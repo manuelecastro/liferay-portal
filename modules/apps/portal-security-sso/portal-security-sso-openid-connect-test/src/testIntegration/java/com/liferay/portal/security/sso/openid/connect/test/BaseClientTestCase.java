@@ -33,6 +33,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsUtil;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectAuthenticationHandler;
 import com.liferay.portal.test.rule.Inject;
+import com.sun.jndi.toolkit.url.Uri;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -141,7 +142,7 @@ public abstract class BaseClientTestCase {
 
 		HashMap<String, String> map = (HashMap<String, String>)objectMapper.readValue(attribute, HashMap.class).get("_state");
 
-		mockHttpServletRequest.setRequestURI("intergrationTest?code=12345678&state=" + map.get("value"));
+		mockHttpServletRequest.setRequestURI("/integrationTest?code=12345678&state=" + map.get("value"));
 
 		return mockHttpServletRequest;
 	}
@@ -178,7 +179,7 @@ public abstract class BaseClientTestCase {
 		String authRequestParametersJSON =  JSONUtil.put(
 			"response_type", "code"
 		).put(
-			"scope", "openid"
+			"scope", "openid email profile"
 		).toString();
 
 		oAuthClientEntry.setAuthRequestParametersJSON(authRequestParametersJSON);
@@ -191,7 +192,13 @@ public abstract class BaseClientTestCase {
 
 		oAuthClientEntry.setInfoJSON(infoJSON);
 
-		oAuthClientEntry.setTokenRequestParametersJSON("{}");
+		String tokenRequestParametersJSON =  JSONUtil.put(
+			"grant_type", "authorization_code"
+		).put(
+			"scope", "openid email profile"
+		).toString();
+
+		oAuthClientEntry.setTokenRequestParametersJSON(tokenRequestParametersJSON);
 
 		oAuthClientEntry.setClientId(String.valueOf(clientId));
 
@@ -207,7 +214,7 @@ public abstract class BaseClientTestCase {
 		).put(
 			"authorization_endpoint", RandomTestUtil.randomString()
 		).put(
-			"token_endpoint", RandomTestUtil.randomString()
+			"token_endpoint", "http://localhost:8080/o/oauth2/token"
 		).put(
 			"jwks_uri", RandomTestUtil.randomString()
 		).put(
