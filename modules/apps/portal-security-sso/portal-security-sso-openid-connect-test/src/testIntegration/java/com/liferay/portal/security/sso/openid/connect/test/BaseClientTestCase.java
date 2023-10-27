@@ -34,17 +34,29 @@ import com.liferay.portal.kernel.test.util.TestPropsUtil;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectAuthenticationHandler;
 import com.liferay.portal.test.rule.Inject;
 import com.sun.jndi.toolkit.url.Uri;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author Olivér Kecskeméty
  */
 public abstract class BaseClientTestCase {
+
+	private BundleActivator _bundleActivator;
+	private BundleContext _bundleContext;
+	protected abstract BundleActivator getBundleActivator();
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -65,6 +77,23 @@ public abstract class BaseClientTestCase {
 			_OPEN_ID_CONNECT_USER_INFO_PROCESSOR_IMPL_REGULAR_ROLE_PROP_KEY,
 			_defaultRegularRole);
 	}
+
+	@Before
+	public void setUp() throws Exception {
+		_bundleActivator = getBundleActivator();
+
+		Bundle bundle = FrameworkUtil.getBundle(BaseClientTestCase.class);
+
+		_bundleContext = bundle.getBundleContext();
+
+		_bundleActivator.start(_bundleContext);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		_bundleActivator.stop(_bundleContext);
+	}
+
 
 	protected String generateUserInfoJSON() {
 		return JSONUtil.put(
@@ -112,7 +141,7 @@ public abstract class BaseClientTestCase {
 
 		long clientId = RandomTestUtil.randomLong();
 
-		String authUri = "test.local"; // Must end with local
+		String authUri = "http://localhost:8080/.well-known/openid-configuration/123/local"; // Must end with local
 
 		createOAuthClientEntry(clientId, authUri);
 		createOAuthClientASLocalMetadata(authUri);
@@ -185,9 +214,11 @@ public abstract class BaseClientTestCase {
 		oAuthClientEntry.setAuthRequestParametersJSON(authRequestParametersJSON);
 
 		String infoJSON =  JSONUtil.put(
-			"client_id", RandomTestUtil.randomString()
+			"client_id", "test_client_id"
 		).put(
-			"client_secret", RandomTestUtil.randomString()
+			"client_secret", "test_client_secret"
+		).put(
+			"redirect_uris", Arrays.asList("http://localhost/c/portal/login/openidconnect")
 		).toString();
 
 		oAuthClientEntry.setInfoJSON(infoJSON);

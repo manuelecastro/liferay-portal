@@ -33,6 +33,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.osgi.framework.BundleActivator;
 
 import java.util.Arrays;
 
@@ -48,7 +49,7 @@ public class OIDCUserInfoProcessorAddRoleToUserLoginTest
 	@Rule
 	public static final LiferayIntegrationTestRule liferayIntegrationTestRule =
 		new LiferayIntegrationTestRule();
-	public abstract static class TestPreparatorBundleActivator
+	private static class  TestPreparatorBundleActivator
 		extends BaseTestPreparatorBundleActivator {
 
 		@Override
@@ -59,8 +60,7 @@ public class OIDCUserInfoProcessorAddRoleToUserLoginTest
 			createOAuth2ApplicationWithClientSecretPost(
 				user.getCompanyId(), user, "test_client_id", "test_client_secret",
 				Arrays.asList(
-					GrantType.RESOURCE_OWNER_PASSWORD, GrantType.REFRESH_TOKEN,
-					GrantType.JWT_BEARER),
+					GrantType.AUTHORIZATION_CODE),
 				Arrays.asList(
 					"everything", "everything.read", "everything.write"));
 		}
@@ -99,5 +99,10 @@ public class OIDCUserInfoProcessorAddRoleToUserLoginTest
 
 	@DeleteAfterTestRun
 	private Role _role;
+
+	@Override
+	protected BundleActivator getBundleActivator() {
+		return new TestPreparatorBundleActivator();
+	}
 
 }

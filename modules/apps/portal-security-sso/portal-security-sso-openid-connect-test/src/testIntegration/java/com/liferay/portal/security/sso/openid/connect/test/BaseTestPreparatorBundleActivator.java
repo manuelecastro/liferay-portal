@@ -11,13 +11,11 @@ import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.scope.spi.prefix.handler.PrefixHandler;
 import com.liferay.oauth2.provider.scope.spi.prefix.handler.PrefixHandlerFactory;
-import com.liferay.oauth2.provider.scope.spi.scope.finder.ScopeFinder;
 import com.liferay.oauth2.provider.scope.spi.scope.mapper.ScopeMapper;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalServiceUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -31,10 +29,6 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.security.service.access.policy.model.SAPEntry;
-import com.liferay.portal.security.service.access.policy.service.SAPEntryLocalService;
-import javafx.application.Application;
-import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -296,7 +290,7 @@ public abstract class BaseTestPreparatorBundleActivator
 				allowedGrantTypesList, clientAuthenticationMethod,
 				user.getUserId(), clientId, 0, clientSecret,
 				"test oauth application",
-				Collections.singletonList("token.introspection"),
+				null,
 				"http://localhost:8080", 0, jwks, "test application",
 				"http://localhost:8080", redirectURIsList, rememberDevice,
 				scopeAliasesList, trustedApplication, new ServiceContext());
@@ -316,39 +310,8 @@ public abstract class BaseTestPreparatorBundleActivator
 
 		return createOAuth2Application(
 			companyId, user, clientId, clientSecret, allowedGrantTypesList,
-			"client_secret_post", null, Arrays.asList(), false,
+			"client_secret_post", null, Arrays.asList("http://localhost/c/portal/login/openidconnect"), false,
 			scopeAliasesList, false);
-	}
-
-	protected void createServiceAccessProfile(
-		long userId, String allowedServiceSignatures, boolean defaultSAPEntry,
-		boolean enabled, String name) {
-
-		ServiceReference<SAPEntryLocalService> serviceReference =
-			bundleContext.getServiceReference(SAPEntryLocalService.class);
-
-		SAPEntryLocalService sapEntryLocalService = bundleContext.getService(
-			serviceReference);
-
-		try {
-			autoCloseables.add(
-				() -> bundleContext.ungetService(serviceReference));
-
-			SAPEntry sapEntry = sapEntryLocalService.addSAPEntry(
-				userId, allowedServiceSignatures, defaultSAPEntry, enabled,
-				name,
-				HashMapBuilder.put(
-					LocaleUtil.getDefault(), name
-				).build(),
-				new ServiceContext());
-
-			autoCloseables.add(
-				() -> sapEntryLocalService.deleteSAPEntry(
-					sapEntry.getSapEntryId()));
-		}
-		catch (PortalException portalException) {
-			throw new RuntimeException(portalException);
-		}
 	}
 
 	protected boolean isIncluded(
@@ -409,22 +372,6 @@ public abstract class BaseTestPreparatorBundleActivator
 		return serviceRegistration;
 	}
 
-	protected ServiceRegistration<ScopeFinder> registerScopeFinder(
-		ScopeFinder scopeFinder, Dictionary<String, Object> properties) {
-
-		if ((properties == null) || properties.isEmpty()) {
-			properties = new HashMapDictionary<>();
-		}
-
-		ServiceRegistration<ScopeFinder> serviceRegistration =
-			bundleContext.registerService(
-				ScopeFinder.class, scopeFinder, properties);
-
-		autoCloseables.add(serviceRegistration::unregister);
-
-		return serviceRegistration;
-	}
-
 	protected ServiceRegistration<ScopeMapper> registerScopeMapper(
 		ScopeMapper scopeMapper, Dictionary<String, Object> properties) {
 
@@ -435,15 +382,6 @@ public abstract class BaseTestPreparatorBundleActivator
 		autoCloseables.add(serviceRegistration::unregister);
 
 		return serviceRegistration;
-	}
-
-	protected void updateOAuth2ProviderConfiguration(
-			Dictionary<String, Object> properties)
-		throws Exception {
-
-		autoCloseables.add(
-			new ConfigurationTemporarySwapper(
-				OAuth2ProviderConfiguration.class.getName(), properties));
 	}
 
 	protected ArrayList<AutoCloseable> autoCloseables;
