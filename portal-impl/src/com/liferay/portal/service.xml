@@ -1966,6 +1966,34 @@
 			<finder-column case-sensitive="false" name="servletContextName" />
 		</finder>
 	</entity>
+	<entity local-service="true" name="RememberMeToken" remote-service="false">
+
+		<!-- PK fields -->
+
+		<column name="RememberMeTokenId" primary="true" type="long" />
+
+		<!-- Audit fields -->
+
+		<column name="companyId" type="long" />
+		<column name="userId" type="long" />
+		<column name="userName" type="String" />
+		<column name="createDate" type="Date" />
+
+		<!-- Other fields -->
+
+		<column name="accessToken" type="String" />
+		<column name="expirationDate" type="Date" />
+
+		<!-- Finder methods -->
+
+		<finder name="RememberMeTokenId" return-type="RememberMeToken">
+			<finder-column name="RememberMeTokenId" />
+		</finder>
+		<finder name="C_U" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column name="userId" />
+		</finder>
+	</entity>
 	<entity change-tracking-enabled="true" local-service="true" name="Repository" remote-service="true" uad-dir-path="../modules/apps/portal/portal-uad/src/main/java" uad-package-path="com.liferay.portal" uuid="true">
 
 		<!-- PK fields -->

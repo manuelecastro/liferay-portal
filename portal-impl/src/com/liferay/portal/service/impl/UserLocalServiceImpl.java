@@ -55,26 +55,7 @@ import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.Company;
-import com.liferay.portal.kernel.model.CompanyConstants;
-import com.liferay.portal.kernel.model.Contact;
-import com.liferay.portal.kernel.model.ContactConstants;
-import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.model.GroupConstants;
-import com.liferay.portal.kernel.model.GroupModel;
-import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.Organization;
-import com.liferay.portal.kernel.model.PasswordPolicy;
-import com.liferay.portal.kernel.model.PortalPreferences;
-import com.liferay.portal.kernel.model.ResourceConstants;
-import com.liferay.portal.kernel.model.Role;
-import com.liferay.portal.kernel.model.Team;
-import com.liferay.portal.kernel.model.Ticket;
-import com.liferay.portal.kernel.model.TicketConstants;
-import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.model.UserConstants;
-import com.liferay.portal.kernel.model.UserGroup;
-import com.liferay.portal.kernel.model.UserGroupRole;
+import com.liferay.portal.kernel.model.*;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.module.util.ServiceLatch;
@@ -107,31 +88,7 @@ import com.liferay.portal.kernel.security.ldap.LDAPSettingsUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
-import com.liferay.portal.kernel.service.BaseServiceImpl;
-import com.liferay.portal.kernel.service.BrowserTrackerLocalService;
-import com.liferay.portal.kernel.service.CompanyLocalService;
-import com.liferay.portal.kernel.service.ContactLocalService;
-import com.liferay.portal.kernel.service.GroupLocalService;
-import com.liferay.portal.kernel.service.ImageLocalService;
-import com.liferay.portal.kernel.service.LayoutLocalService;
-import com.liferay.portal.kernel.service.MembershipRequestLocalService;
-import com.liferay.portal.kernel.service.OrganizationLocalService;
-import com.liferay.portal.kernel.service.PasswordPolicyLocalService;
-import com.liferay.portal.kernel.service.PasswordPolicyRelLocalService;
-import com.liferay.portal.kernel.service.PasswordTrackerLocalService;
-import com.liferay.portal.kernel.service.PortalPreferencesLocalService;
-import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
-import com.liferay.portal.kernel.service.RecentLayoutBranchLocalService;
-import com.liferay.portal.kernel.service.RecentLayoutRevisionLocalService;
-import com.liferay.portal.kernel.service.RecentLayoutSetBranchLocalService;
-import com.liferay.portal.kernel.service.ResourceLocalService;
-import com.liferay.portal.kernel.service.RoleLocalService;
-import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
-import com.liferay.portal.kernel.service.TicketLocalService;
-import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
-import com.liferay.portal.kernel.service.UserIdMapperLocalService;
-import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
+import com.liferay.portal.kernel.service.*;
 import com.liferay.portal.kernel.service.persistence.CompanyPersistence;
 import com.liferay.portal.kernel.service.persistence.ContactPersistence;
 import com.liferay.portal.kernel.service.persistence.GroupPersistence;
@@ -1932,13 +1889,13 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *
 	 * @param  companyId the primary key of the user's company
 	 * @param  name the encrypted primary key of the user
-	 * @param  password the encrypted password of the user
+	 * @param  accessToken the encrypted access token of the user
 	 * @return the user's primary key and password
 	 */
 	@Override
 	public KeyValuePair decryptUserId(
-			long companyId, String name, String password)
-		throws PortalException {
+			long companyId, String name, String accessToken)
+			throws PortalException {
 
 		Company company = _companyPersistence.findByPrimaryKey(companyId);
 
@@ -1949,30 +1906,32 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			throw new SystemException(encryptorException);
 		}
 
-		try {
-			password = EncryptorUtil.decrypt(company.getKeyObj(), password);
-		}
-		catch (EncryptorException encryptorException) {
-			throw new SystemException(encryptorException);
-		}
-
 		long userId = GetterUtil.getLong(name);
 
 		User user = userPersistence.findByPrimaryKey(userId);
 
-		String userPassword = user.getPassword();
+		List<RememberMeToken> RememberMeTokens = _rememberMeTokenLocalService.getUserRememberMeTokens(companyId, user.getUserId());
 
-		String encPassword = PasswordEncryptorUtil.encrypt(
-			password, userPassword);
+		for (RememberMeToken userToken : RememberMeTokens) {
+			String encUserAccessToken = "";
 
-		if (userPassword.equals(encPassword)) {
-			if (isPasswordExpired(user)) {
-				user.setPasswordReset(true);
-
-				userPersistence.update(user);
+			try {
+				encUserAccessToken = EncryptorUtil.encrypt(
+						company.getKeyObj(), userToken.getAccessToken());
+			}
+			catch (EncryptorException encryptorException) {
+				throw new SystemException(encryptorException);
 			}
 
-			return new KeyValuePair(name, password);
+			if (accessToken.equals(encUserAccessToken)) {
+				if (isPasswordExpired(user)) {
+					user.setPasswordReset(true);
+
+					userPersistence.update(user);
+				}
+
+				return new KeyValuePair(name, user.getPassword());
+			}
 		}
 
 		throw new PrincipalException.MustBeAuthenticated(userId);
@@ -7311,6 +7270,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	@BeanReference(type = RecentLayoutSetBranchLocalService.class)
 	private RecentLayoutSetBranchLocalService
 		_recentLayoutSetBranchLocalService;
+
+	@BeanReference(type = RememberMeTokenLocalService.class)
+	private RememberMeTokenLocalService _rememberMeTokenLocalService;
 
 	@BeanReference(type = ResourceLocalService.class)
 	private ResourceLocalService _resourceLocalService;

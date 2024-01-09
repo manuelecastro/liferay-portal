@@ -21,13 +21,11 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.MessageBusUtil;
-import com.liferay.portal.kernel.model.Company;
-import com.liferay.portal.kernel.model.CompanyConstants;
-import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.model.UserTracker;
+import com.liferay.portal.kernel.model.*;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.Authenticator;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
+import com.liferay.portal.kernel.service.RememberMeTokenLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -39,11 +37,7 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.liveusers.LiveUsers;
 import com.liferay.portal.util.PropsValues;
 
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -213,9 +207,15 @@ public class AuthenticatedSessionManagerUtil {
 				CookiesConstants.CONSENT_TYPE_FUNCTIONAL, loginCookie,
 				httpServletRequest, httpServletResponse);
 
+			Date tokenExpirationDate = new Date(
+					System.currentTimeMillis() +
+							((long)loginMaxAge * 1000));
+
+			RememberMeToken rememberMeToken = RememberMeTokenLocalServiceUtil.addRememberMeToken(user.getCompanyId(), user.getUserId(), tokenExpirationDate);
+
 			Cookie passwordCookie = new Cookie(
 				CookiesConstants.NAME_PASSWORD,
-				EncryptorUtil.encrypt(company.getKeyObj(), password));
+				EncryptorUtil.encrypt(company.getKeyObj(), rememberMeToken.getAccessToken()));
 
 			if (domain != null) {
 				passwordCookie.setDomain(domain);

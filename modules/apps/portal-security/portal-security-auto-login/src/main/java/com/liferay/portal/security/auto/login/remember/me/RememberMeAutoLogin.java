@@ -92,7 +92,7 @@ public class RememberMeAutoLogin extends BaseAutoLogin {
 
 				credentials[0] = kvp.getKey();
 				credentials[1] = kvp.getValue();
-				credentials[2] = Boolean.FALSE.toString();
+				credentials[2] = Boolean.TRUE.toString();
 			}
 		}
 
