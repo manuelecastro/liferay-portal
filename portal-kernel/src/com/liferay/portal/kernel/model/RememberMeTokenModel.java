@@ -72,9 +72,9 @@ public interface RememberMeTokenModel
 	/**
 	 * Sets the remember me token ID of this remember me token.
 	 *
-	 * @param RememberMeTokenId the remember me token ID of this remember me token
+	 * @param rememberMeTokenId the remember me token ID of this remember me token
 	 */
-	public void setRememberMeTokenId(long RememberMeTokenId);
+	public void setRememberMeTokenId(long rememberMeTokenId);
 
 	/**
 	 * Returns the company ID of this remember me token.
@@ -119,21 +119,6 @@ public interface RememberMeTokenModel
 	 * @param userUuid the user uuid of this remember me token
 	 */
 	public void setUserUuid(String userUuid);
-
-	/**
-	 * Returns the user name of this remember me token.
-	 *
-	 * @return the user name of this remember me token
-	 */
-	@AutoEscape
-	public String getUserName();
-
-	/**
-	 * Sets the user name of this remember me token.
-	 *
-	 * @param userName the user name of this remember me token
-	 */
-	public void setUserName(String userName);
 
 	/**
 	 * Returns the create date of this remember me token.

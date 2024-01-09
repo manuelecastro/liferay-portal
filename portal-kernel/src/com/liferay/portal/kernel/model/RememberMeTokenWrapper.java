@@ -33,10 +33,9 @@ public class RememberMeTokenWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
-		attributes.put("RememberMeTokenId", getRememberMeTokenId());
+		attributes.put("rememberMeTokenId", getRememberMeTokenId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("userId", getUserId());
-		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("accessToken", getAccessToken());
 		attributes.put("expirationDate", getExpirationDate());
@@ -52,10 +51,10 @@ public class RememberMeTokenWrapper
 			setMvccVersion(mvccVersion);
 		}
 
-		Long RememberMeTokenId = (Long)attributes.get("RememberMeTokenId");
+		Long rememberMeTokenId = (Long)attributes.get("rememberMeTokenId");
 
-		if (RememberMeTokenId != null) {
-			setRememberMeTokenId(RememberMeTokenId);
+		if (rememberMeTokenId != null) {
+			setRememberMeTokenId(rememberMeTokenId);
 		}
 
 		Long companyId = (Long)attributes.get("companyId");
@@ -68,12 +67,6 @@ public class RememberMeTokenWrapper
 
 		if (userId != null) {
 			setUserId(userId);
-		}
-
-		String userName = (String)attributes.get("userName");
-
-		if (userName != null) {
-			setUserName(userName);
 		}
 
 		Date createDate = (Date)attributes.get("createDate");
@@ -181,16 +174,6 @@ public class RememberMeTokenWrapper
 	}
 
 	/**
-	 * Returns the user name of this remember me token.
-	 *
-	 * @return the user name of this remember me token
-	 */
-	@Override
-	public String getUserName() {
-		return model.getUserName();
-	}
-
-	/**
 	 * Returns the user uuid of this remember me token.
 	 *
 	 * @return the user uuid of this remember me token
@@ -268,11 +251,11 @@ public class RememberMeTokenWrapper
 	/**
 	 * Sets the remember me token ID of this remember me token.
 	 *
-	 * @param RememberMeTokenId the remember me token ID of this remember me token
+	 * @param rememberMeTokenId the remember me token ID of this remember me token
 	 */
 	@Override
-	public void setRememberMeTokenId(long RememberMeTokenId) {
-		model.setRememberMeTokenId(RememberMeTokenId);
+	public void setRememberMeTokenId(long rememberMeTokenId) {
+		model.setRememberMeTokenId(rememberMeTokenId);
 	}
 
 	/**
@@ -283,16 +266,6 @@ public class RememberMeTokenWrapper
 	@Override
 	public void setUserId(long userId) {
 		model.setUserId(userId);
-	}
-
-	/**
-	 * Sets the user name of this remember me token.
-	 *
-	 * @param userName the user name of this remember me token
-	 */
-	@Override
-	public void setUserName(String userName) {
-		model.setUserName(userName);
 	}
 
 	/**

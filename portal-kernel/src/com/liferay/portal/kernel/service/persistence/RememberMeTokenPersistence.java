@@ -32,204 +32,49 @@ public interface RememberMeTokenPersistence
 	 */
 
 	/**
-	 * Returns the remember me token where RememberMeTokenId = &#63; or throws a <code>NoSuchRememberMeTokenException</code> if it could not be found.
+	 * Returns the remember me token where accessToken = &#63; or throws a <code>NoSuchRememberMeTokenException</code> if it could not be found.
 	 *
-	 * @param RememberMeTokenId the remember me token ID
+	 * @param accessToken the access token
 	 * @return the matching remember me token
 	 * @throws NoSuchRememberMeTokenException if a matching remember me token could not be found
 	 */
-	public RememberMeToken findByRememberMeTokenId(long RememberMeTokenId)
+	public RememberMeToken findByAccessToken(String accessToken)
 		throws NoSuchRememberMeTokenException;
 
 	/**
-	 * Returns the remember me token where RememberMeTokenId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 * Returns the remember me token where accessToken = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
 	 *
-	 * @param RememberMeTokenId the remember me token ID
+	 * @param accessToken the access token
 	 * @return the matching remember me token, or <code>null</code> if a matching remember me token could not be found
 	 */
-	public RememberMeToken fetchByRememberMeTokenId(long RememberMeTokenId);
+	public RememberMeToken fetchByAccessToken(String accessToken);
 
 	/**
-	 * Returns the remember me token where RememberMeTokenId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 * Returns the remember me token where accessToken = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
 	 *
-	 * @param RememberMeTokenId the remember me token ID
+	 * @param accessToken the access token
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching remember me token, or <code>null</code> if a matching remember me token could not be found
 	 */
-	public RememberMeToken fetchByRememberMeTokenId(
-		long RememberMeTokenId, boolean useFinderCache);
+	public RememberMeToken fetchByAccessToken(
+		String accessToken, boolean useFinderCache);
 
 	/**
-	 * Removes the remember me token where RememberMeTokenId = &#63; from the database.
+	 * Removes the remember me token where accessToken = &#63; from the database.
 	 *
-	 * @param RememberMeTokenId the remember me token ID
+	 * @param accessToken the access token
 	 * @return the remember me token that was removed
 	 */
-	public RememberMeToken removeByRememberMeTokenId(long RememberMeTokenId)
+	public RememberMeToken removeByAccessToken(String accessToken)
 		throws NoSuchRememberMeTokenException;
 
 	/**
-	 * Returns the number of remember me tokens where RememberMeTokenId = &#63;.
+	 * Returns the number of remember me tokens where accessToken = &#63;.
 	 *
-	 * @param RememberMeTokenId the remember me token ID
+	 * @param accessToken the access token
 	 * @return the number of matching remember me tokens
 	 */
-	public int countByRememberMeTokenId(long RememberMeTokenId);
-
-	/**
-	 * Returns all the remember me tokens where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @return the matching remember me tokens
-	 */
-	public java.util.List<RememberMeToken> findByC_U(
-		long companyId, long userId);
-
-	/**
-	 * Returns a range of all the remember me tokens where companyId = &#63; and userId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>RememberMeTokenModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param start the lower bound of the range of remember me tokens
-	 * @param end the upper bound of the range of remember me tokens (not inclusive)
-	 * @return the range of matching remember me tokens
-	 */
-	public java.util.List<RememberMeToken> findByC_U(
-		long companyId, long userId, int start, int end);
-
-	/**
-	 * Returns an ordered range of all the remember me tokens where companyId = &#63; and userId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>RememberMeTokenModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param start the lower bound of the range of remember me tokens
-	 * @param end the upper bound of the range of remember me tokens (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching remember me tokens
-	 */
-	public java.util.List<RememberMeToken> findByC_U(
-		long companyId, long userId, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<RememberMeToken>
-			orderByComparator);
-
-	/**
-	 * Returns an ordered range of all the remember me tokens where companyId = &#63; and userId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>RememberMeTokenModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param start the lower bound of the range of remember me tokens
-	 * @param end the upper bound of the range of remember me tokens (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching remember me tokens
-	 */
-	public java.util.List<RememberMeToken> findByC_U(
-		long companyId, long userId, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<RememberMeToken>
-			orderByComparator,
-		boolean useFinderCache);
-
-	/**
-	 * Returns the first remember me token in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching remember me token
-	 * @throws NoSuchRememberMeTokenException if a matching remember me token could not be found
-	 */
-	public RememberMeToken findByC_U_First(
-			long companyId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<RememberMeToken>
-				orderByComparator)
-		throws NoSuchRememberMeTokenException;
-
-	/**
-	 * Returns the first remember me token in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching remember me token, or <code>null</code> if a matching remember me token could not be found
-	 */
-	public RememberMeToken fetchByC_U_First(
-		long companyId, long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<RememberMeToken>
-			orderByComparator);
-
-	/**
-	 * Returns the last remember me token in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching remember me token
-	 * @throws NoSuchRememberMeTokenException if a matching remember me token could not be found
-	 */
-	public RememberMeToken findByC_U_Last(
-			long companyId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<RememberMeToken>
-				orderByComparator)
-		throws NoSuchRememberMeTokenException;
-
-	/**
-	 * Returns the last remember me token in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching remember me token, or <code>null</code> if a matching remember me token could not be found
-	 */
-	public RememberMeToken fetchByC_U_Last(
-		long companyId, long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<RememberMeToken>
-			orderByComparator);
-
-	/**
-	 * Returns the remember me tokens before and after the current remember me token in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param RememberMeTokenId the primary key of the current remember me token
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next remember me token
-	 * @throws NoSuchRememberMeTokenException if a remember me token with the primary key could not be found
-	 */
-	public RememberMeToken[] findByC_U_PrevAndNext(
-			long RememberMeTokenId, long companyId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<RememberMeToken>
-				orderByComparator)
-		throws NoSuchRememberMeTokenException;
-
-	/**
-	 * Removes all the remember me tokens where companyId = &#63; and userId = &#63; from the database.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 */
-	public void removeByC_U(long companyId, long userId);
-
-	/**
-	 * Returns the number of remember me tokens where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @return the number of matching remember me tokens
-	 */
-	public int countByC_U(long companyId, long userId);
+	public int countByAccessToken(String accessToken);
 
 	/**
 	 * Caches the remember me token in the entity cache if it is enabled.
@@ -248,19 +93,19 @@ public interface RememberMeTokenPersistence
 	/**
 	 * Creates a new remember me token with the primary key. Does not add the remember me token to the database.
 	 *
-	 * @param RememberMeTokenId the primary key for the new remember me token
+	 * @param rememberMeTokenId the primary key for the new remember me token
 	 * @return the new remember me token
 	 */
-	public RememberMeToken create(long RememberMeTokenId);
+	public RememberMeToken create(long rememberMeTokenId);
 
 	/**
 	 * Removes the remember me token with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token that was removed
 	 * @throws NoSuchRememberMeTokenException if a remember me token with the primary key could not be found
 	 */
-	public RememberMeToken remove(long RememberMeTokenId)
+	public RememberMeToken remove(long rememberMeTokenId)
 		throws NoSuchRememberMeTokenException;
 
 	public RememberMeToken updateImpl(RememberMeToken rememberMeToken);
@@ -268,20 +113,20 @@ public interface RememberMeTokenPersistence
 	/**
 	 * Returns the remember me token with the primary key or throws a <code>NoSuchRememberMeTokenException</code> if it could not be found.
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token
 	 * @throws NoSuchRememberMeTokenException if a remember me token with the primary key could not be found
 	 */
-	public RememberMeToken findByPrimaryKey(long RememberMeTokenId)
+	public RememberMeToken findByPrimaryKey(long rememberMeTokenId)
 		throws NoSuchRememberMeTokenException;
 
 	/**
 	 * Returns the remember me token with the primary key or returns <code>null</code> if it could not be found.
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token, or <code>null</code> if a remember me token with the primary key could not be found
 	 */
-	public RememberMeToken fetchByPrimaryKey(long RememberMeTokenId);
+	public RememberMeToken fetchByPrimaryKey(long rememberMeTokenId);
 
 	/**
 	 * Returns all the remember me tokens.

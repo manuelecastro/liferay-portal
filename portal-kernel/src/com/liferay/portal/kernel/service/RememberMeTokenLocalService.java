@@ -82,11 +82,11 @@ public interface RememberMeTokenLocalService
 	/**
 	 * Creates a new remember me token with the primary key. Does not add the remember me token to the database.
 	 *
-	 * @param RememberMeTokenId the primary key for the new remember me token
+	 * @param rememberMeTokenId the primary key for the new remember me token
 	 * @return the new remember me token
 	 */
 	@Transactional(enabled = false)
-	public RememberMeToken createRememberMeToken(long RememberMeTokenId);
+	public RememberMeToken createRememberMeToken(long rememberMeTokenId);
 
 	/**
 	 * @throws PortalException
@@ -102,12 +102,12 @@ public interface RememberMeTokenLocalService
 	 * <strong>Important:</strong> Inspect RememberMeTokenLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
 	 * </p>
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token that was removed
 	 * @throws PortalException if a remember me token with the primary key could not be found
 	 */
 	@Indexable(type = IndexableType.DELETE)
-	public RememberMeToken deleteRememberMeToken(long RememberMeTokenId)
+	public RememberMeToken deleteRememberMeToken(long rememberMeTokenId)
 		throws PortalException;
 
 	/**
@@ -197,7 +197,7 @@ public interface RememberMeTokenLocalService
 		DynamicQuery dynamicQuery, Projection projection);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public RememberMeToken fetchRememberMeToken(long RememberMeTokenId);
+	public RememberMeToken fetchRememberMeToken(long rememberMeTokenId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
@@ -223,13 +223,16 @@ public interface RememberMeTokenLocalService
 	/**
 	 * Returns the remember me token with the primary key.
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token
 	 * @throws PortalException if a remember me token with the primary key could not be found
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public RememberMeToken getRememberMeToken(long RememberMeTokenId)
+	public RememberMeToken getRememberMeToken(long rememberMeTokenId)
 		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<RememberMeToken> getRememberMeToken(String accessToken);
 
 	/**
 	 * Returns a range of all the remember me tokens.
@@ -252,10 +255,6 @@ public interface RememberMeTokenLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getRememberMeTokensCount();
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<RememberMeToken> getUserRememberMeTokens(
-		long companyId, long userId);
 
 	/**
 	 * Updates the remember me token in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.

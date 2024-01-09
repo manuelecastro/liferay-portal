@@ -111,255 +111,63 @@ public class RememberMeTokenUtil {
 	}
 
 	/**
-	 * Returns the remember me token where RememberMeTokenId = &#63; or throws a <code>NoSuchRememberMeTokenException</code> if it could not be found.
+	 * Returns the remember me token where accessToken = &#63; or throws a <code>NoSuchRememberMeTokenException</code> if it could not be found.
 	 *
-	 * @param RememberMeTokenId the remember me token ID
+	 * @param accessToken the access token
 	 * @return the matching remember me token
 	 * @throws NoSuchRememberMeTokenException if a matching remember me token could not be found
 	 */
-	public static RememberMeToken findByRememberMeTokenId(
-			long RememberMeTokenId)
+	public static RememberMeToken findByAccessToken(String accessToken)
 		throws com.liferay.portal.kernel.exception.
 			NoSuchRememberMeTokenException {
 
-		return getPersistence().findByRememberMeTokenId(RememberMeTokenId);
+		return getPersistence().findByAccessToken(accessToken);
 	}
 
 	/**
-	 * Returns the remember me token where RememberMeTokenId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 * Returns the remember me token where accessToken = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
 	 *
-	 * @param RememberMeTokenId the remember me token ID
+	 * @param accessToken the access token
 	 * @return the matching remember me token, or <code>null</code> if a matching remember me token could not be found
 	 */
-	public static RememberMeToken fetchByRememberMeTokenId(
-		long RememberMeTokenId) {
-
-		return getPersistence().fetchByRememberMeTokenId(RememberMeTokenId);
+	public static RememberMeToken fetchByAccessToken(String accessToken) {
+		return getPersistence().fetchByAccessToken(accessToken);
 	}
 
 	/**
-	 * Returns the remember me token where RememberMeTokenId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 * Returns the remember me token where accessToken = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
 	 *
-	 * @param RememberMeTokenId the remember me token ID
+	 * @param accessToken the access token
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching remember me token, or <code>null</code> if a matching remember me token could not be found
 	 */
-	public static RememberMeToken fetchByRememberMeTokenId(
-		long RememberMeTokenId, boolean useFinderCache) {
+	public static RememberMeToken fetchByAccessToken(
+		String accessToken, boolean useFinderCache) {
 
-		return getPersistence().fetchByRememberMeTokenId(
-			RememberMeTokenId, useFinderCache);
+		return getPersistence().fetchByAccessToken(accessToken, useFinderCache);
 	}
 
 	/**
-	 * Removes the remember me token where RememberMeTokenId = &#63; from the database.
+	 * Removes the remember me token where accessToken = &#63; from the database.
 	 *
-	 * @param RememberMeTokenId the remember me token ID
+	 * @param accessToken the access token
 	 * @return the remember me token that was removed
 	 */
-	public static RememberMeToken removeByRememberMeTokenId(
-			long RememberMeTokenId)
+	public static RememberMeToken removeByAccessToken(String accessToken)
 		throws com.liferay.portal.kernel.exception.
 			NoSuchRememberMeTokenException {
 
-		return getPersistence().removeByRememberMeTokenId(RememberMeTokenId);
+		return getPersistence().removeByAccessToken(accessToken);
 	}
 
 	/**
-	 * Returns the number of remember me tokens where RememberMeTokenId = &#63;.
+	 * Returns the number of remember me tokens where accessToken = &#63;.
 	 *
-	 * @param RememberMeTokenId the remember me token ID
+	 * @param accessToken the access token
 	 * @return the number of matching remember me tokens
 	 */
-	public static int countByRememberMeTokenId(long RememberMeTokenId) {
-		return getPersistence().countByRememberMeTokenId(RememberMeTokenId);
-	}
-
-	/**
-	 * Returns all the remember me tokens where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @return the matching remember me tokens
-	 */
-	public static List<RememberMeToken> findByC_U(long companyId, long userId) {
-		return getPersistence().findByC_U(companyId, userId);
-	}
-
-	/**
-	 * Returns a range of all the remember me tokens where companyId = &#63; and userId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>RememberMeTokenModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param start the lower bound of the range of remember me tokens
-	 * @param end the upper bound of the range of remember me tokens (not inclusive)
-	 * @return the range of matching remember me tokens
-	 */
-	public static List<RememberMeToken> findByC_U(
-		long companyId, long userId, int start, int end) {
-
-		return getPersistence().findByC_U(companyId, userId, start, end);
-	}
-
-	/**
-	 * Returns an ordered range of all the remember me tokens where companyId = &#63; and userId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>RememberMeTokenModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param start the lower bound of the range of remember me tokens
-	 * @param end the upper bound of the range of remember me tokens (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching remember me tokens
-	 */
-	public static List<RememberMeToken> findByC_U(
-		long companyId, long userId, int start, int end,
-		OrderByComparator<RememberMeToken> orderByComparator) {
-
-		return getPersistence().findByC_U(
-			companyId, userId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns an ordered range of all the remember me tokens where companyId = &#63; and userId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>RememberMeTokenModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param start the lower bound of the range of remember me tokens
-	 * @param end the upper bound of the range of remember me tokens (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching remember me tokens
-	 */
-	public static List<RememberMeToken> findByC_U(
-		long companyId, long userId, int start, int end,
-		OrderByComparator<RememberMeToken> orderByComparator,
-		boolean useFinderCache) {
-
-		return getPersistence().findByC_U(
-			companyId, userId, start, end, orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first remember me token in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching remember me token
-	 * @throws NoSuchRememberMeTokenException if a matching remember me token could not be found
-	 */
-	public static RememberMeToken findByC_U_First(
-			long companyId, long userId,
-			OrderByComparator<RememberMeToken> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchRememberMeTokenException {
-
-		return getPersistence().findByC_U_First(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the first remember me token in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching remember me token, or <code>null</code> if a matching remember me token could not be found
-	 */
-	public static RememberMeToken fetchByC_U_First(
-		long companyId, long userId,
-		OrderByComparator<RememberMeToken> orderByComparator) {
-
-		return getPersistence().fetchByC_U_First(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last remember me token in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching remember me token
-	 * @throws NoSuchRememberMeTokenException if a matching remember me token could not be found
-	 */
-	public static RememberMeToken findByC_U_Last(
-			long companyId, long userId,
-			OrderByComparator<RememberMeToken> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchRememberMeTokenException {
-
-		return getPersistence().findByC_U_Last(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last remember me token in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching remember me token, or <code>null</code> if a matching remember me token could not be found
-	 */
-	public static RememberMeToken fetchByC_U_Last(
-		long companyId, long userId,
-		OrderByComparator<RememberMeToken> orderByComparator) {
-
-		return getPersistence().fetchByC_U_Last(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the remember me tokens before and after the current remember me token in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param RememberMeTokenId the primary key of the current remember me token
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next remember me token
-	 * @throws NoSuchRememberMeTokenException if a remember me token with the primary key could not be found
-	 */
-	public static RememberMeToken[] findByC_U_PrevAndNext(
-			long RememberMeTokenId, long companyId, long userId,
-			OrderByComparator<RememberMeToken> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchRememberMeTokenException {
-
-		return getPersistence().findByC_U_PrevAndNext(
-			RememberMeTokenId, companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Removes all the remember me tokens where companyId = &#63; and userId = &#63; from the database.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 */
-	public static void removeByC_U(long companyId, long userId) {
-		getPersistence().removeByC_U(companyId, userId);
-	}
-
-	/**
-	 * Returns the number of remember me tokens where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @return the number of matching remember me tokens
-	 */
-	public static int countByC_U(long companyId, long userId) {
-		return getPersistence().countByC_U(companyId, userId);
+	public static int countByAccessToken(String accessToken) {
+		return getPersistence().countByAccessToken(accessToken);
 	}
 
 	/**
@@ -383,25 +191,25 @@ public class RememberMeTokenUtil {
 	/**
 	 * Creates a new remember me token with the primary key. Does not add the remember me token to the database.
 	 *
-	 * @param RememberMeTokenId the primary key for the new remember me token
+	 * @param rememberMeTokenId the primary key for the new remember me token
 	 * @return the new remember me token
 	 */
-	public static RememberMeToken create(long RememberMeTokenId) {
-		return getPersistence().create(RememberMeTokenId);
+	public static RememberMeToken create(long rememberMeTokenId) {
+		return getPersistence().create(rememberMeTokenId);
 	}
 
 	/**
 	 * Removes the remember me token with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token that was removed
 	 * @throws NoSuchRememberMeTokenException if a remember me token with the primary key could not be found
 	 */
-	public static RememberMeToken remove(long RememberMeTokenId)
+	public static RememberMeToken remove(long rememberMeTokenId)
 		throws com.liferay.portal.kernel.exception.
 			NoSuchRememberMeTokenException {
 
-		return getPersistence().remove(RememberMeTokenId);
+		return getPersistence().remove(rememberMeTokenId);
 	}
 
 	public static RememberMeToken updateImpl(RememberMeToken rememberMeToken) {
@@ -411,25 +219,25 @@ public class RememberMeTokenUtil {
 	/**
 	 * Returns the remember me token with the primary key or throws a <code>NoSuchRememberMeTokenException</code> if it could not be found.
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token
 	 * @throws NoSuchRememberMeTokenException if a remember me token with the primary key could not be found
 	 */
-	public static RememberMeToken findByPrimaryKey(long RememberMeTokenId)
+	public static RememberMeToken findByPrimaryKey(long rememberMeTokenId)
 		throws com.liferay.portal.kernel.exception.
 			NoSuchRememberMeTokenException {
 
-		return getPersistence().findByPrimaryKey(RememberMeTokenId);
+		return getPersistence().findByPrimaryKey(rememberMeTokenId);
 	}
 
 	/**
 	 * Returns the remember me token with the primary key or returns <code>null</code> if it could not be found.
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token, or <code>null</code> if a remember me token with the primary key could not be found
 	 */
-	public static RememberMeToken fetchByPrimaryKey(long RememberMeTokenId) {
-		return getPersistence().fetchByPrimaryKey(RememberMeTokenId);
+	public static RememberMeToken fetchByPrimaryKey(long rememberMeTokenId) {
+		return getPersistence().fetchByPrimaryKey(rememberMeTokenId);
 	}
 
 	/**

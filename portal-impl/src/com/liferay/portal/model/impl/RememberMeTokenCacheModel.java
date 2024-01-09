@@ -40,8 +40,8 @@ public class RememberMeTokenCacheModel
 		RememberMeTokenCacheModel rememberMeTokenCacheModel =
 			(RememberMeTokenCacheModel)object;
 
-		if ((RememberMeTokenId ==
-				rememberMeTokenCacheModel.RememberMeTokenId) &&
+		if ((rememberMeTokenId ==
+				rememberMeTokenCacheModel.rememberMeTokenId) &&
 			(mvccVersion == rememberMeTokenCacheModel.mvccVersion)) {
 
 			return true;
@@ -52,7 +52,7 @@ public class RememberMeTokenCacheModel
 
 	@Override
 	public int hashCode() {
-		int hashCode = HashUtil.hash(0, RememberMeTokenId);
+		int hashCode = HashUtil.hash(0, rememberMeTokenId);
 
 		return HashUtil.hash(hashCode, mvccVersion);
 	}
@@ -69,18 +69,16 @@ public class RememberMeTokenCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(17);
+		StringBundler sb = new StringBundler(15);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
-		sb.append(", RememberMeTokenId=");
-		sb.append(RememberMeTokenId);
+		sb.append(", rememberMeTokenId=");
+		sb.append(rememberMeTokenId);
 		sb.append(", companyId=");
 		sb.append(companyId);
 		sb.append(", userId=");
 		sb.append(userId);
-		sb.append(", userName=");
-		sb.append(userName);
 		sb.append(", createDate=");
 		sb.append(createDate);
 		sb.append(", accessToken=");
@@ -97,16 +95,9 @@ public class RememberMeTokenCacheModel
 		RememberMeTokenImpl rememberMeTokenImpl = new RememberMeTokenImpl();
 
 		rememberMeTokenImpl.setMvccVersion(mvccVersion);
-		rememberMeTokenImpl.setRememberMeTokenId(RememberMeTokenId);
+		rememberMeTokenImpl.setRememberMeTokenId(rememberMeTokenId);
 		rememberMeTokenImpl.setCompanyId(companyId);
 		rememberMeTokenImpl.setUserId(userId);
-
-		if (userName == null) {
-			rememberMeTokenImpl.setUserName("");
-		}
-		else {
-			rememberMeTokenImpl.setUserName(userName);
-		}
 
 		if (createDate == Long.MIN_VALUE) {
 			rememberMeTokenImpl.setCreateDate(null);
@@ -138,12 +129,11 @@ public class RememberMeTokenCacheModel
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 
-		RememberMeTokenId = objectInput.readLong();
+		rememberMeTokenId = objectInput.readLong();
 
 		companyId = objectInput.readLong();
 
 		userId = objectInput.readLong();
-		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		accessToken = objectInput.readUTF();
 		expirationDate = objectInput.readLong();
@@ -153,19 +143,11 @@ public class RememberMeTokenCacheModel
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
 
-		objectOutput.writeLong(RememberMeTokenId);
+		objectOutput.writeLong(rememberMeTokenId);
 
 		objectOutput.writeLong(companyId);
 
 		objectOutput.writeLong(userId);
-
-		if (userName == null) {
-			objectOutput.writeUTF("");
-		}
-		else {
-			objectOutput.writeUTF(userName);
-		}
-
 		objectOutput.writeLong(createDate);
 
 		if (accessToken == null) {
@@ -179,10 +161,9 @@ public class RememberMeTokenCacheModel
 	}
 
 	public long mvccVersion;
-	public long RememberMeTokenId;
+	public long rememberMeTokenId;
 	public long companyId;
 	public long userId;
-	public String userName;
 	public long createDate;
 	public String accessToken;
 	public long expirationDate;

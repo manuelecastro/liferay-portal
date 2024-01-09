@@ -83,13 +83,13 @@ public abstract class RememberMeTokenLocalServiceBaseImpl
 	/**
 	 * Creates a new remember me token with the primary key. Does not add the remember me token to the database.
 	 *
-	 * @param RememberMeTokenId the primary key for the new remember me token
+	 * @param rememberMeTokenId the primary key for the new remember me token
 	 * @return the new remember me token
 	 */
 	@Override
 	@Transactional(enabled = false)
-	public RememberMeToken createRememberMeToken(long RememberMeTokenId) {
-		return rememberMeTokenPersistence.create(RememberMeTokenId);
+	public RememberMeToken createRememberMeToken(long rememberMeTokenId) {
+		return rememberMeTokenPersistence.create(rememberMeTokenId);
 	}
 
 	/**
@@ -99,16 +99,16 @@ public abstract class RememberMeTokenLocalServiceBaseImpl
 	 * <strong>Important:</strong> Inspect RememberMeTokenLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
 	 * </p>
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token that was removed
 	 * @throws PortalException if a remember me token with the primary key could not be found
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public RememberMeToken deleteRememberMeToken(long RememberMeTokenId)
+	public RememberMeToken deleteRememberMeToken(long rememberMeTokenId)
 		throws PortalException {
 
-		return rememberMeTokenPersistence.remove(RememberMeTokenId);
+		return rememberMeTokenPersistence.remove(rememberMeTokenId);
 	}
 
 	/**
@@ -229,22 +229,22 @@ public abstract class RememberMeTokenLocalServiceBaseImpl
 	}
 
 	@Override
-	public RememberMeToken fetchRememberMeToken(long RememberMeTokenId) {
-		return rememberMeTokenPersistence.fetchByPrimaryKey(RememberMeTokenId);
+	public RememberMeToken fetchRememberMeToken(long rememberMeTokenId) {
+		return rememberMeTokenPersistence.fetchByPrimaryKey(rememberMeTokenId);
 	}
 
 	/**
 	 * Returns the remember me token with the primary key.
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token
 	 * @throws PortalException if a remember me token with the primary key could not be found
 	 */
 	@Override
-	public RememberMeToken getRememberMeToken(long RememberMeTokenId)
+	public RememberMeToken getRememberMeToken(long rememberMeTokenId)
 		throws PortalException {
 
-		return rememberMeTokenPersistence.findByPrimaryKey(RememberMeTokenId);
+		return rememberMeTokenPersistence.findByPrimaryKey(rememberMeTokenId);
 	}
 
 	@Override
@@ -256,7 +256,7 @@ public abstract class RememberMeTokenLocalServiceBaseImpl
 		actionableDynamicQuery.setClassLoader(getClassLoader());
 		actionableDynamicQuery.setModelClass(RememberMeToken.class);
 
-		actionableDynamicQuery.setPrimaryKeyPropertyName("RememberMeTokenId");
+		actionableDynamicQuery.setPrimaryKeyPropertyName("rememberMeTokenId");
 
 		return actionableDynamicQuery;
 	}
@@ -274,7 +274,7 @@ public abstract class RememberMeTokenLocalServiceBaseImpl
 		indexableActionableDynamicQuery.setModelClass(RememberMeToken.class);
 
 		indexableActionableDynamicQuery.setPrimaryKeyPropertyName(
-			"RememberMeTokenId");
+			"rememberMeTokenId");
 
 		return indexableActionableDynamicQuery;
 	}
@@ -286,7 +286,7 @@ public abstract class RememberMeTokenLocalServiceBaseImpl
 		actionableDynamicQuery.setClassLoader(getClassLoader());
 		actionableDynamicQuery.setModelClass(RememberMeToken.class);
 
-		actionableDynamicQuery.setPrimaryKeyPropertyName("RememberMeTokenId");
+		actionableDynamicQuery.setPrimaryKeyPropertyName("rememberMeTokenId");
 	}
 
 	/**

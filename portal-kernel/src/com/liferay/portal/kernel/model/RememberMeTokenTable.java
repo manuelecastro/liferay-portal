@@ -26,15 +26,13 @@ public class RememberMeTokenTable extends BaseTable<RememberMeTokenTable> {
 
 	public final Column<RememberMeTokenTable, Long> mvccVersion = createColumn(
 		"mvccVersion", Long.class, Types.BIGINT, Column.FLAG_NULLITY);
-	public final Column<RememberMeTokenTable, Long> RememberMeTokenId =
+	public final Column<RememberMeTokenTable, Long> rememberMeTokenId =
 		createColumn(
-			"RememberMeTokenId", Long.class, Types.BIGINT, Column.FLAG_PRIMARY);
+			"rememberMeTokenId", Long.class, Types.BIGINT, Column.FLAG_PRIMARY);
 	public final Column<RememberMeTokenTable, Long> companyId = createColumn(
 		"companyId", Long.class, Types.BIGINT, Column.FLAG_DEFAULT);
 	public final Column<RememberMeTokenTable, Long> userId = createColumn(
 		"userId", Long.class, Types.BIGINT, Column.FLAG_DEFAULT);
-	public final Column<RememberMeTokenTable, String> userName = createColumn(
-		"userName", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<RememberMeTokenTable, Date> createDate = createColumn(
 		"createDate", Date.class, Types.TIMESTAMP, Column.FLAG_DEFAULT);
 	public final Column<RememberMeTokenTable, String> accessToken =

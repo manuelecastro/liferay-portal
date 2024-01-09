@@ -1142,10 +1142,9 @@ create table Release_ (
 
 create table RememberMeToken (
 	mvccVersion LONG default 0 not null,
-	RememberMeTokenId LONG not null primary key,
+	rememberMeTokenId LONG not null primary key,
 	companyId LONG,
 	userId LONG,
-	userName VARCHAR(75) null,
 	createDate DATE null,
 	accessToken VARCHAR(75) null,
 	expirationDate DATE null

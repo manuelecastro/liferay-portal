@@ -53,10 +53,8 @@ public class RememberMeAutoLogin extends BaseAutoLogin {
 			HttpServletResponse httpServletResponse)
 		throws Exception {
 
-		String autoUserId = CookiesManagerUtil.getCookieValue(
-			CookiesConstants.NAME_ID, httpServletRequest, false);
-		String autoPassword = CookiesManagerUtil.getCookieValue(
-			CookiesConstants.NAME_PASSWORD, httpServletRequest, false);
+		String rememberMeAccessToken = CookiesManagerUtil.getCookieValue(
+			CookiesConstants.NAME_REMEMBER_ME_TOKEN, httpServletRequest, false);
 		String rememberMe = CookiesManagerUtil.getCookieValue(
 			CookiesConstants.NAME_REMEMBER_ME, httpServletRequest, false);
 
@@ -78,15 +76,14 @@ public class RememberMeAutoLogin extends BaseAutoLogin {
 
 		String[] credentials = null;
 
-		if (Validator.isNotNull(autoUserId) &&
-			Validator.isNotNull(autoPassword) &&
+		if (Validator.isNotNull(rememberMeAccessToken) &&
 			Validator.isNotNull(rememberMe)) {
 
 			Company company = _portal.getCompany(httpServletRequest);
 
 			if (company.isAutoLogin()) {
 				KeyValuePair kvp = _userLocalService.decryptUserId(
-					company.getCompanyId(), autoUserId, autoPassword);
+					company.getCompanyId(), rememberMeAccessToken);
 
 				credentials = new String[3];
 
@@ -131,7 +128,7 @@ public class RememberMeAutoLogin extends BaseAutoLogin {
 			CookiesConstants.NAME_ID);
 		CookiesManagerUtil.deleteCookies(
 			domain, httpServletRequest, httpServletResponse,
-			CookiesConstants.NAME_PASSWORD);
+			CookiesConstants.NAME_REMEMBER_ME_TOKEN);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

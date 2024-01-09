@@ -60,10 +60,10 @@ public class RememberMeTokenModelImpl
 	public static final String TABLE_NAME = "RememberMeToken";
 
 	public static final Object[][] TABLE_COLUMNS = {
-		{"mvccVersion", Types.BIGINT}, {"RememberMeTokenId", Types.BIGINT},
+		{"mvccVersion", Types.BIGINT}, {"rememberMeTokenId", Types.BIGINT},
 		{"companyId", Types.BIGINT}, {"userId", Types.BIGINT},
-		{"userName", Types.VARCHAR}, {"createDate", Types.TIMESTAMP},
-		{"accessToken", Types.VARCHAR}, {"expirationDate", Types.TIMESTAMP}
+		{"createDate", Types.TIMESTAMP}, {"accessToken", Types.VARCHAR},
+		{"expirationDate", Types.TIMESTAMP}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -71,25 +71,24 @@ public class RememberMeTokenModelImpl
 
 	static {
 		TABLE_COLUMNS_MAP.put("mvccVersion", Types.BIGINT);
-		TABLE_COLUMNS_MAP.put("RememberMeTokenId", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("rememberMeTokenId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("companyId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("userId", Types.BIGINT);
-		TABLE_COLUMNS_MAP.put("userName", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("createDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("accessToken", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("expirationDate", Types.TIMESTAMP);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table RememberMeToken (mvccVersion LONG default 0 not null,RememberMeTokenId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,accessToken VARCHAR(75) null,expirationDate DATE null)";
+		"create table RememberMeToken (mvccVersion LONG default 0 not null,rememberMeTokenId LONG not null primary key,companyId LONG,userId LONG,createDate DATE null,accessToken VARCHAR(75) null,expirationDate DATE null)";
 
 	public static final String TABLE_SQL_DROP = "drop table RememberMeToken";
 
 	public static final String ORDER_BY_JPQL =
-		" ORDER BY rememberMeToken.RememberMeTokenId ASC";
+		" ORDER BY rememberMeToken.rememberMeTokenId ASC";
 
 	public static final String ORDER_BY_SQL =
-		" ORDER BY RememberMeToken.RememberMeTokenId ASC";
+		" ORDER BY RememberMeToken.rememberMeTokenId ASC";
 
 	public static final String DATA_SOURCE = "liferayDataSource";
 
@@ -119,19 +118,14 @@ public class RememberMeTokenModelImpl
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long REMEMBERMETOKENID_COLUMN_BITMASK = 1L;
+	public static final long ACCESSTOKEN_COLUMN_BITMASK = 1L;
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *		#getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long COMPANYID_COLUMN_BITMASK = 2L;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
-	 */
-	@Deprecated
-	public static final long USERID_COLUMN_BITMASK = 4L;
+	public static final long REMEMBERMETOKENID_COLUMN_BITMASK = 2L;
 
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
 		com.liferay.portal.util.PropsUtil.get(
@@ -142,7 +136,7 @@ public class RememberMeTokenModelImpl
 
 	@Override
 	public long getPrimaryKey() {
-		return _RememberMeTokenId;
+		return _rememberMeTokenId;
 	}
 
 	@Override
@@ -152,7 +146,7 @@ public class RememberMeTokenModelImpl
 
 	@Override
 	public Serializable getPrimaryKeyObj() {
-		return _RememberMeTokenId;
+		return _rememberMeTokenId;
 	}
 
 	@Override
@@ -236,12 +230,10 @@ public class RememberMeTokenModelImpl
 			attributeGetterFunctions.put(
 				"mvccVersion", RememberMeToken::getMvccVersion);
 			attributeGetterFunctions.put(
-				"RememberMeTokenId", RememberMeToken::getRememberMeTokenId);
+				"rememberMeTokenId", RememberMeToken::getRememberMeTokenId);
 			attributeGetterFunctions.put(
 				"companyId", RememberMeToken::getCompanyId);
 			attributeGetterFunctions.put("userId", RememberMeToken::getUserId);
-			attributeGetterFunctions.put(
-				"userName", RememberMeToken::getUserName);
 			attributeGetterFunctions.put(
 				"createDate", RememberMeToken::getCreateDate);
 			attributeGetterFunctions.put(
@@ -270,7 +262,7 @@ public class RememberMeTokenModelImpl
 				(BiConsumer<RememberMeToken, Long>)
 					RememberMeToken::setMvccVersion);
 			attributeSetterBiConsumers.put(
-				"RememberMeTokenId",
+				"rememberMeTokenId",
 				(BiConsumer<RememberMeToken, Long>)
 					RememberMeToken::setRememberMeTokenId);
 			attributeSetterBiConsumers.put(
@@ -280,10 +272,6 @@ public class RememberMeTokenModelImpl
 			attributeSetterBiConsumers.put(
 				"userId",
 				(BiConsumer<RememberMeToken, Long>)RememberMeToken::setUserId);
-			attributeSetterBiConsumers.put(
-				"userName",
-				(BiConsumer<RememberMeToken, String>)
-					RememberMeToken::setUserName);
 			attributeSetterBiConsumers.put(
 				"createDate",
 				(BiConsumer<RememberMeToken, Date>)
@@ -319,26 +307,16 @@ public class RememberMeTokenModelImpl
 
 	@Override
 	public long getRememberMeTokenId() {
-		return _RememberMeTokenId;
+		return _rememberMeTokenId;
 	}
 
 	@Override
-	public void setRememberMeTokenId(long RememberMeTokenId) {
+	public void setRememberMeTokenId(long rememberMeTokenId) {
 		if (_columnOriginalValues == Collections.EMPTY_MAP) {
 			_setColumnOriginalValues();
 		}
 
-		_RememberMeTokenId = RememberMeTokenId;
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #getColumnOriginalValue(String)}
-	 */
-	@Deprecated
-	public long getOriginalRememberMeTokenId() {
-		return GetterUtil.getLong(
-			this.<Long>getColumnOriginalValue("RememberMeTokenId"));
+		_rememberMeTokenId = rememberMeTokenId;
 	}
 
 	@Override
@@ -353,16 +331,6 @@ public class RememberMeTokenModelImpl
 		}
 
 		_companyId = companyId;
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #getColumnOriginalValue(String)}
-	 */
-	@Deprecated
-	public long getOriginalCompanyId() {
-		return GetterUtil.getLong(
-			this.<Long>getColumnOriginalValue("companyId"));
 	}
 
 	@Override
@@ -393,34 +361,6 @@ public class RememberMeTokenModelImpl
 
 	@Override
 	public void setUserUuid(String userUuid) {
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #getColumnOriginalValue(String)}
-	 */
-	@Deprecated
-	public long getOriginalUserId() {
-		return GetterUtil.getLong(this.<Long>getColumnOriginalValue("userId"));
-	}
-
-	@Override
-	public String getUserName() {
-		if (_userName == null) {
-			return "";
-		}
-		else {
-			return _userName;
-		}
-	}
-
-	@Override
-	public void setUserName(String userName) {
-		if (_columnOriginalValues == Collections.EMPTY_MAP) {
-			_setColumnOriginalValues();
-		}
-
-		_userName = userName;
 	}
 
 	@Override
@@ -454,6 +394,15 @@ public class RememberMeTokenModelImpl
 		}
 
 		_accessToken = accessToken;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public String getOriginalAccessToken() {
+		return getColumnOriginalValue("accessToken");
 	}
 
 	@Override
@@ -530,7 +479,6 @@ public class RememberMeTokenModelImpl
 		rememberMeTokenImpl.setRememberMeTokenId(getRememberMeTokenId());
 		rememberMeTokenImpl.setCompanyId(getCompanyId());
 		rememberMeTokenImpl.setUserId(getUserId());
-		rememberMeTokenImpl.setUserName(getUserName());
 		rememberMeTokenImpl.setCreateDate(getCreateDate());
 		rememberMeTokenImpl.setAccessToken(getAccessToken());
 		rememberMeTokenImpl.setExpirationDate(getExpirationDate());
@@ -547,13 +495,11 @@ public class RememberMeTokenModelImpl
 		rememberMeTokenImpl.setMvccVersion(
 			this.<Long>getColumnOriginalValue("mvccVersion"));
 		rememberMeTokenImpl.setRememberMeTokenId(
-			this.<Long>getColumnOriginalValue("RememberMeTokenId"));
+			this.<Long>getColumnOriginalValue("rememberMeTokenId"));
 		rememberMeTokenImpl.setCompanyId(
 			this.<Long>getColumnOriginalValue("companyId"));
 		rememberMeTokenImpl.setUserId(
 			this.<Long>getColumnOriginalValue("userId"));
-		rememberMeTokenImpl.setUserName(
-			this.<String>getColumnOriginalValue("userName"));
 		rememberMeTokenImpl.setCreateDate(
 			this.<Date>getColumnOriginalValue("createDate"));
 		rememberMeTokenImpl.setAccessToken(
@@ -638,19 +584,11 @@ public class RememberMeTokenModelImpl
 
 		rememberMeTokenCacheModel.mvccVersion = getMvccVersion();
 
-		rememberMeTokenCacheModel.RememberMeTokenId = getRememberMeTokenId();
+		rememberMeTokenCacheModel.rememberMeTokenId = getRememberMeTokenId();
 
 		rememberMeTokenCacheModel.companyId = getCompanyId();
 
 		rememberMeTokenCacheModel.userId = getUserId();
-
-		rememberMeTokenCacheModel.userName = getUserName();
-
-		String userName = rememberMeTokenCacheModel.userName;
-
-		if ((userName != null) && (userName.length() == 0)) {
-			rememberMeTokenCacheModel.userName = null;
-		}
 
 		Date createDate = getCreateDate();
 
@@ -740,10 +678,9 @@ public class RememberMeTokenModelImpl
 	}
 
 	private long _mvccVersion;
-	private long _RememberMeTokenId;
+	private long _rememberMeTokenId;
 	private long _companyId;
 	private long _userId;
-	private String _userName;
 	private Date _createDate;
 	private String _accessToken;
 	private Date _expirationDate;
@@ -777,10 +714,9 @@ public class RememberMeTokenModelImpl
 		_columnOriginalValues = new HashMap<String, Object>();
 
 		_columnOriginalValues.put("mvccVersion", _mvccVersion);
-		_columnOriginalValues.put("RememberMeTokenId", _RememberMeTokenId);
+		_columnOriginalValues.put("rememberMeTokenId", _rememberMeTokenId);
 		_columnOriginalValues.put("companyId", _companyId);
 		_columnOriginalValues.put("userId", _userId);
-		_columnOriginalValues.put("userName", _userName);
 		_columnOriginalValues.put("createDate", _createDate);
 		_columnOriginalValues.put("accessToken", _accessToken);
 		_columnOriginalValues.put("expirationDate", _expirationDate);
@@ -799,19 +735,17 @@ public class RememberMeTokenModelImpl
 
 		columnBitmasks.put("mvccVersion", 1L);
 
-		columnBitmasks.put("RememberMeTokenId", 2L);
+		columnBitmasks.put("rememberMeTokenId", 2L);
 
 		columnBitmasks.put("companyId", 4L);
 
 		columnBitmasks.put("userId", 8L);
 
-		columnBitmasks.put("userName", 16L);
+		columnBitmasks.put("createDate", 16L);
 
-		columnBitmasks.put("createDate", 32L);
+		columnBitmasks.put("accessToken", 32L);
 
-		columnBitmasks.put("accessToken", 64L);
-
-		columnBitmasks.put("expirationDate", 128L);
+		columnBitmasks.put("expirationDate", 64L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

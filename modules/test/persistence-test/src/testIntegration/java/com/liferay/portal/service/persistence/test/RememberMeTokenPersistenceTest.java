@@ -120,8 +120,6 @@ public class RememberMeTokenPersistenceTest {
 
 		newRememberMeToken.setUserId(RandomTestUtil.nextLong());
 
-		newRememberMeToken.setUserName(RandomTestUtil.randomString());
-
 		newRememberMeToken.setCreateDate(RandomTestUtil.nextDate());
 
 		newRememberMeToken.setAccessToken(RandomTestUtil.randomString());
@@ -146,9 +144,6 @@ public class RememberMeTokenPersistenceTest {
 			existingRememberMeToken.getUserId(),
 			newRememberMeToken.getUserId());
 		Assert.assertEquals(
-			existingRememberMeToken.getUserName(),
-			newRememberMeToken.getUserName());
-		Assert.assertEquals(
 			Time.getShortTimestamp(existingRememberMeToken.getCreateDate()),
 			Time.getShortTimestamp(newRememberMeToken.getCreateDate()));
 		Assert.assertEquals(
@@ -160,18 +155,12 @@ public class RememberMeTokenPersistenceTest {
 	}
 
 	@Test
-	public void testCountByRememberMeTokenId() throws Exception {
-		_persistence.countByRememberMeTokenId(RandomTestUtil.nextLong());
+	public void testCountByAccessToken() throws Exception {
+		_persistence.countByAccessToken("");
 
-		_persistence.countByRememberMeTokenId(0L);
-	}
+		_persistence.countByAccessToken("null");
 
-	@Test
-	public void testCountByC_U() throws Exception {
-		_persistence.countByC_U(
-			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
-
-		_persistence.countByC_U(0L, 0L);
+		_persistence.countByAccessToken((String)null);
 	}
 
 	@Test
@@ -199,9 +188,9 @@ public class RememberMeTokenPersistenceTest {
 
 	protected OrderByComparator<RememberMeToken> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"RememberMeToken", "mvccVersion", true, "RememberMeTokenId", true,
-			"companyId", true, "userId", true, "userName", true, "createDate",
-			true, "accessToken", true, "expirationDate", true);
+			"RememberMeToken", "mvccVersion", true, "rememberMeTokenId", true,
+			"companyId", true, "userId", true, "createDate", true,
+			"accessToken", true, "expirationDate", true);
 	}
 
 	@Test
@@ -349,7 +338,7 @@ public class RememberMeTokenPersistenceTest {
 
 		dynamicQuery.add(
 			RestrictionsFactoryUtil.eq(
-				"RememberMeTokenId",
+				"rememberMeTokenId",
 				newRememberMeToken.getRememberMeTokenId()));
 
 		List<RememberMeToken> result = _persistence.findWithDynamicQuery(
@@ -369,7 +358,7 @@ public class RememberMeTokenPersistenceTest {
 
 		dynamicQuery.add(
 			RestrictionsFactoryUtil.eq(
-				"RememberMeTokenId", RandomTestUtil.nextLong()));
+				"rememberMeTokenId", RandomTestUtil.nextLong()));
 
 		List<RememberMeToken> result = _persistence.findWithDynamicQuery(
 			dynamicQuery);
@@ -385,13 +374,13 @@ public class RememberMeTokenPersistenceTest {
 			RememberMeToken.class, _dynamicQueryClassLoader);
 
 		dynamicQuery.setProjection(
-			ProjectionFactoryUtil.property("RememberMeTokenId"));
+			ProjectionFactoryUtil.property("rememberMeTokenId"));
 
 		Object newRememberMeTokenId = newRememberMeToken.getRememberMeTokenId();
 
 		dynamicQuery.add(
 			RestrictionsFactoryUtil.in(
-				"RememberMeTokenId", new Object[] {newRememberMeTokenId}));
+				"rememberMeTokenId", new Object[] {newRememberMeTokenId}));
 
 		List<Object> result = _persistence.findWithDynamicQuery(dynamicQuery);
 
@@ -408,11 +397,11 @@ public class RememberMeTokenPersistenceTest {
 			RememberMeToken.class, _dynamicQueryClassLoader);
 
 		dynamicQuery.setProjection(
-			ProjectionFactoryUtil.property("RememberMeTokenId"));
+			ProjectionFactoryUtil.property("rememberMeTokenId"));
 
 		dynamicQuery.add(
 			RestrictionsFactoryUtil.in(
-				"RememberMeTokenId", new Object[] {RandomTestUtil.nextLong()}));
+				"rememberMeTokenId", new Object[] {RandomTestUtil.nextLong()}));
 
 		List<Object> result = _persistence.findWithDynamicQuery(dynamicQuery);
 
@@ -461,7 +450,7 @@ public class RememberMeTokenPersistenceTest {
 
 		dynamicQuery.add(
 			RestrictionsFactoryUtil.eq(
-				"RememberMeTokenId",
+				"rememberMeTokenId",
 				newRememberMeToken.getRememberMeTokenId()));
 
 		List<RememberMeToken> result = _persistence.findWithDynamicQuery(
@@ -472,10 +461,10 @@ public class RememberMeTokenPersistenceTest {
 
 	private void _assertOriginalValues(RememberMeToken rememberMeToken) {
 		Assert.assertEquals(
-			Long.valueOf(rememberMeToken.getRememberMeTokenId()),
-			ReflectionTestUtil.<Long>invoke(
+			rememberMeToken.getAccessToken(),
+			ReflectionTestUtil.invoke(
 				rememberMeToken, "getColumnOriginalValue",
-				new Class<?>[] {String.class}, "RememberMeTokenId"));
+				new Class<?>[] {String.class}, "accessToken"));
 	}
 
 	protected RememberMeToken addRememberMeToken() throws Exception {
@@ -488,8 +477,6 @@ public class RememberMeTokenPersistenceTest {
 		rememberMeToken.setCompanyId(RandomTestUtil.nextLong());
 
 		rememberMeToken.setUserId(RandomTestUtil.nextLong());
-
-		rememberMeToken.setUserName(RandomTestUtil.randomString());
 
 		rememberMeToken.setCreateDate(RandomTestUtil.nextDate());
 

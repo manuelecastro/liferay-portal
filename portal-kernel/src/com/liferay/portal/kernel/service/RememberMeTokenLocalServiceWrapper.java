@@ -67,15 +67,15 @@ public class RememberMeTokenLocalServiceWrapper
 	/**
 	 * Creates a new remember me token with the primary key. Does not add the remember me token to the database.
 	 *
-	 * @param RememberMeTokenId the primary key for the new remember me token
+	 * @param rememberMeTokenId the primary key for the new remember me token
 	 * @return the new remember me token
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.RememberMeToken
-		createRememberMeToken(long RememberMeTokenId) {
+		createRememberMeToken(long rememberMeTokenId) {
 
 		return _rememberMeTokenLocalService.createRememberMeToken(
-			RememberMeTokenId);
+			rememberMeTokenId);
 	}
 
 	/**
@@ -97,17 +97,17 @@ public class RememberMeTokenLocalServiceWrapper
 	 * <strong>Important:</strong> Inspect RememberMeTokenLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
 	 * </p>
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token that was removed
 	 * @throws PortalException if a remember me token with the primary key could not be found
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.RememberMeToken
-			deleteRememberMeToken(long RememberMeTokenId)
+			deleteRememberMeToken(long rememberMeTokenId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _rememberMeTokenLocalService.deleteRememberMeToken(
-			RememberMeTokenId);
+			rememberMeTokenId);
 	}
 
 	/**
@@ -234,10 +234,10 @@ public class RememberMeTokenLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.RememberMeToken fetchRememberMeToken(
-		long RememberMeTokenId) {
+		long rememberMeTokenId) {
 
 		return _rememberMeTokenLocalService.fetchRememberMeToken(
-			RememberMeTokenId);
+			rememberMeTokenId);
 	}
 
 	@Override
@@ -279,17 +279,24 @@ public class RememberMeTokenLocalServiceWrapper
 	/**
 	 * Returns the remember me token with the primary key.
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token
 	 * @throws PortalException if a remember me token with the primary key could not be found
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.RememberMeToken getRememberMeToken(
-			long RememberMeTokenId)
+			long rememberMeTokenId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _rememberMeTokenLocalService.getRememberMeToken(
-			RememberMeTokenId);
+			rememberMeTokenId);
+	}
+
+	@Override
+	public java.util.List<com.liferay.portal.kernel.model.RememberMeToken>
+		getRememberMeToken(String accessToken) {
+
+		return _rememberMeTokenLocalService.getRememberMeToken(accessToken);
 	}
 
 	/**
@@ -318,14 +325,6 @@ public class RememberMeTokenLocalServiceWrapper
 	@Override
 	public int getRememberMeTokensCount() {
 		return _rememberMeTokenLocalService.getRememberMeTokensCount();
-	}
-
-	@Override
-	public java.util.List<com.liferay.portal.kernel.model.RememberMeToken>
-		getUserRememberMeTokens(long companyId, long userId) {
-
-		return _rememberMeTokenLocalService.getUserRememberMeTokens(
-			companyId, userId);
 	}
 
 	/**

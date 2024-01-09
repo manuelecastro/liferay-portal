@@ -71,13 +71,13 @@ public class RememberMeTokenLocalServiceUtil {
 	/**
 	 * Creates a new remember me token with the primary key. Does not add the remember me token to the database.
 	 *
-	 * @param RememberMeTokenId the primary key for the new remember me token
+	 * @param rememberMeTokenId the primary key for the new remember me token
 	 * @return the new remember me token
 	 */
 	public static RememberMeToken createRememberMeToken(
-		long RememberMeTokenId) {
+		long rememberMeTokenId) {
 
-		return getService().createRememberMeToken(RememberMeTokenId);
+		return getService().createRememberMeToken(rememberMeTokenId);
 	}
 
 	/**
@@ -97,14 +97,14 @@ public class RememberMeTokenLocalServiceUtil {
 	 * <strong>Important:</strong> Inspect RememberMeTokenLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
 	 * </p>
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token that was removed
 	 * @throws PortalException if a remember me token with the primary key could not be found
 	 */
-	public static RememberMeToken deleteRememberMeToken(long RememberMeTokenId)
+	public static RememberMeToken deleteRememberMeToken(long rememberMeTokenId)
 		throws PortalException {
 
-		return getService().deleteRememberMeToken(RememberMeTokenId);
+		return getService().deleteRememberMeToken(rememberMeTokenId);
 	}
 
 	/**
@@ -208,8 +208,8 @@ public class RememberMeTokenLocalServiceUtil {
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
-	public static RememberMeToken fetchRememberMeToken(long RememberMeTokenId) {
-		return getService().fetchRememberMeToken(RememberMeTokenId);
+	public static RememberMeToken fetchRememberMeToken(long rememberMeTokenId) {
+		return getService().fetchRememberMeToken(rememberMeTokenId);
 	}
 
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
@@ -246,14 +246,18 @@ public class RememberMeTokenLocalServiceUtil {
 	/**
 	 * Returns the remember me token with the primary key.
 	 *
-	 * @param RememberMeTokenId the primary key of the remember me token
+	 * @param rememberMeTokenId the primary key of the remember me token
 	 * @return the remember me token
 	 * @throws PortalException if a remember me token with the primary key could not be found
 	 */
-	public static RememberMeToken getRememberMeToken(long RememberMeTokenId)
+	public static RememberMeToken getRememberMeToken(long rememberMeTokenId)
 		throws PortalException {
 
-		return getService().getRememberMeToken(RememberMeTokenId);
+		return getService().getRememberMeToken(rememberMeTokenId);
+	}
+
+	public static List<RememberMeToken> getRememberMeToken(String accessToken) {
+		return getService().getRememberMeToken(accessToken);
 	}
 
 	/**
@@ -280,12 +284,6 @@ public class RememberMeTokenLocalServiceUtil {
 	 */
 	public static int getRememberMeTokensCount() {
 		return getService().getRememberMeTokensCount();
-	}
-
-	public static List<RememberMeToken> getUserRememberMeTokens(
-		long companyId, long userId) {
-
-		return getService().getUserRememberMeTokens(companyId, userId);
 	}
 
 	/**

@@ -32,12 +32,11 @@ public class RememberMeTokenLocalServiceImpl
 		rememberMeToken.setUserId(userId);
 		rememberMeToken.setAccessToken(PortalUUIDUtil.generate());
 		rememberMeToken.setExpirationDate(expirationDate);
-		rememberMeToken.setUserName("test");
 
 		return rememberMeTokenPersistence.update(rememberMeToken);
 	}
 
-	public List<RememberMeToken> getUserRememberMeTokens(long companyId, long userId) {
-		return RememberMeTokenUtil.findByC_U(companyId, userId);
+	public List<RememberMeToken> getRememberMeToken(String accessToken) {
+		return RememberMeTokenUtil.findByAccessToken(accessToken);
 	}
 }

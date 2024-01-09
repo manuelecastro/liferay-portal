@@ -1311,10 +1311,9 @@
 	</model>
 	<model name="com.liferay.portal.kernel.model.RememberMeToken">
 		<field name="mvccVersion" type="long" />
-		<field name="RememberMeTokenId" type="long" />
+		<field name="rememberMeTokenId" type="long" />
 		<field name="companyId" type="long" />
 		<field name="userId" type="long" />
-		<field name="userName" type="String" />
 		<field name="createDate" type="Date" />
 		<field name="accessToken" type="String" />
 		<field name="expirationDate" type="Date" />

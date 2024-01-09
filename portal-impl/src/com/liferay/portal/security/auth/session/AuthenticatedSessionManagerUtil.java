@@ -213,19 +213,19 @@ public class AuthenticatedSessionManagerUtil {
 
 			RememberMeToken rememberMeToken = RememberMeTokenLocalServiceUtil.addRememberMeToken(user.getCompanyId(), user.getUserId(), tokenExpirationDate);
 
-			Cookie passwordCookie = new Cookie(
-				CookiesConstants.NAME_PASSWORD,
+			Cookie rememberMeTokenCookie = new Cookie(
+				CookiesConstants.NAME_REMEMBER_ME_TOKEN,
 				EncryptorUtil.encrypt(company.getKeyObj(), rememberMeToken.getAccessToken()));
 
 			if (domain != null) {
-				passwordCookie.setDomain(domain);
+				rememberMeTokenCookie.setDomain(domain);
 			}
 
-			passwordCookie.setMaxAge(loginMaxAge);
-			passwordCookie.setPath(StringPool.SLASH);
+			rememberMeTokenCookie.setMaxAge(loginMaxAge);
+			rememberMeTokenCookie.setPath(StringPool.SLASH);
 
 			CookiesManagerUtil.addCookie(
-				CookiesConstants.CONSENT_TYPE_FUNCTIONAL, passwordCookie,
+				CookiesConstants.CONSENT_TYPE_FUNCTIONAL, rememberMeTokenCookie,
 				httpServletRequest, httpServletResponse);
 
 			Cookie rememberMeCookie = new Cookie(
@@ -269,7 +269,7 @@ public class AuthenticatedSessionManagerUtil {
 			domain, httpServletRequest, httpServletResponse,
 			CookiesConstants.NAME_COMPANY_ID,
 			CookiesConstants.NAME_GUEST_LANGUAGE_ID, CookiesConstants.NAME_ID,
-			CookiesConstants.NAME_PASSWORD, CookiesConstants.NAME_REMEMBER_ME);
+			CookiesConstants.NAME_REMEMBER_ME_TOKEN, CookiesConstants.NAME_REMEMBER_ME);
 
 		if (!rememberMe) {
 			CookiesManagerUtil.deleteCookies(
