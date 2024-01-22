@@ -78,6 +78,9 @@ import com.liferay.saml.runtime.servlet.profile.WebSsoProfile;
 
 import java.io.IOException;
 
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -1305,12 +1308,27 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 				samlBindingContext.getRelayState()));
 
 		if (Validator.isNull(relayState)) {
-			relayState = portal.getHomeURL(httpServletRequest);
+			String redirectURL = portal.getPortalURL(httpServletRequest) + samlBindingContext.getRelayState();
+			int code = _checkRedirectConnection(redirectURL);
+			if (code != 200) {
+				relayState = portal.getHomeURL(httpServletRequest);
+			} else {
+				relayState = redirectURL;
+			}
+			System.out.println(code);
 		}
 
 		sb.append(URLCodec.encodeURL(relayState));
 
 		return sb.toString();
+	}
+
+	private int _checkRedirectConnection(String redirectURL) throws IOException {
+		URL url = new URL (redirectURL);
+		HttpURLConnection huc =  ( HttpURLConnection )  url.openConnection ();
+		huc.setRequestMethod ("GET");  //OR  huc.setRequestMethod ("HEAD");
+		huc.connect();
+		return huc.getResponseCode();
 	}
 
 	private NameIdResolver _getNameIdResolver(String entityId) {
