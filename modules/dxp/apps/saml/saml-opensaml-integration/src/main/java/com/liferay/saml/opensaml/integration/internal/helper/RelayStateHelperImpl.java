@@ -8,6 +8,7 @@ package com.liferay.saml.opensaml.integration.internal.helper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 import com.liferay.saml.helper.RelayStateHelper;
 
@@ -25,6 +26,12 @@ import org.osgi.service.component.annotations.Component;
 public class RelayStateHelperImpl implements RelayStateHelper {
 
 	public String getRedirectFromRelayStateToken(String relayStateToken) {
+		if (Validator.isNotNull(relayStateToken) &&
+			relayStateToken.startsWith("/")) {
+
+			return relayStateToken;
+		}
+
 		return _relayStateTokensToRedirects.get(relayStateToken);
 	}
 
