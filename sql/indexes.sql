@@ -376,7 +376,7 @@ create unique index IX_58777164 on Team (groupId, ctCollectionId, name[$COLUMN_L
 create unique index IX_4AAB3CAF on Team (groupId, ctCollectionId, uuid_[$COLUMN_LENGTH:75$]);
 
 create index IX_A3DCE03A on Ticket (classNameId, classPK, type_, companyId);
-create index IX_B2468446 on Ticket (key_[$COLUMN_LENGTH:75$]);
+create index IX_B2468446 on Ticket (key_[$COLUMN_LENGTH:255$]);
 
 create unique index IX_A33BD191 on UserGroup (companyId, ctCollectionId, externalReferenceCode[$COLUMN_LENGTH:75$]);
 create unique index IX_C3A268EB on UserGroup (companyId, ctCollectionId, name[$COLUMN_LENGTH:255$]);
