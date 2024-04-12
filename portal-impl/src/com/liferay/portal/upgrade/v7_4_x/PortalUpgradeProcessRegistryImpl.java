@@ -384,6 +384,21 @@ public class PortalUpgradeProcessRegistryImpl
 		upgradeVersionTreeMap.put(
 			new Version(30, 0, 0),
 			new UpgradePartitionedControlTable("Counter"));
+
+		upgradeVersionTreeMap.put(
+			new Version(30, 1, 0),
+			UpgradeProcessFactory.alterColumnType(
+				"User_", "password_", "VARCHAR(255) null"));
+
+		upgradeVersionTreeMap.put(
+			new Version(30, 2, 0),
+			UpgradeProcessFactory.alterColumnType(
+				"PasswordTracker", "password_", "VARCHAR(255) null"));
+
+		upgradeVersionTreeMap.put(
+			new Version(30, 3, 0),
+			UpgradeProcessFactory.alterColumnType(
+				"Ticket", "key_", "VARCHAR(255) null"));
 	}
 
 }
