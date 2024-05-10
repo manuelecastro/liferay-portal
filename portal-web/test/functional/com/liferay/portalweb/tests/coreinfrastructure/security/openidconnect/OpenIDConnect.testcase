@@ -645,8 +645,8 @@ definition {
 
 		var openIdConnectClientSecret = PropsUtil.get("openid.provider.google.client.secret.1");
 		var osgiConfigFileName = "googleClient1.json";
-		var userEmailAddress = PropsUtil.get("email.address.2");
-		var userPassword = PropsUtil.get("email.password.2");
+		var userEmailAddress = PropsUtil.get("email.address.4");
+		var userPassword = PropsUtil.get("email.password.4");
 
 		task ("Add CP") {
 			HeadlessPortalInstanceAPI.addPortalInstance(
@@ -709,8 +709,8 @@ definition {
 
 		var openIdConnectClientId = PropsUtil.get("google.client.id.3");
 		var openIdConnectClientSecret = PropsUtil.get("google.client.secret.3");
-		var userEmailAddress = PropsUtil.get("email.address.2");
-		var userPassword = PropsUtil.get("email.password.2");
+		var userEmailAddress = PropsUtil.get("email.address.4");
+		var userPassword = PropsUtil.get("email.password.4");
 
 		task ("Add SSO OpenID Connect provider") {
 			PortalSettings.gotoConfiguration(
