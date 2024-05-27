@@ -1,0 +1,7 @@
+dependencies {
+	testIntegrationImplementation group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
+	testIntegrationImplementation group: "com.liferay.portal", name: "com.liferay.util.java", version: "default"
+	testIntegrationImplementation project(":apps:portal-security-sso:portal-security-sso-openid-connect-persistence-api")
+	testIntegrationImplementation project(":apps:portal-security-sso:portal-security-sso-openid-connect-persistence-service")
+	testIntegrationImplementation project(":test:arquillian-extension-junit-bridge")
+}
