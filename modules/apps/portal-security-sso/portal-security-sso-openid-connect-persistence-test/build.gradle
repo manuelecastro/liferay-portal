@@ -4,4 +4,11 @@ dependencies {
 	testIntegrationImplementation project(":apps:portal-security-sso:portal-security-sso-openid-connect-persistence-api")
 	testIntegrationImplementation project(":apps:portal-security-sso:portal-security-sso-openid-connect-persistence-service")
 	testIntegrationImplementation project(":test:arquillian-extension-junit-bridge")
+
+	testIntegrationImplementation group: "com.nimbusds", name: "content-type", version: "2.0"
+	testIntegrationImplementation group: "com.nimbusds", name: "lang-tag", version: "1.4.4"
+	testIntegrationImplementation group: "com.nimbusds", name: "nimbus-jose-jwt", version: "8.14.1"
+	testIntegrationImplementation group: "com.nimbusds", name: "oauth2-oidc-sdk", version: "8.11"
+	testIntegrationImplementation group: "net.minidev", name: "accessors-smart", version: "2.4.9"
+	testIntegrationImplementation group: "net.minidev", name: "json-smart", version: "2.4.10"
 }
