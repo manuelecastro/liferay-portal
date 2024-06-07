@@ -329,7 +329,7 @@ definition {
 
 			LexiconEntry.gotoEntryMenuItem(
 				menuItem = "Edit",
-				rowEntry = "OAuth Application");
+				rowEntry = "Analytics Cloud");
 
 			Navigator.gotoNavItem(navItem = "Scopes");
 
