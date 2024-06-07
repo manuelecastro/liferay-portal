@@ -322,7 +322,7 @@ definition {
 		task ("Log in the second portal and verify Analytics and portal services are present in scopes") {
 			User.loginPG(
 				nodePort = 9080,
-				password = PropsUtil.get("default.admin.password"),
+				password = "test",
 				userEmailAddress = "test@liferay.com");
 
 			OAuth2.openOAuth2Admin(baseURL = "http://localhost:9080");
