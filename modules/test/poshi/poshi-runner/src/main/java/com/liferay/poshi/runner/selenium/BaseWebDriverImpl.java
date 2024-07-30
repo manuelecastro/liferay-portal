@@ -2122,7 +2122,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		throws Exception {
 
 		File baselineFile = new File(
-			poshiProperties.testBaseDirName + getOcularBaselineImageDirName() +
+			"test/functional/com/liferay/portalweb/" + getOcularBaselineImageDirName() +
 				"/" + fileName);
 
 		if (!baselineFile.exists()) {
@@ -2132,7 +2132,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		}
 
 		File resultFile = new File(
-			poshiProperties.testBaseDirName + getOcularResultImageDirName() +
+			"test/functional/com/liferay/portalweb/" + getOcularResultImageDirName() +
 				"/" + fileName);
 
 		File resultParentFile = resultFile.getParentFile();
