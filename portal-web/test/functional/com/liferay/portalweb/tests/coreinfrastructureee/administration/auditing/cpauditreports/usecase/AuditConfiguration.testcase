@@ -66,7 +66,7 @@ definition {
 	@priority = 4
 	test CanEnableOrDisableAudit {
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.configuration.AuditConfiguration.config:com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=\"false\"${line.separator}bufferSize=\"0\"${line.separator}";
+		property osgi.module.configurations = "enabled=\"false\":bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -119,7 +119,7 @@ definition {
 	@priority = 4
 	test CanEnableOrDisableDatabasePersistence {
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=\"false\":bufferSize=\"0\"";
+		property osgi.module.configurations = "enabled=\"false\"${line.separator}bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
