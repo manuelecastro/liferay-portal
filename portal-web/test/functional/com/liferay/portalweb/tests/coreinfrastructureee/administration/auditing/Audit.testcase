@@ -299,7 +299,7 @@ definition {
 	@priority = 5
 	test AuditDataCanBeFilteredBySiteID {
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=B\"true\"";
+		property osgi.module.configurations = "bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -436,7 +436,7 @@ definition {
 	@priority = 5
 	test CanExportCSVFilteredAuditDataFile {
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=B\"true\"";
+		property osgi.module.configurations = "bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -500,7 +500,7 @@ definition {
 	@priority = 5
 	test CanExportCSVFilteredAuditDataFileOnVirtualInstance {
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=B\"true\"";
+		property osgi.module.configurations = "bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -566,7 +566,7 @@ definition {
 	@priority = 5
 	test CanStoreSiteIDForAuditEvent {
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=B\"true\"";
+		property osgi.module.configurations = "bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -683,7 +683,7 @@ definition {
 	@priority = 5
 	test CanStoreSiteIDForAuditEventOnVirtualInstance {
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=B\"true\"";
+		property osgi.module.configurations = "bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -1235,8 +1235,8 @@ definition {
 	@description = "This is a use case for LPS-159334. TC-2: Verify LOGIN_DNE message returns when the User tries to login with a non-existing email address but an existing password."
 	@priority = 5
 	test ViewLoginDNEMessageWhenAuthenticateByEmailAddress {
-		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=\"true\"";
+		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
+		property osgi.module.configurations = "enabled=\"true\":bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -1288,8 +1288,8 @@ definition {
 	@description = "This is a use case for LPS-159334. TC-6: Verify LOGIN_DNE message returns when user tries to login with a non-existing Screen Name but an existing password."
 	@priority = 5
 	test ViewLoginDNEMessageWhenAuthenticateByScreenName {
-		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=\"true\"";
+		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
+		property osgi.module.configurations = "enabled=\"true\":bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -1352,8 +1352,8 @@ definition {
 	@description = "This is a use case for LPS-159334. TC-4: Verify LOGIN_DNE message returns when the User tries to login with a non-existing user ID but an existing password."
 	@priority = 5
 	test ViewLoginDNEMessageWhenAuthenticateByUserID {
-		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=\"true\"";
+		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
+		property osgi.module.configurations = "enabled=\"true\":bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -1418,8 +1418,8 @@ definition {
 	@description = "This is a use case for LPS-159334. TC-1: Verify LOGIN_FAILURE message returns when user tries to login with a valid email address but an invalid password."
 	@priority = 5
 	test ViewLoginFailureMessageWhenAuthenticateByEmailAddress {
-		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=\"true\"";
+		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
+		property osgi.module.configurations = "enabled=\"true\":bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -1472,8 +1472,8 @@ definition {
 	@description = "This is a use case for LPS-159334. TC-5: Verify LOGIN_FAILURE message returns when user tries to login with a valid Screen Name but an invalid password."
 	@priority = 5
 	test ViewLoginFailureMessageWhenAuthenticateByScreenName {
-		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=\"true\"";
+		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
+		property osgi.module.configurations = "enabled=\"true\":bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -1537,8 +1537,8 @@ definition {
 	@description = "This is a use case for LPS-159334. TC-3: Verify LOGIN_FAILURE message returns when user tries to login with a valid user ID but an invalid password."
 	@priority = 5
 	test ViewLoginFailureMessageWhenAuthenticateByUserID {
-		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=\"true\"";
+		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
+		property osgi.module.configurations = "enabled=\"true\":bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -1605,8 +1605,8 @@ definition {
 	@priority = 5
 	test ViewLoginFailureMessageWhenLDAPUserEnterWrongPassword {
 		property apacheds.enabled = "true";
-		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
-		property osgi.module.configurations = "enabled=\"true\"";
+		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration.config:com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config:com.liferay.portal.security.audit.router.configuration.LoggingAuditMessageProcessorConfiguration.config";
+		property osgi.module.configurations = "enabled=\"true\":bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
