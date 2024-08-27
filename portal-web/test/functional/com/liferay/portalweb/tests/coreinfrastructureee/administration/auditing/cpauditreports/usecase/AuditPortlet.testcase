@@ -396,6 +396,8 @@ definition {
 	@description = "This test Audit events can be searched with the Audit app's advanced search by various search criteria."
 	@priority = 4
 	test CanSearchEventsInAuditAdvancedSearch {
+		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
+		property osgi.module.configurations = "bufferSize=\"0\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
