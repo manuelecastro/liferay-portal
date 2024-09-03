@@ -34,6 +34,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add and edit 2 external applications") {
@@ -101,6 +103,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add and edit an external application with remember device enabled") {
@@ -142,6 +146,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add and edit an external application") {
@@ -259,6 +265,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add and edit an external application") {
@@ -454,6 +462,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add and edit an external application") {
@@ -510,6 +520,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add and edit an external application") {
@@ -909,6 +921,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add a new OAuth 2 application") {
@@ -999,6 +1013,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add a new OAuth 2 application") {
@@ -1109,6 +1125,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add and edit an external application") {
@@ -1142,6 +1160,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add and edit an external trusted application") {
@@ -1181,6 +1201,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add a new external application") {
@@ -1926,6 +1948,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add and edit an external application") {
@@ -1966,6 +1990,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add a new external application with remember device checked") {
@@ -1996,6 +2022,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add and edit 2 external applications") {
@@ -2058,6 +2086,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add and edit an external application") {
@@ -2314,6 +2344,8 @@ definition {
 
 		task ("Add the OSGI configuration file") {
 			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+			OSGiConfig.waitForOSGiConfig();
 		}
 
 		task ("Add a trusted OAuth 2 application") {
