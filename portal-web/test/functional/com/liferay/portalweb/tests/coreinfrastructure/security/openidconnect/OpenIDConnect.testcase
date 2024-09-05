@@ -456,6 +456,8 @@ definition {
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
+		SearchAdministration.executeReindex();
+
 		var jsonFileName = "keycloak.json";
 		var jsonFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/openidconnect/dependencies";
 		var openIdConnectClientSecret = PropsUtil.get("openid.provider.default.client.password");

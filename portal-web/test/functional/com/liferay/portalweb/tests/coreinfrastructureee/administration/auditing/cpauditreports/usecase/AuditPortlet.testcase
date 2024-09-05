@@ -35,6 +35,8 @@ definition {
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
+		SearchAdministration.executeReindex();
+
 		UserGroup.openUserGroupsAdmin();
 
 		UserGroup.addCP(userGroupName = "User Group1");
