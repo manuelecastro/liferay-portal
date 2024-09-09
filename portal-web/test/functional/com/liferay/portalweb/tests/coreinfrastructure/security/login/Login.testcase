@@ -254,8 +254,7 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for LRQA-43015. Ignore test due to OpenAM 12 doesn't support Tomcat 9."
-	@ignore = "true"
+	@description = "This is a use case for LRQA-43015."
 	@priority = 5
 	test OpenSSOSmoke {
 		property custom.properties = "javascript.single.page.application.enabled=false";
