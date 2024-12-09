@@ -8,7 +8,6 @@ package com.liferay.portal.security.content.security.policy.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.HtmlUtil;
@@ -51,7 +50,7 @@ public class ContentSecurityPolicyFilterTest {
 					_getCompanyConfigurationTemporarySwapper(false, null, "")) {
 
 			HttpURLConnection httpURLConnection = _openHttpURLConnection(
-				"http://localhost:8080/html/" + RandomTestUtil.randomString());
+				"http://localhost:8080/html/icons/default.png");
 
 			Map<String, List<String>> headerFields =
 				httpURLConnection.getHeaderFields();
