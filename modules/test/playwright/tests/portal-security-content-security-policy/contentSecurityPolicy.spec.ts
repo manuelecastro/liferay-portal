@@ -29,11 +29,15 @@ export const test = mergeTests(
 
 const DEFAULT_VIRTUAL_INSTANCE_NAME = 'www.able.com';
 
+const defaultBaseUrl = liferayConfig.environment.baseUrl;
+
 let hasVirtualInstance: boolean = false;
 
 test.afterEach(
 	'Reset CSP configuration',
 	async ({contentSecurityPolicyPage, page, virtualInstancesPage}) => {
+		liferayConfig.environment.baseUrl = defaultBaseUrl;
+
 		await page.goto('/');
 
 		if (await page.getByRole('button', {name: 'Sign In'}).isVisible()) {
@@ -457,8 +461,6 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 
 	hasVirtualInstance = true;
 
-	const defaultBaseUrl = liferayConfig.environment.baseUrl;
-
 	liferayConfig.environment.baseUrl = `http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080`;
 
 	const newPage = await browser.newPage({
@@ -479,9 +481,9 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 			`frame-ancestors 'self' ${defaultBaseUrl};`
 		);
 
-		liferayConfig.environment.baseUrl = defaultBaseUrl;
-
 		await expect(async () => {
+			liferayConfig.environment.baseUrl = defaultBaseUrl;
+
 			const errors = [];
 
 			page.on('console', (msg) => {
@@ -490,7 +492,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 					msg
 						.text()
 						.includes(
-							'Content Security Policy directive: "frame-ancestors'
+							`Refused to frame 'http://www.able.com:8080/' because an ancestor violates the following Content Security Policy directive: "frame-ancestors 'self'"`
 						)
 				) {
 					errors.push({text: msg.text(), type: msg.type()});
@@ -512,9 +514,9 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 			`frame-ancestors 'self';`
 		);
 
-		liferayConfig.environment.baseUrl = defaultBaseUrl;
-
 		await expect(async () => {
+			liferayConfig.environment.baseUrl = defaultBaseUrl;
+
 			const errors = [];
 
 			page.on('console', (msg) => {
@@ -523,7 +525,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 					msg
 						.text()
 						.includes(
-							'Content Security Policy directive: "frame-ancestors'
+							`Refused to frame 'http://www.able.com:8080/' because an ancestor violates the following Content Security Policy directive: "frame-ancestors 'self'"`
 						)
 				) {
 					errors.push({text: msg.text(), type: msg.type()});
@@ -534,7 +536,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 
 			await page.waitForLoadState();
 
-			expect(errors).toHaveLength(4);
+			expect(errors).toHaveLength(5);
 		}).toPass();
 	});
 });
