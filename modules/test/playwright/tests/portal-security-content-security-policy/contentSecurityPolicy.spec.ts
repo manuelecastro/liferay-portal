@@ -485,7 +485,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 				}
 			});
 
-			await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+			await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`, {timeout: 10000});
 
 			await page.waitForLoadState();
 
@@ -518,7 +518,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 				}
 			});
 
-			await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+			await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`, {timeout: 10000});
 
 			await page.waitForLoadState();
 
