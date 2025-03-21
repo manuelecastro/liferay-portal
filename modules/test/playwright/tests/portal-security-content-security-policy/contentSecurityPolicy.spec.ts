@@ -407,7 +407,7 @@ test('CSP frame-ancestors directive in the same instance', async ({
 	});
 });
 
-test('CSP frame-ancestors directive in a specific domain', async ({
+test('CSP frame-ancestors allows framing from specific domain', async ({
 	apiHelpers,
 	browser,
 	page,
@@ -476,44 +476,106 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 	const virtualInstanceContentSecurityPolicyPage =
 		new ContentSecurityPolicyPage(newInstancePage);
 
-	// CSP frame-ancestors allows framing from specific domain
-
 	await virtualInstanceContentSecurityPolicyPage.gotoAndConfigurePolicy(
 		`frame-ancestors 'self' ${defaultBaseUrl};`
 	);
 
-	await expect(async () => {
-		liferayConfig.environment.baseUrl = defaultBaseUrl;
+	liferayConfig.environment.baseUrl = defaultBaseUrl;
 
-		const errors = [];
+	const errors = [];
 
-		page.on('console', (msg) => {
-			if (
-				msg.type() === 'error' &&
-				msg
-					.text()
-					.includes(
-						`Content Security Policy directive: "frame-ancestors`
-					)
-			) {
-				errors.push({text: msg.text(), type: msg.type()});
-			}
-		});
+	page.on('console', (msg) => {
+		if (
+			msg.type() === 'error' &&
+			msg
+				.text()
+				.includes(
+					`Content Security Policy directive: "frame-ancestors`
+				)
+		) {
+			errors.push({text: msg.text(), type: msg.type()});
+		}
+	});
 
-		await page.goto(
-			`/web/${site.name}/${layout.friendlyUrlPath}`
-		);
+	await page.goto(
+		`/web/${site.name}/${layout.friendlyUrlPath}`
+	);
 
-		await page.waitForLoadState();
+	await page.waitForLoadState();
 
-		console.log(`CSP Erros when allowing framing from specific domains: ${errors}`);
+	expect(errors).toHaveLength(0);
 
-		expect(errors).toHaveLength(0);
-	}).toPass();
+	await page.goto(liferayConfig.environment.baseUrl);
+});
+
+test('CSP frame-ancestors blocks framing from specific domain', async ({
+	apiHelpers,
+	browser,
+	page,
+	pageEditorPage,
+	site,
+	virtualInstancesPage,
+}) => {
+	const layout = await apiHelpers.headlessDelivery.createSitePage({
+		pageDefinition: getPageDefinition([
+			getFragmentDefinition({
+				id: getRandomString(),
+				key: 'BASIC_COMPONENT-html',
+			}),
+		]),
+		siteId: site.id,
+		title: getRandomString(),
+	});
+
+	await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+	await pageEditorPage.editHTMLEditable({
+		editableId: 'element-html',
+		fragmentId: await pageEditorPage.getFragmentId('HTML'),
+		value: `<object
+					type="text/html"
+					data="http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080"
+					width="300"
+					height="200">
+				</object>
+
+				<embed
+					type="text/html"
+					src="http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080"
+					width="300"
+					height="200" />
+
+				<iframe
+					id="inlineFrameExample"
+					title="Inline Frame Example"
+					width="300"
+					height="200"
+					src="http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080">
+				</iframe>`,
+	});
+
+	await pageEditorPage.publishPage();
+
+	await virtualInstancesPage.addNewVirtualInstance(
+		DEFAULT_VIRTUAL_INSTANCE_NAME
+	);
+
+	hasVirtualInstance = true;
 
 	liferayConfig.environment.baseUrl = `http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080`;
 
-	// CSP frame-ancestors blocks framing from specific domain
+	const newInstancePage = await browser.newPage({
+		baseURL: `http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080`,
+	});
+
+	await performLoginViaApi(
+		newInstancePage,
+		'test',
+		`@${DEFAULT_VIRTUAL_INSTANCE_NAME}.com`
+	);
+
+	const virtualInstanceContentSecurityPolicyPage =
+		new ContentSecurityPolicyPage(newInstancePage);
 
 	await virtualInstanceContentSecurityPolicyPage.gotoAndConfigurePolicy(
 		`frame-ancestors 'self';`
@@ -542,8 +604,6 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 		);
 
 		await page.waitForLoadState();
-
-		console.log(`CSP Erros when blocking framing from specific domains: ${errors}`);
 
 		expect(errors.length).toBeGreaterThanOrEqual(3);
 	}).toPass();
