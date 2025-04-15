@@ -11,6 +11,7 @@ import com.liferay.oauth2.provider.internal.test.TestInterfaceAnnotatedApplicati
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -62,7 +63,7 @@ public class AnnotatedApplicationClientTest extends BaseClientTestCase {
 
 		@Override
 		protected void prepareTest() throws Exception {
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
+			long defaultCompanyId = TestPropsValues.getCompanyId();
 
 			User user = UserTestUtil.getAdminUser(defaultCompanyId);
 
