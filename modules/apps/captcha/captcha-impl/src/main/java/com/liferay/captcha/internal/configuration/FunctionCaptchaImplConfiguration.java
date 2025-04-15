@@ -22,6 +22,15 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 public interface FunctionCaptchaImplConfiguration {
 
 	@Meta.AD
+	public String captchaClientResponseParameter();
+
+	@Meta.AD
 	public String captchaName();
+
+	@Meta.AD
+	public String oAuth2ApplicationExternalReferenceCode();
+
+	@Meta.AD
+	public String resourcePath();
 
 }
