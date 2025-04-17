@@ -30,8 +30,11 @@ import java.util.Map;
 
 import javax.portlet.PortletRequest;
 
+import javax.portlet.ResourceRequest;
+import javax.portlet.ResourceResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -55,6 +58,21 @@ public class FunctionCaptchaImpl extends SimpleCaptchaImpl {
 	@Override
 	public String getName() {
 		return _functionCaptchaImplConfiguration.captchaName();
+	}
+
+	@Override
+	public void serveImage(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse) {
+
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void serveImage(
+		ResourceRequest resourceRequest, ResourceResponse resourceResponse) {
+
+		throw new UnsupportedOperationException();
 	}
 
 	@Activate
@@ -133,7 +151,7 @@ public class FunctionCaptchaImpl extends SimpleCaptchaImpl {
 		catch (Exception exception) {
 			_log.error(
 				_functionCaptchaImplConfiguration.captchaName() +
-					"did not return a valid result",
+					" did not return a valid result",
 				exception);
 
 			throw new CaptchaConfigurationException();
