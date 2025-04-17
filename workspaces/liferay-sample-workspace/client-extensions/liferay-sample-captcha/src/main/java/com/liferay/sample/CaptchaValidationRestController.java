@@ -17,6 +17,14 @@ import org.apache.commons.logging.LogFactory;
 
 import org.json.JSONObject;
 
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,7 +40,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/captcha/validation")
 @RestController
 public class CaptchaValidationRestController extends BaseRestController {
-
 	@PostMapping
 	public ResponseEntity<String> post(
 		@AuthenticationPrincipal Jwt jwt, @RequestBody String json) {
@@ -41,42 +48,18 @@ public class CaptchaValidationRestController extends BaseRestController {
 
 		JSONObject jsonObject = new JSONObject(json);
 
-		String captchaResponse = jsonObject.getString("g-recaptcha-response");
+		String postResult = 
+				postToUrlWithParams(
+					"https://www.google.com/recaptcha/api/siteverify", 
+					"6Le3FhorAAAAAG3Xmjgz0VphYiPpF4Zq75_E-zhg",
+					jsonObject.getString("remoteAddress"), 
+					jsonObject.getString("captchaResponse")).getBody();
 
-		Http.Options options = new Http.Options();
+		jsonObject = new JSONObject(postResult);
+		
+		Boolean success = jsonObject.getBoolean("success");
 
-		options.setLocation("https://www.google.com/recaptcha/api/siteverify");
-
-		try {
-			options.addPart(
-				"secret", "6Le3FhorAAAAAG3Xmjgz0VphYiPpF4Zq75_E-zhg");
-		}
-		catch (Exception exception) {
-			_log.error(exception);
-		}
-
-		options.addPart("remoteip", jsonObject.getString("remoteAddress"));
-		options.addPart("response", captchaResponse);
-		options.setPost(true);
-
-		String content = null;
-
-		try {
-			content = HttpUtil.URLtoString(options);
-		}
-		catch (Exception ioException) {
-			_log.error(ioException);
-		}
-
-		if (content == null) {
-			_log.error("CAPTCHA did not return a result");
-		}
-
-		jsonObject = new JSONObject(content);
-
-		String success = jsonObject.getString("success");
-
-		if (StringUtil.equalsIgnoreCase(success, "true")) {
+		if (success) {
 			jsonObject.put("validation", "passed");
 		} else {
 			jsonObject.put("validation", "failed");
@@ -87,5 +70,28 @@ public class CaptchaValidationRestController extends BaseRestController {
 
 	private static final Log _log = LogFactory.getLog(
 		CaptchaValidationRestController.class);
+
+	private final RestTemplate restTemplate;
+
+    public CaptchaValidationRestController(RestTemplateBuilder restTemplateBuilder) {
+        this.restTemplate = restTemplateBuilder.build();
+    }
+
+	public ResponseEntity<String> postToUrlWithParams(String url, String secret, String remoteip, String response) {
+		// Prepare headers
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED); // For x-www-form-urlencoded
+
+		// Prepare request body as form parameters
+		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+		map.add("secret", secret);
+		map.add("remoteip", remoteip);
+		map.add("response", response);
+
+		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+
+		// Make the POST request
+		return restTemplate.postForEntity(url, request, String.class);
+	}
 
 }

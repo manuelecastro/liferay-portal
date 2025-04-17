@@ -9,5 +9,4 @@ liferay-sample-captcha-oauth-application-user-agent:
     .serviceAddress: localhost:58081
     .serviceScheme: http
     name: Liferay Sample Captcha OAuth Application User Agent
-    scopes:
     type: oAuthApplicationUserAgent
