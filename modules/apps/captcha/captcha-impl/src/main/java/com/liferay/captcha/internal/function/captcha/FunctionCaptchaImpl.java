@@ -8,11 +8,14 @@ package com.liferay.captcha.internal.function.captcha;
 import com.liferay.captcha.internal.configuration.FunctionCaptchaImplConfiguration;
 import com.liferay.captcha.simplecaptcha.SimpleCaptchaImpl;
 import com.liferay.osgi.util.configuration.ConfigurationFactoryUtil;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.catapult.PortalCatapult;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.captcha.Captcha;
 import com.liferay.portal.kernel.captcha.CaptchaConfigurationException;
 import com.liferay.portal.kernel.captcha.CaptchaException;
+import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
@@ -29,9 +32,9 @@ import com.liferay.portal.kernel.util.Validator;
 import java.util.Map;
 
 import javax.portlet.PortletRequest;
-
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
@@ -51,13 +54,13 @@ import org.osgi.service.component.annotations.Reference;
 public class FunctionCaptchaImpl extends SimpleCaptchaImpl {
 
 	@Override
-	public String getTaglibPath() {
-		return _TAGLIB_PATH;
+	public String getName() {
+		return _functionCaptchaImplConfiguration.captchaName();
 	}
 
 	@Override
-	public String getName() {
-		return _functionCaptchaImplConfiguration.captchaName();
+	public String getTaglibPath() {
+		return _TAGLIB_PATH;
 	}
 
 	@Override
@@ -88,24 +91,24 @@ public class FunctionCaptchaImpl extends SimpleCaptchaImpl {
 	protected boolean validateChallenge(HttpServletRequest httpServletRequest)
 		throws CaptchaException {
 
-		String captchaResponse = ParamUtil.getString(
+		String captchaClientResponse = ParamUtil.getString(
 			httpServletRequest,
 			_functionCaptchaImplConfiguration.captchaClientResponseParameter());
 
-		while (Validator.isBlank(captchaResponse) &&
+		while (Validator.isBlank(captchaClientResponse) &&
 			   (httpServletRequest instanceof
 				   HttpServletRequestWrapper httpServletRequestWrapper)) {
 
 			httpServletRequest =
 				(HttpServletRequest)httpServletRequestWrapper.getRequest();
 
-			captchaResponse = ParamUtil.getString(
+			captchaClientResponse = ParamUtil.getString(
 				httpServletRequest,
 				_functionCaptchaImplConfiguration.
 					captchaClientResponseParameter());
 		}
 
-		if (Validator.isBlank(captchaResponse)) {
+		if (Validator.isBlank(captchaClientResponse)) {
 			_log.error(
 				"CAPTCHA challenge is null. User " +
 					httpServletRequest.getRemoteUser() +
@@ -114,11 +117,12 @@ public class FunctionCaptchaImpl extends SimpleCaptchaImpl {
 			throw new CaptchaException();
 		}
 
-		JSONObject payloadJSONObject = _jsonFactory.createJSONObject();
-
-		payloadJSONObject.put("captchaResponse", captchaResponse);
-		payloadJSONObject.put("remoteAddress",
-			httpServletRequest.getRemoteAddr());
+		JSONObject payloadJSONObject = _jsonFactory.createJSONObject(
+		).put(
+			"remoteip", httpServletRequest.getRemoteAddr()
+		).put(
+			"response", captchaClientResponse
+		);
 
 		try {
 			User user = _userLocalService.getUserByScreenName(
@@ -135,16 +139,43 @@ public class FunctionCaptchaImpl extends SimpleCaptchaImpl {
 						user.getUserId()
 					).get()));
 
-			String validation = jsonObject.getString("validation");
+			if (jsonObject == null) {
+				_log.error(
+					_functionCaptchaImplConfiguration.captchaName() +
+						" did not return a result");
 
-			if (StringUtil.equalsIgnoreCase(validation, "passed")) {
+				throw new CaptchaConfigurationException();
+			}
+
+			String success = jsonObject.getString("success");
+
+			if (StringUtil.equalsIgnoreCase(success, "true")) {
 				return true;
 			}
 
-			_log.error(
-				"Challenge validation failed " +
+			JSONArray jsonArray = jsonObject.getJSONArray("error-codes");
+
+			if ((jsonArray == null) || (jsonArray.length() == 0)) {
+				_log.error(
 					_functionCaptchaImplConfiguration.captchaName() +
-						" encountered an error.");
+						" encountered an error");
+
+				throw new CaptchaConfigurationException();
+			}
+
+			StringBundler sb = new StringBundler((jsonArray.length() * 2) - 1);
+
+			for (int i = 0; i < jsonArray.length(); i++) {
+				sb.append(jsonArray.getString(i));
+
+				if (i < (jsonArray.length() - 1)) {
+					sb.append(StringPool.COMMA_AND_SPACE);
+				}
+			}
+
+			_log.error(
+				_functionCaptchaImplConfiguration.captchaName() +
+					" encountered an error: " + sb.toString());
 
 			throw new CaptchaConfigurationException();
 		}
@@ -166,6 +197,8 @@ public class FunctionCaptchaImpl extends SimpleCaptchaImpl {
 			PortalUtil.getHttpServletRequest(portletRequest));
 	}
 
+	private static final String _TAGLIB_PATH = "/captcha/recaptcha.jsp";
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		FunctionCaptchaImpl.class);
 
@@ -185,7 +218,5 @@ public class FunctionCaptchaImpl extends SimpleCaptchaImpl {
 
 	@Reference
 	private UserLocalService _userLocalService;
-
-	private static final String _TAGLIB_PATH = "/captcha/recaptcha.jsp";
 
 }
