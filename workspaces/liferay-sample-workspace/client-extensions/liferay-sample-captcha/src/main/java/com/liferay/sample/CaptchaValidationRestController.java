@@ -52,14 +52,14 @@ public class CaptchaValidationRestController extends BaseRestController {
 
 		MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
 
-		body.add("secret", "6LdBVSgrAAAAAEuAbG4C7_4VmAtEfZtLFdtYI8GT");
+		body.add("secret", "ES_60ec7851b9b740c6aede883dec03dd6f");
 		body.add("remoteip", jsonObject.getString("remoteip"));
 		body.add("response", jsonObject.getString("response"));
 
 		JSONObject siteVerifyJSONObject = new JSONObject(
 			_verifySite(
 				body,
-				 "https://www.google.com/recaptcha/api/siteverify"
+				 "https://api.hcaptcha.com/siteverify"
 			).getBody()
 		);
 
