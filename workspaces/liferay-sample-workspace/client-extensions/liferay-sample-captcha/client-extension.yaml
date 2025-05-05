@@ -1,6 +1,6 @@
 liferay-sample-captcha:
-    captchaClientResponseParameter: h-captcha-response
-    captchaName: sampleCaptchaCX
+    captchaName: hCaptcha
+    captchaResponseParameterName: h-captcha-response
     customElementExternalReferenceCode: LXC:liferay-sample-captcha-custom-element
     name: Liferay Sample Captcha
     oAuth2ApplicationExternalReferenceCode: liferay-sample-captcha-oauth-application-user-agent
