@@ -56,37 +56,35 @@ public class CaptchaValidationRestController extends BaseRestController {
 		body.add("remoteip", jsonObject.getString("remoteip"));
 		body.add("response", jsonObject.getString("response"));
 
-		String postResult = _postToUrlWithParams(
-			body, "https://www.google.com/recaptcha/api/siteverify"
-		).getBody();
+		JSONObject siteVerifyJSONObject = new JSONObject(
+			_verifySite(
+				body,
+				 "https://www.google.com/recaptcha/api/siteverify"
+			).getBody()
+		);
 
-		jsonObject = new JSONObject(postResult);
-
-		Boolean success = jsonObject.getBoolean("success");
-
-		jsonObject.put("success", success);
-
-		if (!success) {
-			JSONArray errorCodesJSONArray = jsonObject.getJSONArray(
+		if (!siteVerifyJSONObject.getBoolean("success")) {
+			JSONArray errorCodesJSONArray = siteVerifyJSONObject.getJSONArray(
 				"error-codes");
 
-			jsonObject.put("error-codes", errorCodesJSONArray);
+				siteVerifyJSONObject.put("error-codes", errorCodesJSONArray);
 		}
 
-		return new ResponseEntity<>(jsonObject.toString(), HttpStatus.OK);
+		return new ResponseEntity<>(siteVerifyJSONObject.toString(), HttpStatus.OK);
 	}
 
-	private ResponseEntity<String> _postToUrlWithParams(
+	private ResponseEntity<String> _verifySite(
 		MultiValueMap<String, String> body, String url) {
 
 		HttpHeaders httpHeaders = new HttpHeaders();
 
 		httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(
-			body, httpHeaders);
-
-		return _restTemplate.postForEntity(url, request, String.class);
+		return _restTemplate.postForEntity(
+			url, 
+			new HttpEntity<>(body, httpHeaders),
+			String.class
+		);
 	}
 
 	private static final Log _log = LogFactory.getLog(
