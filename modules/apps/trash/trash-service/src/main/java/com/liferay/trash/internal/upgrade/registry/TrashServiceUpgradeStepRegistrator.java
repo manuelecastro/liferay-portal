@@ -49,7 +49,7 @@ public class TrashServiceUpgradeStepRegistrator
 
 		registry.register(
 			"2.2.0", "2.2.1",
-			new BaseExternalReferenceCodeUpgradeProcess() {
+			new BaseUuidUpgradeProcess() {
 
 				@Override
 				protected String[][] getTableAndPrimaryKeyColumnNames() {
@@ -57,7 +57,7 @@ public class TrashServiceUpgradeStepRegistrator
 				}
 
 			},
-			new BaseUuidUpgradeProcess() {
+			new BaseExternalReferenceCodeUpgradeProcess() {
 
 				@Override
 				protected String[][] getTableAndPrimaryKeyColumnNames() {
