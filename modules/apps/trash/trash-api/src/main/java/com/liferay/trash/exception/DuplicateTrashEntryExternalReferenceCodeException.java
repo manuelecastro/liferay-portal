@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: (c) 2025 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
+
 package com.liferay.trash.exception;
 
 import com.liferay.portal.kernel.exception.DuplicateExternalReferenceCodeException;
@@ -9,7 +10,8 @@ import com.liferay.portal.kernel.exception.DuplicateExternalReferenceCodeExcepti
 /**
  * @author Brian Wing Shun Chan
  */
-public class DuplicateTrashEntryExternalReferenceCodeException extends DuplicateExternalReferenceCodeException {
+public class DuplicateTrashEntryExternalReferenceCodeException
+	extends DuplicateExternalReferenceCodeException {
 
 	public DuplicateTrashEntryExternalReferenceCodeException() {
 	}
@@ -18,11 +20,15 @@ public class DuplicateTrashEntryExternalReferenceCodeException extends Duplicate
 		super(msg);
 	}
 
-	public DuplicateTrashEntryExternalReferenceCodeException(String msg, Throwable throwable) {
+	public DuplicateTrashEntryExternalReferenceCodeException(
+		String msg, Throwable throwable) {
+
 		super(msg, throwable);
 	}
 
-	public DuplicateTrashEntryExternalReferenceCodeException(Throwable throwable) {
+	public DuplicateTrashEntryExternalReferenceCodeException(
+		Throwable throwable) {
+
 		super(throwable);
 	}
 
