@@ -713,7 +713,7 @@ public class MBCategoryLocalServiceImpl extends MBCategoryLocalServiceBaseImpl {
 
 		// Trash
 
-		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(null,
 			userId, category.getGroupId(), MBCategory.class.getName(),
 			categoryId, category.getUuid(), null,
 			WorkflowConstants.STATUS_APPROVED, null, null);

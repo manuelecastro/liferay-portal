@@ -1433,7 +1433,7 @@ public class KBArticleLocalServiceImpl extends KBArticleLocalServiceBaseImpl {
 				resourcePrimKey, SocialActivityConstants.TYPE_MOVE_TO_TRASH,
 				extraDataJSONObject.toString(), 0);
 
-			TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+			TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(null,
 				userId, kbArticle.getGroupId(), KBArticle.class.getName(),
 				resourcePrimKey, kbArticle.getUuid(), null, oldStatus, null,
 				null);

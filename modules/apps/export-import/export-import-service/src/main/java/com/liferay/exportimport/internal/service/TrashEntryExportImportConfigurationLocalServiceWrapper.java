@@ -48,7 +48,7 @@ public class TrashEntryExportImportConfigurationLocalServiceWrapper
 			userId, exportImportConfiguration.getExportImportConfigurationId(),
 			WorkflowConstants.STATUS_IN_TRASH);
 
-		_trashEntryLocalService.addTrashEntry(
+		_trashEntryLocalService.addTrashEntry(null,
 			userId, exportImportConfiguration.getGroupId(),
 			ExportImportConfiguration.class.getName(),
 			exportImportConfiguration.getExportImportConfigurationId(), null,

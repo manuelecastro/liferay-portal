@@ -4293,7 +4293,7 @@ public class JournalArticleLocalServiceImpl
 			_journalArticleResourceLocalService.getArticleResource(
 				article.getResourcePrimKey());
 
-		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(null,
 			userId, article.getGroupId(), JournalArticle.class.getName(),
 			article.getResourcePrimKey(), articleResource.getUuid(), null,
 			oldStatus, articleVersionStatusOVPs,

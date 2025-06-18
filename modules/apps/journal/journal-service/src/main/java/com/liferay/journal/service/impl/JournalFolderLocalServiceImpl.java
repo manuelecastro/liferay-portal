@@ -688,7 +688,7 @@ public class JournalFolderLocalServiceImpl
 
 		// Trash
 
-		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(null,
 			userId, folder.getGroupId(), JournalFolder.class.getName(),
 			folder.getFolderId(), folder.getUuid(), null,
 			WorkflowConstants.STATUS_APPROVED, null,

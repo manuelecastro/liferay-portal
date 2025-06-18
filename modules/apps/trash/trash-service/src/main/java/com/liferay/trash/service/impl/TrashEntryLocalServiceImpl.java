@@ -86,7 +86,7 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 	 */
 	@Override
 	public TrashEntry addTrashEntry(
-			long userId, long groupId, String className, long classPK,
+			String externalReferenceCode, long userId, long groupId, String className, long classPK,
 			String classUuid, String referrerClassName, int status,
 			List<ObjectValuePair<Long, Integer>> statusOVPs,
 			UnicodeProperties typeSettingsUnicodeProperties)
@@ -111,6 +111,7 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 
 		trashEntry = trashEntryPersistence.create(entryId);
 
+		trashEntry.setExternalReferenceCode(externalReferenceCode);
 		trashEntry.setGroupId(groupId);
 
 		User user = _userLocalService.getUserById(userId);

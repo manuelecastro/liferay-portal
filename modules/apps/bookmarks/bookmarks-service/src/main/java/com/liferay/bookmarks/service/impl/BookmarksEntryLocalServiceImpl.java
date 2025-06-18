@@ -425,7 +425,7 @@ public class BookmarksEntryLocalServiceImpl
 
 		entry = updateStatus(userId, entry, WorkflowConstants.STATUS_IN_TRASH);
 
-		_trashEntryLocalService.addTrashEntry(
+		_trashEntryLocalService.addTrashEntry(null,
 			userId, entry.getGroupId(), BookmarksEntry.class.getName(),
 			entry.getEntryId(), entry.getUuid(), null, oldStatus, null, null);
 

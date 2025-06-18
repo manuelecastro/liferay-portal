@@ -48,7 +48,7 @@ public class TrashVersionTableReferenceDefinitionTest
 		_journalArticle = JournalTestUtil.addArticle(
 			TestPropsValues.getUserId(), group.getGroupId(), 0);
 
-		_trashEntry = _trashEntryLocalService.addTrashEntry(
+		_trashEntry = _trashEntryLocalService.addTrashEntry(null,
 			TestPropsValues.getUserId(), _journalArticle.getGroupId(),
 			JournalArticle.class.getName(),
 			_journalArticle.getResourcePrimKey(), _journalArticle.getUuid(),

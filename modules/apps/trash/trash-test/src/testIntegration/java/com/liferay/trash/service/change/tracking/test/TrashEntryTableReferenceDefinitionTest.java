@@ -48,7 +48,7 @@ public class TrashEntryTableReferenceDefinitionTest
 
 	@Override
 	protected CTModel<?> addCTModel() throws Exception {
-		return _trashEntryLocalService.addTrashEntry(
+		return _trashEntryLocalService.addTrashEntry(null,
 			TestPropsValues.getUserId(), _journalArticle.getGroupId(),
 			JournalArticle.class.getName(),
 			_journalArticle.getResourcePrimKey(), _journalArticle.getUuid(),

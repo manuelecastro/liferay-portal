@@ -1595,7 +1595,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 						BlogsEntry.class.getName(), entryId);
 				}
 
-				_trashEntryLocalService.addTrashEntry(
+				_trashEntryLocalService.addTrashEntry(null,
 					userId, entry.getGroupId(), BlogsEntry.class.getName(),
 					entry.getEntryId(), entry.getUuid(), null, oldStatus, null,
 					null);

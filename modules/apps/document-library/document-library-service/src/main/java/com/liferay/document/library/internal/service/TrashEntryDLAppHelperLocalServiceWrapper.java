@@ -242,7 +242,7 @@ public class TrashEntryDLAppHelperLocalServiceWrapper
 
 		// Trash
 
-		_trashEntryLocalService.addTrashEntry(
+		_trashEntryLocalService.addTrashEntry(null,
 			userId, fileShortcut.getGroupId(),
 			DLFileShortcutConstants.getClassName(),
 			fileShortcut.getFileShortcutId(), fileShortcut.getUuid(), null,
@@ -702,7 +702,7 @@ public class TrashEntryDLAppHelperLocalServiceWrapper
 
 		int oldDLFileVersionStatus = oldDLFileVersion.getStatus();
 
-		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(null,
 			userId, dlFileEntry.getGroupId(),
 			DLFileEntryConstants.getClassName(), dlFileEntry.getFileEntryId(),
 			dlFileEntry.getUuid(), dlFileEntry.getClassName(),
@@ -830,7 +830,7 @@ public class TrashEntryDLAppHelperLocalServiceWrapper
 
 		// Trash
 
-		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(null,
 			userId, dlFolder.getGroupId(), DLFolderConstants.getClassName(),
 			dlFolder.getFolderId(), dlFolder.getUuid(), null,
 			WorkflowConstants.STATUS_APPROVED, null,

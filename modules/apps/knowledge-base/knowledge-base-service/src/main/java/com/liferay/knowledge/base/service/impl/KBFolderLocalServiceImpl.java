@@ -414,7 +414,7 @@ public class KBFolderLocalServiceImpl extends KBFolderLocalServiceBaseImpl {
 
 		// Trash
 
-		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(null,
 			userId, kbFolder.getGroupId(), KBFolder.class.getName(),
 			kbFolder.getKbFolderId(), kbFolder.getUuid(), null, oldStatus, null,
 			null);

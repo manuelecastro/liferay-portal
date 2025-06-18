@@ -469,7 +469,7 @@ public class BookmarksFolderLocalServiceImpl
 
 		// Trash
 
-		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(null,
 			userId, folder.getGroupId(), BookmarksFolder.class.getName(),
 			folder.getFolderId(), folder.getUuid(), null, oldStatus, null,
 			null);

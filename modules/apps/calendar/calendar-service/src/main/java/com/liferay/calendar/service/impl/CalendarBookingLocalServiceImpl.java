@@ -1613,14 +1613,14 @@ public class CalendarBookingLocalServiceImpl
 			calendarBooking.isMasterRecurringBooking()) {
 
 			if (calendarBooking.isMasterBooking()) {
-				trashEntryLocalService.addTrashEntry(
+				trashEntryLocalService.addTrashEntry(null,
 					userId, calendarBooking.getGroupId(),
 					CalendarBooking.class.getName(),
 					calendarBooking.getCalendarBookingId(),
 					calendarBooking.getUuid(), null, oldStatus, null, null);
 			}
 			else {
-				trashEntryLocalService.addTrashEntry(
+				trashEntryLocalService.addTrashEntry(null,
 					userId, calendarBooking.getGroupId(),
 					CalendarBooking.class.getName(),
 					calendarBooking.getCalendarBookingId(),

@@ -50,8 +50,9 @@ public class TrashEntryLocalServiceWrapper
 	 */
 	@Override
 	public TrashEntry addTrashEntry(
-			long userId, long groupId, String className, long classPK,
-			String classUuid, String referrerClassName, int status,
+			String externalReferenceCode, long userId, long groupId,
+			String className, long classPK, String classUuid,
+			String referrerClassName, int status,
 			java.util.List
 				<com.liferay.portal.kernel.util.ObjectValuePair<Long, Integer>>
 					statusOVPs,
@@ -60,8 +61,9 @@ public class TrashEntryLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _trashEntryLocalService.addTrashEntry(
-			userId, groupId, className, classPK, classUuid, referrerClassName,
-			status, statusOVPs, typeSettingsUnicodeProperties);
+			externalReferenceCode, userId, groupId, className, classPK,
+			classUuid, referrerClassName, status, statusOVPs,
+			typeSettingsUnicodeProperties);
 	}
 
 	/**

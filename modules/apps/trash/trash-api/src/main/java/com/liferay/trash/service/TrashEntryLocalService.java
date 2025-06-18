@@ -82,8 +82,9 @@ public interface TrashEntryLocalService
 	 * @return the trashEntry
 	 */
 	public TrashEntry addTrashEntry(
-			long userId, long groupId, String className, long classPK,
-			String classUuid, String referrerClassName, int status,
+			String externalReferenceCode, long userId, long groupId,
+			String className, long classPK, String classUuid,
+			String referrerClassName, int status,
 			List<ObjectValuePair<Long, Integer>> statusOVPs,
 			UnicodeProperties typeSettingsUnicodeProperties)
 		throws PortalException;

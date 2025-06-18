@@ -435,7 +435,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 
 		// Trash
 
-		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(null,
 			userId, node.getGroupId(), WikiNode.class.getName(),
 			node.getNodeId(), node.getUuid(), null, oldStatus, null,
 			UnicodePropertiesBuilder.put(

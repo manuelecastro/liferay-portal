@@ -1738,7 +1738,7 @@ public class WikiPageLocalServiceImpl extends WikiPageLocalServiceBaseImpl {
 			_wikiPageResourcePersistence.fetchByPrimaryKey(
 				page.getResourcePrimKey());
 
-		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(null,
 			userId, page.getGroupId(), WikiPage.class.getName(),
 			page.getResourcePrimKey(), page.getUuid(), null, oldStatus,
 			pageVersionStatusOVPs,

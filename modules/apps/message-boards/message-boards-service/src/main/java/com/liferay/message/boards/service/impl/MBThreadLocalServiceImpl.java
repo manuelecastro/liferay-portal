@@ -746,7 +746,7 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 
 		// Trash
 
-		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(null,
 			userId, thread.getGroupId(), MBThread.class.getName(),
 			thread.getThreadId(), thread.getUuid(), null, oldStatus, null,
 			null);

@@ -55,8 +55,9 @@ public class TrashEntryLocalServiceUtil {
 	 * @return the trashEntry
 	 */
 	public static TrashEntry addTrashEntry(
-			long userId, long groupId, String className, long classPK,
-			String classUuid, String referrerClassName, int status,
+			String externalReferenceCode, long userId, long groupId,
+			String className, long classPK, String classUuid,
+			String referrerClassName, int status,
 			List<com.liferay.portal.kernel.util.ObjectValuePair<Long, Integer>>
 				statusOVPs,
 			com.liferay.portal.kernel.util.UnicodeProperties
@@ -64,8 +65,9 @@ public class TrashEntryLocalServiceUtil {
 		throws PortalException {
 
 		return getService().addTrashEntry(
-			userId, groupId, className, classPK, classUuid, referrerClassName,
-			status, statusOVPs, typeSettingsUnicodeProperties);
+			externalReferenceCode, userId, groupId, className, classPK,
+			classUuid, referrerClassName, status, statusOVPs,
+			typeSettingsUnicodeProperties);
 	}
 
 	/**
