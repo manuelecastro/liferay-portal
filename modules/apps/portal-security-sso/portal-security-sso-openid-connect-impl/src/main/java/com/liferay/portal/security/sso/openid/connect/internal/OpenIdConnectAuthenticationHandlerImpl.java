@@ -18,12 +18,15 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectAuthenticationHandler;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
+import com.liferay.portal.security.sso.openid.connect.configuration.ConfigurationProvider;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectConstants;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
+import com.liferay.portal.security.sso.openid.connect.internal.configuration.OpenIdConnectProviderConfiguration;
 import com.liferay.portal.security.sso.openid.connect.internal.session.manager.OfflineOpenIdConnectSessionManager;
 import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectProviderUtil;
 import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectRequestParametersUtil;
@@ -158,13 +161,19 @@ public class OpenIdConnectAuthenticationHandlerImpl
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			httpServletRequest);
 
+		OpenIdConnectProviderConfiguration openIdConnectProviderConfiguration =
+			_openIdConnectProviderConfigurationConfigurationProvider.
+				getConfiguration(oAuthClientEntry.getClientId());
+
 		serviceContext.setAttribute(
 			"oAuthClientEntryId", oAuthClientEntry.getOAuthClientEntryId());
 
 		long userId = _oidcUserInfoProcessor.processUserInfo(
 			_portal.getCompanyId(httpServletRequest),
 			String.valueOf(oidcProviderMetadata.getIssuer()), serviceContext,
-			userInfoJSON, oAuthClientEntry.getOIDCUserInfoMapperJSON());
+			userInfoJSON, oAuthClientEntry.getOIDCUserInfoMapperJSON(),
+			ListUtil.fromArray(
+				openIdConnectProviderConfiguration.customClaims()));
 
 		userIdUnsafeConsumer.accept(userId);
 
@@ -506,6 +515,12 @@ public class OpenIdConnectAuthenticationHandlerImpl
 
 	@Reference
 	private OIDCUserInfoProcessor _oidcUserInfoProcessor;
+
+	@Reference(
+		target = "(factoryPid=com.liferay.portal.security.sso.openid.connect.internal.configuration.OpenIdConnectProviderConfiguration)"
+	)
+	private ConfigurationProvider<OpenIdConnectProviderConfiguration>
+		_openIdConnectProviderConfigurationConfigurationProvider;
 
 	@Reference
 	private Portal _portal;

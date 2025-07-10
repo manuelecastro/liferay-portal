@@ -50,6 +50,8 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 import com.liferay.portal.security.sso.openid.connect.internal.exception.StrangersNotAllowedException;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -57,9 +59,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Arthur Chan
@@ -69,12 +68,13 @@ public class OIDCUserInfoProcessor {
 
 	public long processUserInfo(
 			long companyId, String issuer, ServiceContext serviceContext,
-			String userInfoJSON, String userInfoMapperJSON)
+			String userInfoJSON, String userInfoMapperJSON,
+			List<String> customClaims)
 		throws Exception {
 
 		User user = _addOrUpdateUser(
-			companyId, issuer, serviceContext, userInfoJSON,
-			userInfoMapperJSON);
+			companyId, issuer, serviceContext, userInfoJSON, userInfoMapperJSON,
+			customClaims);
 
 		try {
 			_addAddress(serviceContext, user, userInfoJSON, userInfoMapperJSON);
@@ -194,9 +194,32 @@ public class OIDCUserInfoProcessor {
 			null, serviceContext);
 	}
 
+	private void _addOrUpdateCustomClaimExpandoValues(
+			long companyId, List<String> customClaims,
+			JSONObject userInfoJSONObject, long userId)
+		throws Exception {
+
+		for (String claim : customClaims) {
+			String[] claimParts = claim.split("=");
+
+			String claimValue = userInfoJSONObject.getString(claimParts[0]);
+
+			if (claimValue != null) {
+				ExpandoColumn expandoColumn = _getOrAddCustomClaimExpandoColumn(
+					User.class.getName(), companyId, claimParts[1]);
+
+				_expandoValueLocalService.addValue(
+					_classNameLocalService.getClassNameId(User.class.getName()),
+					expandoColumn.getTableId(), expandoColumn.getColumnId(),
+					userId, claimValue);
+			}
+		}
+	}
+
 	private User _addOrUpdateUser(
 			long companyId, String issuer, ServiceContext serviceContext,
-			String userInfoJSON, String userInfoMapperJSON)
+			String userInfoJSON, String userInfoMapperJSON,
+			List<String> customClaims)
 		throws Exception {
 
 		JSONObject userInfoMapperJSONObject = _jsonFactory.createJSONObject(
@@ -269,6 +292,9 @@ public class OIDCUserInfoProcessor {
 				expandoColumn.getTableId(), expandoColumn.getColumnId(),
 				user.getUserId(), String.valueOf(oAuthClientEntryId));
 
+			_addOrUpdateCustomClaimExpandoValues(
+				companyId, customClaims, userInfoJSONObject, user.getUserId());
+
 			return _userLocalService.updatePasswordReset(
 				user.getUserId(), false);
 		}
@@ -276,6 +302,9 @@ public class OIDCUserInfoProcessor {
 		Contact contact = user.getContact();
 
 		serviceContext.setUuid(user.getUuid());
+
+		_addOrUpdateCustomClaimExpandoValues(
+			companyId, customClaims, userInfoJSONObject, user.getUserId());
 
 		return _userLocalService.updateUser(
 			user.getUserId(), StringPool.BLANK, StringPool.BLANK,
@@ -446,6 +475,46 @@ public class OIDCUserInfoProcessor {
 		Company company = _companyLocalService.getCompany(companyId);
 
 		return company.getLocale();
+	}
+
+	private ExpandoColumn _getOrAddCustomClaimExpandoColumn(
+			String className, long companyId, String columnName)
+		throws Exception {
+
+		ExpandoTable expandoTable = _expandoTableLocalService.fetchTable(
+			companyId, _classNameLocalService.getClassNameId(className),
+			ExpandoTableConstants.DEFAULT_TABLE_NAME);
+
+		if (expandoTable == null) {
+			expandoTable = _expandoTableLocalService.addTable(
+				companyId, className, ExpandoTableConstants.DEFAULT_TABLE_NAME);
+		}
+
+		ExpandoColumn expandoColumn = _expandoColumnLocalService.fetchColumn(
+			expandoTable.getTableId(), columnName);
+
+		if (expandoColumn != null) {
+			return expandoColumn;
+		}
+
+		expandoColumn = _expandoColumnLocalService.addColumn(
+			expandoTable.getTableId(), columnName,
+			ExpandoColumnConstants.STRING);
+
+		UnicodeProperties unicodeProperties =
+			expandoColumn.getTypeSettingsProperties();
+
+		unicodeProperties.setProperty(
+			ExpandoColumnConstants.INDEX_TYPE,
+			String.valueOf(ExpandoColumnConstants.INDEX_TYPE_KEYWORD));
+		unicodeProperties.setProperty(
+			ExpandoColumnConstants.PROPERTY_HIDDEN, Boolean.FALSE.toString());
+		unicodeProperties.setProperty(
+			ExpandoColumnConstants.PROPERTY_WIDTH, "300");
+
+		expandoColumn.setTypeSettingsProperties(unicodeProperties);
+
+		return _expandoColumnLocalService.updateExpandoColumn(expandoColumn);
 	}
 
 	private ExpandoColumn _getOrAddExpandoColumn(
