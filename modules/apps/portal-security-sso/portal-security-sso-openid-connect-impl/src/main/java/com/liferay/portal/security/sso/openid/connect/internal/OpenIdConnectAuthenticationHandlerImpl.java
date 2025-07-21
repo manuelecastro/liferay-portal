@@ -26,7 +26,7 @@ import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceExcept
 import com.liferay.portal.security.sso.openid.connect.configuration.ConfigurationProvider;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectConstants;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
-import com.liferay.portal.security.sso.openid.connect.internal.configuration.OpenIdConnectProviderConfiguration;
+import com.liferay.portal.security.sso.openid.connect.configuration.OpenIdConnectProviderConfiguration;
 import com.liferay.portal.security.sso.openid.connect.internal.session.manager.OfflineOpenIdConnectSessionManager;
 import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectProviderUtil;
 import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectRequestParametersUtil;
@@ -517,7 +517,7 @@ public class OpenIdConnectAuthenticationHandlerImpl
 	private OIDCUserInfoProcessor _oidcUserInfoProcessor;
 
 	@Reference(
-		target = "(factoryPid=com.liferay.portal.security.sso.openid.connect.internal.configuration.OpenIdConnectProviderConfiguration)"
+		target = "(factoryPid=com.liferay.portal.security.sso.openid.connect.configuration.OpenIdConnectProviderConfiguration)"
 	)
 	private ConfigurationProvider<OpenIdConnectProviderConfiguration>
 		_openIdConnectProviderConfigurationConfigurationProvider;

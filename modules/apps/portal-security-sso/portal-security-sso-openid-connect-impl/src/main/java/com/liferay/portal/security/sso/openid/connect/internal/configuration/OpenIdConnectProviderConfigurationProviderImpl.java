@@ -14,6 +14,7 @@ import java.util.Dictionary;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.liferay.portal.security.sso.openid.connect.configuration.OpenIdConnectProviderConfiguration;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.component.annotations.Component;
 
@@ -21,7 +22,7 @@ import org.osgi.service.component.annotations.Component;
  * @author Christian Moura
  */
 @Component(
-	property = "factoryPid=com.liferay.portal.security.sso.openid.connect.internal.configuration.OpenIdConnectProviderConfiguration",
+	property = "factoryPid=com.liferay.portal.security.sso.openid.connect.configuration.OpenIdConnectProviderConfiguration",
 	service = ConfigurationProvider.class
 )
 public class OpenIdConnectProviderConfigurationProviderImpl
