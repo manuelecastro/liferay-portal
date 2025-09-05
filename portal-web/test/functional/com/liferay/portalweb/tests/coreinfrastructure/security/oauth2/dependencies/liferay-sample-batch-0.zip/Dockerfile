@@ -1,5 +1,3 @@
-FROM liferay/batch:latest
+# TODO: LPS-176095
 
-#ENV LIFERAY_BATCH_CURL_OPTIONS="-v"
-
-COPY /batch /opt/liferay/batch
+FROM liferay/noop
