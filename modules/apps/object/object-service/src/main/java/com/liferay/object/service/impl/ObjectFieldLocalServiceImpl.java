@@ -13,6 +13,7 @@ import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.constants.ObjectValidationRuleSettingConstants;
+import com.liferay.object.definition.security.permission.resource.util.ObjectDefinitionResourcePermissionUtil;
 import com.liferay.object.definition.util.ObjectDefinitionUtil;
 import com.liferay.object.exception.DuplicateObjectFieldExternalReferenceCodeException;
 import com.liferay.object.exception.ObjectDefinitionEnableLocalizationException;
@@ -63,6 +64,7 @@ import com.liferay.object.service.persistence.ObjectLayoutColumnPersistence;
 import com.liferay.object.service.persistence.ObjectRelationshipPersistence;
 import com.liferay.object.system.SystemObjectDefinitionManager;
 import com.liferay.object.system.SystemObjectDefinitionManagerRegistry;
+import com.liferay.object.tree.ObjectDefinitionTreeFactory;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.sql.dsl.Column;
@@ -83,6 +85,8 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.security.permission.ResourceActions;
+import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.Base64;
@@ -94,6 +98,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.language.override.service.PLOEntryLocalService;
 import com.liferay.portal.util.PropsValues;
 
 import java.io.Serializable;
@@ -901,6 +906,27 @@ public class ObjectFieldLocalServiceImpl
 			objectField, objectDefinition, objectFieldBusinessType,
 			objectFieldSettings, null);
 
+		if (objectDefinition.isApproved() &&
+			Objects.equals(
+				objectField.getBusinessType(),
+				ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
+
+			try {
+				ObjectDefinitionResourcePermissionUtil.populateResourceActions(
+					null, objectDefinition, null, _objectDefinitionPersistence,
+					new ObjectDefinitionTreeFactory(
+						_objectDefinitionPersistence,
+						_objectRelationshipLocalServiceSnapshot.get()),
+					_portletLocalService, _resourceActions, null,
+					objectFieldLocalService, null);
+
+				_addOrUpdateObjectFieldResourceActionPLOEntries(objectField);
+			}
+			catch (Exception exception) {
+				ReflectionUtil.throwException(exception);
+			}
+		}
+
 		if (!objectDefinition.isApproved() ||
 			ObjectFieldUtil.isMetadata(name) ||
 			(system && objectDefinition.isUnmodifiableSystemObject())) {
@@ -958,6 +984,20 @@ public class ObjectFieldLocalServiceImpl
 					dbTableName, objectField.getBusinessType(),
 					objectField.getSortableDBColumnName(),
 					ObjectFieldConstants.DB_TYPE_LONG));
+		}
+	}
+
+	private void _addOrUpdateObjectFieldResourceActionPLOEntries(
+			ObjectField objectField)
+		throws PortalException {
+
+		for (Locale locale : _language.getAvailableLocales()) {
+			String languageId = LocaleUtil.toLanguageId(locale);
+
+			_ploEntryLocalService.addOrUpdatePLOEntry(
+				objectField.getCompanyId(), objectField.getUserId(),
+				"action." + objectField.getName(), languageId,
+				objectField.getLabel(locale));
 		}
 	}
 
@@ -1136,6 +1176,14 @@ public class ObjectFieldLocalServiceImpl
 				objectField.getBusinessType(),
 				ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
 
+			if (objectDefinition.isApproved()) {
+				_resourceActions.removeModelResource(
+					objectDefinition.getClassName(),
+					objectField.getName());
+
+				_deleteObjectFieldActionPLOEntries(objectField);
+			}
+
 			ObjectFieldSetting objectFieldSetting =
 				_objectFieldSettingPersistence.fetchByOFI_N(
 					objectField.getObjectFieldId(), "fileSource");
@@ -1249,6 +1297,12 @@ public class ObjectFieldLocalServiceImpl
 		}
 
 		return objectField;
+	}
+
+	private void _deleteObjectFieldActionPLOEntries(ObjectField objectField) {
+		_ploEntryLocalService.deletePLOEntries(
+			objectField.getCompanyId(),
+			"action." + objectField.getName());
 	}
 
 	private String _getDBColumnName(
@@ -1478,6 +1532,12 @@ public class ObjectFieldLocalServiceImpl
 			_addOrUpdateObjectFieldSettings(
 				newObjectField, objectDefinition, objectFieldBusinessType,
 				objectFieldSettings, oldObjectField);
+
+			if (businessType.equals(
+					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
+
+				_addOrUpdateObjectFieldResourceActionPLOEntries(newObjectField);
+			}
 
 			return newObjectField;
 		}
@@ -1924,6 +1984,12 @@ public class ObjectFieldLocalServiceImpl
 	@Reference
 	private ObjectViewLocalService _objectViewLocalService;
 
+	@Reference
+	private PLOEntryLocalService _ploEntryLocalService;
+
+	@Reference
+	private PortletLocalService _portletLocalService;
+
 	private final Set<String> _readOnlyObjectFieldNames = SetUtil.fromArray(
 		"createDate", "creator", "id", "modifiedDate", "status");
 	private final Set<String> _reservedNames = SetUtil.fromArray(
@@ -1932,6 +1998,9 @@ public class ObjectFieldLocalServiceImpl
 		"externalreferencecode", "groupid", "id", "lastpublishdate",
 		"modifieddate", "reviewdate", "status", "statusbyuserid",
 		"statusbyusername", "statusdate", "userid", "username");
+
+	@Reference
+	private ResourceActions _resourceActions;
 
 	@Reference
 	private SystemObjectDefinitionManagerRegistry

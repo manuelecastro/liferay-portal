@@ -8,10 +8,13 @@ package com.liferay.object.definition.security.permission.resource.util;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.service.ObjectActionLocalService;
+import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.persistence.ObjectActionPersistence;
 import com.liferay.object.service.persistence.ObjectDefinitionPersistence;
 import com.liferay.object.tree.Node;
@@ -53,7 +56,9 @@ public class ObjectDefinitionResourcePermissionUtil {
 			ObjectDefinitionTreeFactory objectDefinitionTreeFactory,
 			PortletLocalService portletLocalService,
 			ResourceActions resourceActions,
-			List<ObjectAction> standaloneObjectActions)
+			List<ObjectAction> standaloneObjectActions,
+			ObjectFieldLocalService objectFieldLocalService,
+			List<ObjectField> attachmentObjectFields)
 		throws Exception {
 
 		if (objectDefinition.isRootDescendantNode()) {
@@ -67,7 +72,8 @@ public class ObjectDefinitionResourcePermissionUtil {
 			objectActionLocalService, objectDefinition, objectRelationshipsMap,
 			objectDefinitionPersistence, objectDefinitionTreeFactory,
 			rootDescendantNodeObjectDefinitionClassNames,
-			standaloneObjectActions);
+			standaloneObjectActions, objectFieldLocalService,
+			attachmentObjectFields);
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
 				objectDefinition.getCompanyId())) {
@@ -171,7 +177,7 @@ public class ObjectDefinitionResourcePermissionUtil {
 			document = _readDocument(
 				objectActionLocalService, objectDefinition, null,
 				objectDefinitionPersistence, objectDefinitionTreeFactory,
-				new ArrayList<>(), null);
+				new ArrayList<>(), null, null, null);
 		}
 
 		resourceActions.removeModelResources(document);
@@ -224,13 +230,17 @@ public class ObjectDefinitionResourcePermissionUtil {
 		ObjectActionLocalService objectActionLocalService,
 		long objectDefinitionId, List<ObjectAction> standaloneObjectActions) {
 
-		String objectActionPermissionKeys = StringPool.BLANK;
-
 		if (standaloneObjectActions == null) {
+			if (objectActionLocalService == null) {
+				return null;
+			}
+
 			standaloneObjectActions = objectActionLocalService.getObjectActions(
 				objectDefinitionId,
 				ObjectActionTriggerConstants.KEY_STANDALONE);
 		}
+
+		String objectActionPermissionKeys = StringPool.BLANK;
 
 		for (ObjectAction objectAction : standaloneObjectActions) {
 			objectActionPermissionKeys = StringBundler.concat(
@@ -239,6 +249,32 @@ public class ObjectDefinitionResourcePermissionUtil {
 		}
 
 		return objectActionPermissionKeys;
+	}
+
+	private static String _getObjectFieldPermissionKeys(
+		ObjectFieldLocalService objectFieldLocalService,
+		long objectDefinitionId, List<ObjectField> attachmentObjectFields) {
+
+		if (attachmentObjectFields == null) {
+			if (objectFieldLocalService == null) {
+				return null;
+			}
+
+			attachmentObjectFields =
+				objectFieldLocalService.getObjectFieldsByBusinessType(
+					objectDefinitionId,
+					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT);
+		}
+
+		String objectFieldPermissionKeys = StringPool.BLANK;
+
+		for (ObjectField objectField : attachmentObjectFields) {
+			objectFieldPermissionKeys = StringBundler.concat(
+				objectFieldPermissionKeys, "<action-key>",
+				objectField.getName(), "</action-key>");
+		}
+
+		return objectFieldPermissionKeys;
 	}
 
 	private static String _getPermissionsGuestUnsupported(
@@ -358,12 +394,18 @@ public class ObjectDefinitionResourcePermissionUtil {
 			ObjectDefinitionPersistence objectDefinitionPersistence,
 			ObjectDefinitionTreeFactory objectDefinitionTreeFactory,
 			List<String> rootDescendantNodeObjectDefinitionClassNames,
-			List<ObjectAction> standaloneObjectActions)
+			List<ObjectAction> standaloneObjectActions,
+			ObjectFieldLocalService objectFieldLocalService,
+			List<ObjectField> attachmentObjectFields)
 		throws Exception {
 
 		String objectActionPermissionKeys = _getObjectActionPermissionKeys(
 			objectActionLocalService, objectDefinition.getObjectDefinitionId(),
 			standaloneObjectActions);
+
+		String objectFieldPermissionKeys = _getObjectFieldPermissionKeys(
+			objectFieldLocalService, objectDefinition.getObjectDefinitionId(),
+			attachmentObjectFields);
 
 		String resourceActionsFileName =
 			"resource-actions/resource-actions.xml.tpl";
@@ -395,7 +437,7 @@ public class ObjectDefinitionResourcePermissionUtil {
 					_getPermissionsGuestUnsupported(objectDefinition) +
 						objectActionPermissionKeys,
 					_getPermissionsSupports(objectDefinition) +
-						objectActionPermissionKeys,
+						objectActionPermissionKeys + objectFieldPermissionKeys,
 					objectDefinition.getPortletId(),
 					objectDefinition.getResourceName(),
 					_getRootDescendantNodeObjectDefinitionsModelResources(

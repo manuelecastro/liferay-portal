@@ -223,7 +223,9 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 						GetterUtil.getString(
 							ddmFormField.getProperty(
 								"objectEntryExternalReferenceCode")),
-						themeDisplay);
+						themeDisplay,
+						GetterUtil.getString(
+							ddmFormField.getProperty("objectFieldName")));
 				}
 			).put(
 				"title", fileEntry.getFileName()
