@@ -796,7 +796,8 @@ public class BatchEngineBrokerTest {
 
 		Link link = LinkUtil.toLink(
 			_dlAppService, dlFileEntry, _dlURLHelper, groupId,
-			objectDefinitionERC, objectEntryERC, _portal);
+			objectDefinitionERC, objectEntryERC, _portal,
+			RandomTestUtil.randomString());
 
 		template = StringUtil.replace(
 			template,
@@ -926,7 +927,7 @@ public class BatchEngineBrokerTest {
 		Link link = LinkUtil.toLink(
 			_dlAppService, dlFileEntry, _dlURLHelper,
 			GetterUtil.getLong(groupId), objectDefinitionERC, objectEntryERC,
-			_portal);
+			_portal, RandomTestUtil.randomString());
 
 		String scopeKey = null;
 
