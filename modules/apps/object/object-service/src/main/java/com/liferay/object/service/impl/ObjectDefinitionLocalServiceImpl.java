@@ -677,8 +677,9 @@ public class ObjectDefinitionLocalServiceImpl
 					objectDefinition.getCompanyId())) {
 
 				ObjectDefinitionResourcePermissionUtil.removeResourceActions(
-					_objectActionLocalService, objectDefinition,
-					_objectFieldLocalService, _resourceActions);
+					_language, _objectActionLocalService, objectDefinition,
+					_objectFieldLocalService, _ploEntryLocalService,
+					_resourceActions);
 			}
 			catch (Exception exception) {
 				throw new PortalException(exception);
@@ -1040,7 +1041,7 @@ public class ObjectDefinitionLocalServiceImpl
 				_accountEntryOrganizationRelLocalService,
 				_assetEntryLocalService, _bundleContext,
 				_dynamicQueryBatchIndexingActionableFactory, _groupLocalService,
-				_listTypeLocalService, _objectActionLocalService,
+				_language, _listTypeLocalService, _objectActionLocalService,
 				objectDefinitionLocalService,
 				_objectDefinitionSettingLocalService,
 				_objectEntryFolderLocalService, _objectEntryLocalService,

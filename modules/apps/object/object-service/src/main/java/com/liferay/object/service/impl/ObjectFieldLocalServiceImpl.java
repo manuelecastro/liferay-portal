@@ -913,10 +913,9 @@ public class ObjectFieldLocalServiceImpl
 
 			try {
 				ObjectDefinitionResourcePermissionUtil.populateResourceActions(
-					null, null, objectDefinition, objectFieldLocalService,
+					null, _language, null, objectDefinition,
+					objectFieldLocalService, _ploEntryLocalService,
 					_portletLocalService, _resourceActions, null);
-
-				_addOrUpdateObjectFieldResourceActionPLOEntries(objectField);
 			}
 			catch (Exception exception) {
 				ReflectionUtil.throwException(exception);
