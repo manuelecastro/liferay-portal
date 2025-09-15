@@ -214,7 +214,8 @@ public class ObjectFieldUtil {
 			objectEntryExternalReferenceCode);
 		downloadURL = HttpComponentsUtil.addParameter(
 			downloadURL, "objectFieldActionId",
-			"objectField." + objectFieldName);
+			ObjectFieldConstants.ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
+				objectFieldName);
 
 		return downloadURL;
 	}
