@@ -80,6 +80,8 @@ import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.service.Snapshot;
@@ -87,6 +89,7 @@ import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.security.permission.ResourceActions;
 import com.liferay.portal.kernel.service.PortletLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.Base64;
@@ -916,6 +919,8 @@ public class ObjectFieldLocalServiceImpl
 					null, _language, null, objectDefinition,
 					objectFieldLocalService, _ploEntryLocalService,
 					_portletLocalService, _resourceActions, null);
+
+				_updateResourcePermissions(objectDefinition, objectField);
 			}
 			catch (Exception exception) {
 				ReflectionUtil.throwException(exception);
@@ -1569,6 +1574,30 @@ public class ObjectFieldLocalServiceImpl
 		return newObjectField;
 	}
 
+	private void _updateResourcePermissions(
+			ObjectDefinition objectDefinition, ObjectField objectField)
+		throws PortalException {
+
+		List<ResourcePermission> resourcePermissions =
+			_resourcePermissionLocalService.getResourcePermissions(
+				objectDefinition.getCompanyId(),
+				objectDefinition.getClassName(),
+				ResourceConstants.SCOPE_INDIVIDUAL);
+
+		for (ResourcePermission resourcePermission : resourcePermissions) {
+			String objectFieldActionId =
+				ObjectFieldConstants.
+					ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
+						objectField.getName();
+
+			if (resourcePermission.isViewActionId() &&
+				!resourcePermission.hasActionId(objectFieldActionId)) {
+
+				resourcePermission.addResourceAction(objectFieldActionId);
+			}
+		}
+	}
+
 	private void _validateBusinessType(
 			ObjectDefinition objectDefinition, String businessType)
 		throws PortalException {
@@ -2001,6 +2030,9 @@ public class ObjectFieldLocalServiceImpl
 
 	@Reference
 	private ResourceActions _resourceActions;
+
+	@Reference
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
 
 	@Reference
 	private SystemObjectDefinitionManagerRegistry
