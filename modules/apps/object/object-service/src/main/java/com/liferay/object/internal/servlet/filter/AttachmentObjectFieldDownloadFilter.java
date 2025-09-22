@@ -12,6 +12,7 @@ import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.login.AuthLoginGroupSettingsUtil;
@@ -55,8 +56,16 @@ public class AttachmentObjectFieldDownloadFilter extends BaseFilter {
 		HttpServletRequest httpServletRequest,
 		HttpServletResponse httpServletResponse) {
 
-		return Validator.isNotNull(
-			ParamUtil.getString(httpServletRequest, "objectFieldActionId"));
+		if (FeatureFlagManagerUtil.isEnabled(
+				PortalUtil.getCompanyId(httpServletRequest), "LPD-17564") &&
+			Validator.isNotNull(
+				ParamUtil.getString(
+					httpServletRequest, "objectFieldActionId"))) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	@Override
