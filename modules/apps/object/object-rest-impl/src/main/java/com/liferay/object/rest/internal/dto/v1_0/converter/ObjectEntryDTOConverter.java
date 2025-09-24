@@ -78,6 +78,9 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.GuestOrUserUtil;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.PermissionService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
@@ -805,7 +808,10 @@ public class ObjectEntryDTOConverter
 				objectEntry.getGroupId(),
 				objectDefinition.getExternalReferenceCode(),
 				objectEntry.getExternalReferenceCode(), _portal,
-				objectFieldName));
+				objectFieldName,
+				_hasDownloadPermission(
+					fileEntryId, objectDefinition, objectEntry,
+					objectFieldName)));
 		fileEntry.setMimeType(dlFileEntry::getMimeType);
 		fileEntry.setName(dlFileEntry::getFileName);
 		fileEntry.setPreviewURL(
@@ -1196,6 +1202,28 @@ public class ObjectEntryDTOConverter
 		}
 
 		return serializable;
+	}
+
+	private boolean _hasDownloadPermission(
+			long fileEntryId, ObjectDefinition objectDefinition,
+			com.liferay.object.model.ObjectEntry objectEntry,
+			String objectFieldName)
+		throws PortalException {
+
+		PermissionChecker permissionChecker =
+			GuestOrUserUtil.getPermissionChecker();
+
+		return permissionChecker.hasPermission(
+			objectEntry.getGroupId(),
+			com.liferay.portal.kernel.repository.model.FileEntry.class.
+				getName(),
+			fileEntryId, ActionKeys.DOWNLOAD) &&
+			   _objectEntryService.hasModelResourcePermission(
+				   objectDefinition.getObjectDefinitionId(),
+				   objectEntry.getObjectEntryId(),
+				   ObjectFieldConstants.
+					   ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
+				   objectFieldName);
 	}
 
 	private boolean _hasRootModelHierarchyNestedField() {

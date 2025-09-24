@@ -197,7 +197,7 @@ public class SharedAssetDTOConverter
 					objectEntry.getGroupId(),
 					objectDefinition.getExternalReferenceCode(),
 					objectEntry.getExternalReferenceCode(), _portal,
-					objectFieldName)));
+					objectFieldName, true)));
 		fileEntry.setName(dlFileEntry::getFileName);
 		fileEntry.setThumbnailURL(
 			() -> {
