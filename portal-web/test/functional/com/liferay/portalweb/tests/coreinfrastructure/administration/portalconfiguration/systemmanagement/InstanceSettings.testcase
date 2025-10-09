@@ -39,83 +39,268 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for LPS-108998."
+	@description = "This test asserts that a user can add additional mail host name."
+	@priority = 3
+	test CanAddAdditionalMailHostName {
+		PortalSettings.gotoConfiguration(
+			configurationCategory = "Email",
+			configurationName = "Mail Host Names",
+			configurationScope = "Virtual Instance Scope");
+
+		AssertElementPresent(
+			key_fieldLabel = "Enter one mail host name",
+			locator1 = "FormFields#LABEL");
+
+		FormFields.editTextArea(
+			fieldName = "admin.mail.host.names",
+			fieldValue = "newhostname.com");
+
+		PortletEntry.save();
+
+		PortalSettings.gotoConfiguration(
+			configurationCategory = "Email",
+			configurationName = "Mail Host Names",
+			configurationScope = "Virtual Instance Scope");
+
+		FormFields.viewTextAreaValue(
+			fieldName = "admin.mail.host.names",
+			fieldValue = "newhostname.com");
+	}
+
+	@description = "This test add the contact information via appearance in Instance Configuration."
+	@priority = 3
+	test CanAddContactInformationInInstanceConfiguration {
+		PortalSettings.gotoConfiguration(
+			configurationCategory = "Instance Configuration",
+			configurationName = "Contact Information",
+			configurationScope = "Virtual Instance Scope");
+
+		for (var text : list "Street 1,Street 2,Street 3,City") {
+			var value1 = StringUtil.replace(${text}, " ", "");
+
+			Type(
+				key_text = ${text},
+				locator1 = "TextInput#ANY",
+				value1 = ${value1});
+		}
+
+		Type(
+			key_text = "Postal Code",
+			locator1 = "TextInput#ANY",
+			value1 = 116023);
+
+		Type(
+			key_text = "Number",
+			locator1 = "TextInput#ANY",
+			value1 = 041188120855);
+
+		Type(
+			key_text = "Extension",
+			locator1 = "TextInput#ANY",
+			value1 = 86);
+
+		Type(
+			key_text = "Email Address",
+			locator1 = "TextInput#ANY",
+			value1 = "testsample@liferay.com");
+
+		Type(
+			key_text = "URL",
+			locator1 = "TextInput#ANY",
+			value1 = "http://liferay.com");
+
+		Select(
+			locator1 = "Select#COUNTRY",
+			value1 = "China");
+
+		Select(
+			locator1 = "Select#REGION",
+			value1 = "Liaoning Sheng");
+
+		Select(
+			locator1 = "Select#ADDRESS_TYPE",
+			value1 = "Shipping");
+
+		PortletEntry.save();
+
+		PortalSettings.gotoConfiguration(
+			configurationCategory = "Instance Configuration",
+			configurationName = "Contact Information",
+			configurationScope = "Virtual Instance Scope");
+
+		for (var text : list "Street 1,Street 2,Street 3,City") {
+			var value1 = StringUtil.replace(${text}, " ", "");
+
+			AssertTextEquals(
+				key_text = ${text},
+				locator1 = "TextInput#ANY",
+				value1 = ${value1});
+		}
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Select#COUNTRY",
+			value1 = "China");
+
+		AssertTextEquals(
+			key_text = "Email Address",
+			locator1 = "TextInput#ANY",
+			value1 = "testsample@liferay.com");
+
+		AssertTextEquals(
+			key_text = "URL",
+			locator1 = "TextInput#ANY",
+			value1 = "http://liferay.com");
+	}
+
+	@description = "This test disable the Terms of Use via UI and assert the Terms of Use not required when a new user login."
+	@priority = 3
+	test CanChangeTheTermsOfUseNotRequired {
+		property custom.properties = "jsonws.web.service.paths.excludes=";
+
+		PortalSettings.gotoConfiguration(
+			configurationCategory = "Instance Configuration",
+			configurationName = "Terms of Use",
+			configurationScope = "Virtual Instance Scope");
+
+		FormFields.viewCheckboxChecked(fieldName = "terms-of-use-required");
+
+		FormFields.disableCheckbox(fieldName = "terms-of-use-required");
+
+		PortletEntry.save();
+
+		JSONUser.addUser(
+			userEmailAddress = "userea@liferay.com",
+			userFirstName = "userfn",
+			userLastName = "userln",
+			userScreenName = "usersn");
+
+		JSONUser.setFirstPassword(
+			requireReset = "false",
+			userEmailAddress = "userea@liferay.com");
+
+		User.logoutPG();
+
+		AssertClick(
+			locator1 = "UserBar#USER_SIGN_IN",
+			value1 = "Sign In");
+
+		Type.typePause(
+			locator1 = "TextInput#EMAIL_ADDRESS",
+			value1 = "userea@liferay.com");
+
+		TestCase.typePassword(password = PropsUtil.get("default.admin.password"));
+
+		User._clickSignInButton(localization = ${localization});
+
+		AssertElementNotPresent(locator1 = "Button#SIGN_IN");
+
+		AssertElementNotPresent(locator1 = "Button#I_AGREE");
+
+		User.answerPasswordReminder();
+
+		AssertElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE");
+	}
+
+	@description = "This test asserts that a user can change the general authentication. Like user can change the authentication way to user ID and so."
 	@priority = 4
-	test AssertEmailVerificationIsRequiredByDefault {
-		property custom.properties = "company.security.strangers.verify=true${line.separator}jsonws.web.service.paths.excludes=";
-		property osgi.module.configuration.file.names = "com.liferay.mail.settings.configuration.MailSettingSystemConfiguration.config";
-		property osgi.module.configurations = "sendBlacklist=[\"noreply@liferay.com\",\"noreply@domain.invalid\",\"test@domain.invalid\"]";
-		property test.smtp.server.enabled = "true";
+	test CanChangeUserGeneralAuthentication {
+		var userId = JSONUserSetter.setUserId(userEmailAddress = "test@liferay.com");
 
-		var portalURL = PropsUtil.get("portal.url");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Instance Settings");
-
-		SystemSettings.gotoConfiguration(
+		PortalSettings.gotoConfiguration(
 			configurationCategory = "User Authentication",
 			configurationName = "General",
 			configurationScope = "Virtual Instance Scope");
 
-		FormFields.viewCheckboxChecked(fieldName = "strangers-verify");
+		PortalSettings.editConfigurationAuthenticationGeneral(authenticationMethod = "By User ID");
 
-		PortalSettings.gotoConfiguration(
-			configurationCategory = "Email",
-			configurationName = "Email Sender",
-			configurationScope = "Virtual Instance Scope");
+		Uncheck(
+			checkboxName = "Allow strangers to create accounts with a company email address?",
+			locator1 = "Checkbox#ANY_CHECKBOX");
 
-		PortalSettings.configureEmailSender(
-			emailAddress = "test@liferay.com",
-			emailSenderName = "Joe Bloggs");
+		Button.clickSave();
 
-		for (var userNum : list "1,2") {
-			JSONUser.addUser(
-				userEmailAddress = "userea${userNum}@liferay.com",
-				userFirstName = "userfn${userNum}",
-				userLastName = "userln${userNum}",
-				userScreenName = "usersn${userNum}");
+		User.logoutPG();
 
-			JSONUser.setFirstPassword(
-				agreeToTermsAndAnswerReminderQuery = "true",
-				requireReset = "false",
-				userEmailAddress = "userea${userNum}@liferay.com");
+		Navigator.openURL();
+
+		AssertClick(
+			locator1 = "UserBar#USER_SIGN_IN",
+			value1 = "Sign In");
+
+		AssertElementPresent(
+			key_text = "ID",
+			locator1 = "TextInput#ANY");
+
+		SignInNavigator.gotoCreateAccount();
+
+		for (var text : list "Screen Name,First Name,Last Name,Password,Reenter Password") {
+			var value1 = StringUtil.replace(${text}, " ", "");
+
+			Type(
+				key_text = ${text},
+				locator1 = "TextInput#ANY",
+				value1 = ${value1});
 		}
 
-		SignOut.signOut();
+		Type(
+			key_text = "Reenter Password",
+			locator1 = "TextInput#ANY",
+			value1 = "Password");
 
-		Navigator.openSpecificURL(url = "${portalURL}/web/guest?SM_USER=userea2@liferay.com");
+		Type(
+			key_text = "Email Address",
+			locator1 = "TextInput#ANY",
+			value1 = "userEmailAddress@liferay.com");
 
-		User.verifyEmail(
-			portalURL = ${portalURL},
-			recipient = "userfn2 userln2");
+		Button.clickSave();
 
-		AssertElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE");
+		Alert.viewErrorMessage(errorMessage = "Error:The email address you requested is not valid because its domain is reserved.");
 
-		SignOut.signOut();
+		Navigator.openURL();
 
-		SignIn.signIn();
+		User.firstLoginUI(
+			authenticationMethod = "By User ID",
+			password = PropsUtil.get("default.admin.password"),
+			userId = ${userId});
 
-		Navigator.gotoAccountSettings();
+		PortalSettings.gotoConfiguration(
+			configurationCategory = "User Authentication",
+			configurationName = "General",
+			configurationScope = "Virtual Instance Scope");
 
-		User.editUserInformation(userEmailAddressEdit = "edit@liferay.com");
+		PortalSettings.editConfigurationAuthenticationGeneral(authenticationMethod = "By Email Address");
 
-		MockMock.openBodyLink(
-			asset = "${portalURL}: Email Address Verification",
-			content = "Please verify your email address for ${portalURL}",
-			portalURL = ${portalURL},
-			subject = "${portalURL}: Email Address Verification");
+		Uncheck(
+			checkboxName = "Allow users to automatically log in?",
+			locator1 = "Checkbox#ANY_CHECKBOX");
 
-		Button.clickVerifyButton();
+		Uncheck(
+			checkboxName = "Allow users to request password reset links?",
+			locator1 = "Checkbox#ANY_CHECKBOX");
 
-		User.openUsersAdmin();
+		Uncheck(
+			checkboxName = "Allow strangers to create accounts?",
+			locator1 = "Checkbox#ANY_CHECKBOX");
 
-		User.viewCP(
-			userEmailAddress = "edit@liferay.com",
-			userFirstName = "Test",
-			userLastName = "Test",
-			userScreenName = "test");
+		Button.clickSave();
+
+		User.logoutPG();
+
+		Navigator.openURL();
+
+		AssertClick(
+			locator1 = "UserBar#USER_SIGN_IN",
+			value1 = "Sign In");
+
+		AssertElementPresent(
+			key_text = "Email Address",
+			locator1 = "TextInput#ANY");
+
+		AssertElementNotPresent(locator1 = "Checkbox#REMEMBER_ME");
+
+		AssertElementNotPresent(locator1 = "Link#FORGOT_PASSWORD");
+
+		AssertElementNotPresent(locator1 = "Link#CREATE_ACCOUNT");
 	}
 
 	@description = "This test asserts that a user can add additional mail host name."
