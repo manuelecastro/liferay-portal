@@ -6,60 +6,85 @@ definition {
 	property portal.upstream = "true";
 	property testray.main.component.name = "Login";
 
-	@description = "This is a test for LPS-179689. TC-8: Verify if users cannot edit their password on the My Account page if the change password option is disabled by default policy and Facebook SSO is enabled. Blocked by LPS-173860."
-	@ignore = "true"
-	@priority = 5
-	test CannotChangePasswordWhenLoginViaFacebookSSOWithDisablePasswordChangeable {
-		property portal.ssl.enabled = "true";
-		property test.liferay.virtual.instance = "false";
-		property test.run.type = "single";
+	@description = "This is a use case for LPS-108998."
+	@priority = 4
+	test AssertEmailVerificationIsRequiredByDefault {
+		property custom.properties = "company.security.strangers.verify=true${line.separator}jsonws.web.service.paths.excludes=";
+		property osgi.module.configuration.file.names = "com.liferay.mail.settings.configuration.MailSettingSystemConfiguration.config";
+		property osgi.module.configurations = "sendBlacklist=[\"noreply@liferay.com\",\"noreply@domain.invalid\",\"test@domain.invalid\"]";
+		property test.smtp.server.enabled = "true";
 
-		var facebookApplicationId = PropsUtil.get("facebook.application.id");
-		var facebookApplicationSecret = PropsUtil.get("facebook.application.secret");
-		var facebookEmail = PropsUtil.get("facebook.email");
-		var facebookPassword = PropsUtil.get("facebook.password");
+		User.firstLoginUI();
 
-		task ("Given: Go to edit default password policy to disable password changeable and enabled Facebook SSO") {
-			User.firstLoginPG();
+		var portalURL = PropsUtil.get("portal.url");
 
-			var siteName = TestCase.getSiteName(siteName = ${siteName});
+		ApplicationsMenu.gotoPortlet(
+			category = "Configuration",
+			panel = "Control Panel",
+			portlet = "Instance Settings");
 
-			PasswordPolicies.openPasswordPoliciesAdmin();
+		SystemSettings.gotoConfiguration(
+			configurationCategory = "User Authentication",
+			configurationName = "General",
+			configurationScope = "Virtual Instance Scope");
 
-			PasswordPolicies.disableChangeable(
-				passwordPolicyName = "Default Password Policy",
-				passwordPolicyPanel = "Password Changes");
+		FormFields.viewCheckboxChecked(fieldName = "strangers-verify");
 
-			PortalSettings.gotoConfiguration(
-				baseURL = "http://localhost:8080",
-				configurationCategory = "SSO",
-				configurationName = "Facebook Connect",
-				configurationScope = "Virtual Instance Scope");
+		PortalSettings.gotoConfiguration(
+			configurationCategory = "Email",
+			configurationName = "Email Sender",
+			configurationScope = "Virtual Instance Scope");
 
-			PortalSettings.editConfigurationAuthenticationFacebook(
-				facebookApplicationId = ${facebookApplicationId},
-				facebookApplicationSecret = ${facebookApplicationSecret});
+		PortalSettings.configureEmailSender(
+			emailAddress = "test@liferay.com",
+			emailSenderName = "Joe Bloggs");
 
-			User.logoutPG();
+		for (var userNum : list "1,2") {
+			JSONUser.addUser(
+				userEmailAddress = "userea${userNum}@liferay.com",
+				userFirstName = "userfn${userNum}",
+				userLastName = "userln${userNum}",
+				userScreenName = "usersn${userNum}");
+
+			JSONUser.setFirstPassword(
+				agreeToTermsAndAnswerReminderQuery = "true",
+				requireReset = "false",
+				userEmailAddress = "userea${userNum}@liferay.com");
 		}
 
-		task ("When: Login portal using the Facebook login option and navigate to Account Settings") {
-			User.loginUserWithFacebookSSOEnabledPG(
-				baseURL = "https://localhost:8443",
-				facebookEmail = ${facebookEmail},
-				facebookPassword = ${facebookPassword},
-				siteName = ${siteName});
+		SignOut.signOut();
 
-			UserBar.gotoDropdownItem(dropdownItem = "Account Settings");
+		Navigator.openSpecificURL(url = "${portalURL}/web/guest?SM_USER=userea2@liferay.com");
 
-			UserNavigator.gotoGeneral();
-		}
+		User.verifyEmail(
+			portalURL = ${portalURL},
+			recipient = "userfn2 userln2");
 
-		task ("Then: Assert there is no Password menu item at the General tab") {
-			AssertElementNotPresent(
-				key_navNested = "Password",
-				locator1 = "NavNested#NAV_NESTED_LINK");
-		}
+		AssertElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE");
+
+		SignOut.signOut();
+
+		SignIn.signIn();
+
+		Navigator.gotoAccountSettings();
+
+		User.editUserInformation(userEmailAddressEdit = "edit@liferay.com");
+
+		MockMock.openBodyLink(
+			asset = "${portalURL}: Email Address Verification",
+			content = "Please verify your email address for ${portalURL}",
+			portalURL = ${portalURL},
+			subject = "${portalURL}: Email Address Verification");
+
+		Button.clickVerifyButton();
+
+		User.openUsersAdmin();
+
+		User.viewCP(
+			userEmailAddress = "edit@liferay.com",
+			userFirstName = "Test",
+			userLastName = "Test",
+			userScreenName = "test");
 	}
 
 	@description = "This test asserts that a user can change the general authentication. Like user can change the authentication way to user ID and so."
@@ -166,85 +191,60 @@ definition {
 		AssertElementNotPresent(locator1 = "Link#CREATE_ACCOUNT");
 	}
 
-	@description = "This is a use case for LPS-108998."
-	@priority = 4
-	test AssertEmailVerificationIsRequiredByDefault {
-		property custom.properties = "company.security.strangers.verify=true${line.separator}jsonws.web.service.paths.excludes=";
-		property osgi.module.configuration.file.names = "com.liferay.mail.settings.configuration.MailSettingSystemConfiguration.config";
-		property osgi.module.configurations = "sendBlacklist=[\"noreply@liferay.com\",\"noreply@domain.invalid\",\"test@domain.invalid\"]";
-		property test.smtp.server.enabled = "true";
+	@description = "This is a test for LPS-179689. TC-8: Verify if users cannot edit their password on the My Account page if the change password option is disabled by default policy and Facebook SSO is enabled. Blocked by LPS-173860."
+	@ignore = "true"
+	@priority = 5
+	test CannotChangePasswordWhenLoginViaFacebookSSOWithDisablePasswordChangeable {
+		property portal.ssl.enabled = "true";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		User.firstLoginUI();
+		var facebookApplicationId = PropsUtil.get("facebook.application.id");
+		var facebookApplicationSecret = PropsUtil.get("facebook.application.secret");
+		var facebookEmail = PropsUtil.get("facebook.email");
+		var facebookPassword = PropsUtil.get("facebook.password");
 
-		var portalURL = PropsUtil.get("portal.url");
+		task ("Given: Go to edit default password policy to disable password changeable and enabled Facebook SSO") {
+			User.firstLoginPG();
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Instance Settings");
+			var siteName = TestCase.getSiteName(siteName = ${siteName});
 
-		SystemSettings.gotoConfiguration(
-			configurationCategory = "User Authentication",
-			configurationName = "General",
-			configurationScope = "Virtual Instance Scope");
+			PasswordPolicies.openPasswordPoliciesAdmin();
 
-		FormFields.viewCheckboxChecked(fieldName = "strangers-verify");
+			PasswordPolicies.disableChangeable(
+				passwordPolicyName = "Default Password Policy",
+				passwordPolicyPanel = "Password Changes");
 
-		PortalSettings.gotoConfiguration(
-			configurationCategory = "Email",
-			configurationName = "Email Sender",
-			configurationScope = "Virtual Instance Scope");
+			PortalSettings.gotoConfiguration(
+				baseURL = "http://localhost:8080",
+				configurationCategory = "SSO",
+				configurationName = "Facebook Connect",
+				configurationScope = "Virtual Instance Scope");
 
-		PortalSettings.configureEmailSender(
-			emailAddress = "test@liferay.com",
-			emailSenderName = "Joe Bloggs");
+			PortalSettings.editConfigurationAuthenticationFacebook(
+				facebookApplicationId = ${facebookApplicationId},
+				facebookApplicationSecret = ${facebookApplicationSecret});
 
-		for (var userNum : list "1,2") {
-			JSONUser.addUser(
-				userEmailAddress = "userea${userNum}@liferay.com",
-				userFirstName = "userfn${userNum}",
-				userLastName = "userln${userNum}",
-				userScreenName = "usersn${userNum}");
-
-			JSONUser.setFirstPassword(
-				agreeToTermsAndAnswerReminderQuery = "true",
-				requireReset = "false",
-				userEmailAddress = "userea${userNum}@liferay.com");
+			User.logoutPG();
 		}
 
-		SignOut.signOut();
+		task ("When: Login portal using the Facebook login option and navigate to Account Settings") {
+			User.loginUserWithFacebookSSOEnabledPG(
+				baseURL = "https://localhost:8443",
+				facebookEmail = ${facebookEmail},
+				facebookPassword = ${facebookPassword},
+				siteName = ${siteName});
 
-		Navigator.openSpecificURL(url = "${portalURL}/web/guest?SM_USER=userea2@liferay.com");
+			UserBar.gotoDropdownItem(dropdownItem = "Account Settings");
 
-		User.verifyEmail(
-			portalURL = ${portalURL},
-			recipient = "userfn2 userln2");
+			UserNavigator.gotoGeneral();
+		}
 
-		AssertElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE");
-
-		SignOut.signOut();
-
-		SignIn.signIn();
-
-		Navigator.gotoAccountSettings();
-
-		User.editUserInformation(userEmailAddressEdit = "edit@liferay.com");
-
-		MockMock.openBodyLink(
-			asset = "${portalURL}: Email Address Verification",
-			content = "Please verify your email address for ${portalURL}",
-			portalURL = ${portalURL},
-			subject = "${portalURL}: Email Address Verification");
-
-		Button.clickVerifyButton();
-
-		User.openUsersAdmin();
-
-		User.viewCP(
-			userEmailAddress = "edit@liferay.com",
-			userFirstName = "Test",
-			userLastName = "Test",
-			userScreenName = "test");
+		task ("Then: Assert there is no Password menu item at the General tab") {
+			AssertElementNotPresent(
+				key_navNested = "Password",
+				locator1 = "NavNested#NAV_NESTED_LINK");
+		}
 	}
 
 	@description = "This is a use case for LPS-39744 and LPS-78508. Default landing page could be set by property and user is redirected to the changed landing page."
