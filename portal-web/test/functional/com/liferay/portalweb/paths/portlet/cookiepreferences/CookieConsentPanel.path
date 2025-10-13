@@ -81,8 +81,8 @@
 	<td></td>
 </tr>
 <tr>
-	<td>CONFIRM_BUTTON</td>
-	<td>//div[contains(@id,'cookiesBannerConfiguration')]//button[contains(.,'Confirm')]</td>
+	<td>ACCEPT_SELECTED_BUTTON</td>
+	<td>//div[contains(@id,'cookiesBannerConfiguration')]//button[contains(.,'Accept Selected')]</td>
 	<td></td>
 </tr>
 <tr>

@@ -49,7 +49,7 @@ definition {
 	macro cookiesConfirmSelected() {
 		CookieConsentPanel._selectPanelOuterFrame();
 
-		Click(locator1 = "CookieConsentPanel#CONFIRM_BUTTON");
+		Click(locator1 = "CookieConsentPanel#ACCEPT_SELECTED_BUTTON");
 	}
 
 	@description = "Decline all cookies on Cookie Consent Panel"
@@ -92,8 +92,8 @@ definition {
 		Check.checkToggleSwitch(locator1 = "CookieConsentPanel#PERSONALIZATION_COOKIES_TOGGLE");
 
 		AssertClick(
-			locator1 = "CookieConsentPanel#CONFIRM_BUTTON",
-			value1 = "Confirm");
+			locator1 = "CookieConsentPanel#ACCEPT_SELECTED_BUTTON",
+			value1 = "Accept Selected");
 	}
 
 	@description = "Verify that all Cookie Consent portlet elements are present on the Cookie Consent Popup"
@@ -109,7 +109,7 @@ definition {
 
 		WaitForElementPresent(locator1 = "CookieConsentPanel#DECLINE_ALL_BUTTON");
 
-		WaitForElementPresent(locator1 = "CookieConsentPanel#CONFIRM_BUTTON");
+		WaitForElementPresent(locator1 = "CookieConsentPanel#ACCEPT_SELECTED_BUTTON");
 
 		WaitForElementPresent(locator1 = "CookieConsentPanel#ACCEPT_ALL_BUTTON");
 
@@ -127,7 +127,7 @@ definition {
 
 		WaitForElementPresent(locator1 = "CookieConsentPanel#DECLINE_ALL_BUTTON");
 
-		WaitForElementPresent(locator1 = "CookieConsentPanel#CONFIRM_BUTTON");
+		WaitForElementPresent(locator1 = "CookieConsentPanel#ACCEPT_SELECTED_BUTTON");
 
 		WaitForElementPresent(locator1 = "CookieConsentPanel#ACCEPT_ALL_BUTTON");
 	}
