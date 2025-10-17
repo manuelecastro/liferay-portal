@@ -152,25 +152,22 @@ public class AttachmentObjectFieldDownloadFilterTest {
 
 	@Test
 	public void testProcessFilter() throws Exception {
-		String objectFieldActionId =
-			ObjectFieldConstants.ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
-				_objectField.getName();
+		String actionId = _objectField.getAttachmentDownloadActionKey();
 
 		Assert.assertFalse(
 			_permissionChecker.hasPermission(
 				_user.getGroupId(), _objectDefinition.getClassName(),
-				_objectEntry.getObjectEntryId(), objectFieldActionId));
+				_objectEntry.getObjectEntryId(), actionId));
 
 		_testHttpURLConnection(HttpServletResponse.SC_NOT_FOUND);
 
 		_testProcessFilter(
 			HttpServletResponse.SC_NOT_FOUND, new String[] {ActionKeys.VIEW});
 		_testProcessFilter(
-			HttpServletResponse.SC_NOT_FOUND,
-			new String[] {objectFieldActionId});
+			HttpServletResponse.SC_NOT_FOUND, new String[] {actionId});
 		_testProcessFilter(
 			HttpServletResponse.SC_OK,
-			new String[] {ActionKeys.VIEW, objectFieldActionId});
+			new String[] {ActionKeys.VIEW, actionId});
 
 		_resourcePermissionLocalService.setResourcePermissions(
 			_company.getCompanyId(), DLFileEntry.class.getName(),
