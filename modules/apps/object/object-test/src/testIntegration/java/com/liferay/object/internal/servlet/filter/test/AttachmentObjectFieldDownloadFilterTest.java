@@ -215,7 +215,7 @@ public class AttachmentObjectFieldDownloadFilterTest {
 					_dlURLHelper, _fileEntry, 0,
 					_objectDefinition.getExternalReferenceCode(),
 					_objectEntry.getExternalReferenceCode(),
-					_objectField.getName(), _themeDisplay)));
+					_objectField.getExternalReferenceCode(), _themeDisplay)));
 
 		httpURLConnection.connect();
 
