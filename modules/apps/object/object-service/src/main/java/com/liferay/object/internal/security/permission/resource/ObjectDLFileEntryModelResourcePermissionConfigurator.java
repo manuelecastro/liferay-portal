@@ -61,10 +61,15 @@ public class ObjectDLFileEntryModelResourcePermissionConfigurator
 				HttpServletRequest httpServletRequest =
 					serviceContext.getRequest();
 
+				boolean download = ParamUtil.getBoolean(
+					httpServletRequest, "download");
+
 				String objectFieldExternalReferenceCode = ParamUtil.getString(
 					httpServletRequest, "objectFieldExternalReferenceCode");
 
-				if (Validator.isNotNull(objectFieldExternalReferenceCode)) {
+				if (download &&
+					Validator.isNotNull(objectFieldExternalReferenceCode)) {
+
 					long companyId = PortalUtil.getCompanyId(
 						httpServletRequest);
 
@@ -122,13 +127,18 @@ public class ObjectDLFileEntryModelResourcePermissionConfigurator
 								getModelResourcePermission(
 									objectDefinition.getClassName());
 
-					return objectEntryModelResourcePermission.contains(
-						permissionChecker, objectEntry.getObjectEntryId(),
-						ActionKeys.VIEW) &&
-						   objectEntryModelResourcePermission.contains(
-							   permissionChecker,
-							   objectEntry.getObjectEntryId(),
-							   objectField.getAttachmentDownloadActionKey());
+					if ((objectEntryModelResourcePermission == null) ||
+						(objectEntryModelResourcePermission.contains(
+							permissionChecker, objectEntry.getObjectEntryId(),
+							ActionKeys.VIEW) &&
+						 objectEntryModelResourcePermission.contains(
+							 permissionChecker, objectEntry.getObjectEntryId(),
+							 objectField.getAttachmentDownloadActionKey()))) {
+
+						return null;
+					}
+
+					return false;
 				}
 
 				return null;
