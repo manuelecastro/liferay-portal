@@ -64,12 +64,14 @@ public class ObjectDLFileEntryModelResourcePermissionConfigurator
 				boolean download = ParamUtil.getBoolean(
 					httpServletRequest, "download");
 
+				if (!download) {
+					return null;
+				}
+
 				String objectFieldExternalReferenceCode = ParamUtil.getString(
 					httpServletRequest, "objectFieldExternalReferenceCode");
 
-				if (download &&
-					Validator.isNotNull(objectFieldExternalReferenceCode)) {
-
+				if (Validator.isNotNull(objectFieldExternalReferenceCode)) {
 					long companyId = PortalUtil.getCompanyId(
 						httpServletRequest);
 
