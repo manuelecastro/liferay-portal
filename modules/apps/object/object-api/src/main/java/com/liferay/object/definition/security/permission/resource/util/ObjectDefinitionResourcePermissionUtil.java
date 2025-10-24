@@ -123,11 +123,11 @@ public class ObjectDefinitionResourcePermissionUtil {
 			ObjectFieldLocalService objectFieldLocalService)
 		throws Exception {
 
-		if (attachmentObjectFields == null) {
-			if (objectFieldLocalService == null) {
-				return null;
-			}
+		if (objectFieldLocalService == null) {
+			return null;
+		}
 
+		if (attachmentObjectFields == null) {
 			attachmentObjectFields =
 				objectFieldLocalService.getObjectFieldsByBusinessType(
 					objectDefinitionId,
