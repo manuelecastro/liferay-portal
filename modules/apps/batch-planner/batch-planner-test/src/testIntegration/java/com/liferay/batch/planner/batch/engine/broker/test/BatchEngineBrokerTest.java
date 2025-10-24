@@ -796,7 +796,7 @@ public class BatchEngineBrokerTest {
 
 		Link link = LinkUtil.toLink(
 			_dlAppService, dlFileEntry, _dlURLHelper, groupId, true,
-			objectDefinitionERC, objectEntryERC, null, _portal);
+			objectDefinitionERC, objectEntryERC, _OBJECT_FIELD_ERC, _portal);
 
 		template = StringUtil.replace(
 			template,
@@ -926,7 +926,7 @@ public class BatchEngineBrokerTest {
 		Link link = LinkUtil.toLink(
 			_dlAppService, dlFileEntry, _dlURLHelper,
 			GetterUtil.getLong(groupId), true, objectDefinitionERC,
-			objectEntryERC, null, _portal);
+			objectEntryERC, _OBJECT_FIELD_ERC, _portal);
 
 		String scopeKey = null;
 
@@ -1175,7 +1175,7 @@ public class BatchEngineBrokerTest {
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				user.getUserId(), 0, null, false, true, false, true, true,
+				user.getUserId(), 0, null, false, true, false, true, false,
 				false, false, false, false, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				name, null, null,
@@ -1184,6 +1184,8 @@ public class BatchEngineBrokerTest {
 				Collections.emptyList(),
 				Arrays.asList(
 					new AttachmentObjectFieldBuilder(
+					).externalReferenceCode(
+						_OBJECT_FIELD_ERC
 					).labelMap(
 						LocalizedMapUtil.getLocalizedMap(
 							RandomTestUtil.randomString())
@@ -1584,6 +1586,8 @@ public class BatchEngineBrokerTest {
 	private static final String _OBJECT_ENTRY_ERC_2 = "TEST-OBJECT-ENTRY-2";
 
 	private static final String _OBJECT_ENTRY_ERC_3 = "TEST-OBJECT-ENTRY-3";
+
+	private static final String _OBJECT_FIELD_ERC = "TEST-OBJECT-FIELD";
 
 	private static final List<String> _objectDefinitionExportCSVFieldNames =
 		Arrays.asList(
