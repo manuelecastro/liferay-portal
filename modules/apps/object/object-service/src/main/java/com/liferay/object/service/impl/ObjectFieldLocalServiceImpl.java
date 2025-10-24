@@ -215,13 +215,11 @@ public class ObjectFieldLocalServiceImpl
 		throws PortalException {
 
 		for (Locale locale : _language.getAvailableLocales()) {
-			String languageId = LocaleUtil.toLanguageId(locale);
-
 			String actionId = objectField.getAttachmentDownloadActionKey();
 
 			_ploEntryLocalService.addOrUpdatePLOEntry(
 				objectField.getCompanyId(), objectField.getUserId(),
-				"action." + actionId, languageId,
+				"action." + actionId, LocaleUtil.toLanguageId(locale),
 				_language.format(
 					locale, "download-x", objectField.getLabel(locale)));
 		}
