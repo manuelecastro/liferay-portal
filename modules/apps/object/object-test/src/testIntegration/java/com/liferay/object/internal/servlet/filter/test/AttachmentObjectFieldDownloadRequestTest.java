@@ -76,7 +76,7 @@ import org.junit.runner.RunWith;
  */
 @FeatureFlag("LPD-17564")
 @RunWith(Arquillian.class)
-public class AttachmentObjectFieldDownloadFilterTest {
+public class AttachmentObjectFieldDownloadRequestTest {
 
 	@ClassRule
 	@Rule
@@ -109,6 +109,8 @@ public class AttachmentObjectFieldDownloadFilterTest {
 					"100"
 				).build()),
 			false);
+
+		_objectField.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		_objectDefinition = ObjectDefinitionTestUtil.publishObjectDefinition(
 			Collections.singletonList(_objectField));
@@ -151,7 +153,7 @@ public class AttachmentObjectFieldDownloadFilterTest {
 	}
 
 	@Test
-	public void testProcessFilter() throws Exception {
+	public void testDownloadRequest() throws Exception {
 		String actionId = _objectField.getAttachmentDownloadActionKey();
 
 		Assert.assertFalse(
@@ -161,11 +163,11 @@ public class AttachmentObjectFieldDownloadFilterTest {
 
 		_testHttpURLConnection(HttpServletResponse.SC_NOT_FOUND);
 
-		_testProcessFilter(
+		_testDownloadRequest(
 			HttpServletResponse.SC_NOT_FOUND, new String[] {ActionKeys.VIEW});
-		_testProcessFilter(
+		_testDownloadRequest(
 			HttpServletResponse.SC_NOT_FOUND, new String[] {actionId});
-		_testProcessFilter(
+		_testDownloadRequest(
 			HttpServletResponse.SC_OK,
 			new String[] {ActionKeys.VIEW, actionId});
 
@@ -205,6 +207,15 @@ public class AttachmentObjectFieldDownloadFilterTest {
 		return httpURLConnection;
 	}
 
+	private void _testDownloadRequest(
+			int expectedStatusCode, String[] permissions)
+		throws Exception {
+
+		_testPermissions(permissions);
+
+		_testHttpURLConnection(expectedStatusCode);
+	}
+
 	private void _testHttpURLConnection(int expectedStatusCode)
 		throws Exception {
 
@@ -225,30 +236,21 @@ public class AttachmentObjectFieldDownloadFilterTest {
 		httpURLConnection.disconnect();
 	}
 
-	private void _testPermissions(String[] permissions) throws Exception {
+	private void _testPermissions(String[] actionIds) throws Exception {
 		_resourcePermissionLocalService.setResourcePermissions(
 			_company.getCompanyId(), _objectDefinition.getClassName(),
 			ResourceConstants.SCOPE_INDIVIDUAL,
 			String.valueOf(_objectEntry.getObjectEntryId()), _role.getRoleId(),
-			permissions);
+			actionIds);
 
 		PermissionCacheUtil.clearCache(_user.getUserId());
 
-		for (String permission : permissions) {
+		for (String actionId : actionIds) {
 			Assert.assertTrue(
 				_permissionChecker.hasPermission(
 					_user.getGroupId(), _objectDefinition.getClassName(),
-					_objectEntry.getObjectEntryId(), permission));
+					_objectEntry.getObjectEntryId(), actionId));
 		}
-	}
-
-	private void _testProcessFilter(
-			int expectedStatusCode, String[] permissions)
-		throws Exception {
-
-		_testPermissions(permissions);
-
-		_testHttpURLConnection(expectedStatusCode);
 	}
 
 	private Company _company;
