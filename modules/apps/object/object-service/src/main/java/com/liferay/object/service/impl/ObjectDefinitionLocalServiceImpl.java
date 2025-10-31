@@ -695,7 +695,7 @@ public class ObjectDefinitionLocalServiceImpl
 
 				ObjectDefinitionResourcePermissionUtil.removeResourceActions(
 					_objectActionLocalService, objectDefinition,
-					_resourceActions);
+					_objectFieldLocalService, _resourceActions);
 			}
 			catch (Exception exception) {
 				throw new PortalException(exception);
@@ -1057,7 +1057,7 @@ public class ObjectDefinitionLocalServiceImpl
 				_accountEntryOrganizationRelLocalService,
 				_assetEntryLocalService, _bundleContext,
 				_dynamicQueryBatchIndexingActionableFactory, _groupLocalService,
-				_kaleoDefinitionLocalService, _listTypeLocalService,
+				_kaleoDefinitionLocalService, _language, _listTypeLocalService,
 				_objectActionLocalService, objectDefinitionLocalService,
 				_objectDefinitionSettingLocalService,
 				_objectEntryFolderLocalService, _objectEntryLocalService,
