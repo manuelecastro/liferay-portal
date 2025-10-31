@@ -95,6 +95,7 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.language.override.service.PLOEntryLocalService;
 
 import java.io.Serializable;
 
@@ -197,6 +198,22 @@ public class ObjectFieldLocalServiceImpl
 			indexedAsKeyword, indexedLanguageId, labelMap, localized, name,
 			readOnly, readOnlyConditionExpression, required, state,
 			objectFieldSettings);
+	}
+
+	@Override
+	public void addOrUpdateObjectFieldResourceActionPLOEntries(
+			ObjectField objectField)
+		throws PortalException {
+
+		for (Locale locale : _language.getAvailableLocales()) {
+			String actionId = objectField.getAttachmentDownloadActionKey();
+
+			_ploEntryLocalService.addOrUpdatePLOEntry(
+				objectField.getCompanyId(), objectField.getUserId(),
+				"action." + actionId, LocaleUtil.toLanguageId(locale),
+				_language.format(
+					locale, "download-x", objectField.getLabel(locale)));
+		}
 	}
 
 	@Indexable(type = IndexableType.REINDEX)
@@ -1999,6 +2016,9 @@ public class ObjectFieldLocalServiceImpl
 
 	@Reference
 	private ObjectViewLocalService _objectViewLocalService;
+
+	@Reference
+	private PLOEntryLocalService _ploEntryLocalService;
 
 	private final Set<String> _readOnlyObjectFieldNames = SetUtil.fromArray(
 		"createDate", "creator", "id", "modifiedDate", "status");
