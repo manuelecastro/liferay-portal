@@ -697,7 +697,7 @@ public class ObjectDefinitionLocalServiceImpl
 					objectDefinition.getCompanyId())) {
 
 				ObjectDefinitionResourcePermissionUtil.removeResourceActions(
-					_objectActionLocalService, objectDefinition,
+					_objectActionLocalService, objectDefinition, null,
 					_resourceActions);
 			}
 			catch (Exception exception) {

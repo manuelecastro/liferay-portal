@@ -285,9 +285,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 
 		try {
 			ObjectDefinitionResourcePermissionUtil.populateResourceActions(
-				_objectActionLocalService, objectDefinition,
-				_portletLocalService, _resourceActions,
-				standaloneObjectActions);
+				_objectActionLocalService, standaloneObjectActions,
+				objectDefinition, null, null, _portletLocalService,
+				_resourceActions);
 		}
 		catch (Exception exception) {
 			return ReflectionUtil.throwException(exception);
