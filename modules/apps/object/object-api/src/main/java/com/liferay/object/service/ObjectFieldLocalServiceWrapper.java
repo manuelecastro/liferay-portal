@@ -87,6 +87,14 @@ public class ObjectFieldLocalServiceWrapper
 	}
 
 	@Override
+	public void addOrUpdateObjectFieldPLOEntries(
+			com.liferay.object.model.ObjectField objectField)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_objectFieldLocalService.addOrUpdateObjectFieldPLOEntries(objectField);
+	}
+
+	@Override
 	public com.liferay.object.model.ObjectField addOrUpdateSystemObjectField(
 			String externalReferenceCode, long userId,
 			long listTypeDefinitionId, long objectDefinitionId,
