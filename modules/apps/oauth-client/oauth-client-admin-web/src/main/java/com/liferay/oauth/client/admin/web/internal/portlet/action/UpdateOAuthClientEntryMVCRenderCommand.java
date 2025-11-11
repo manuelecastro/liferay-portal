@@ -8,11 +8,13 @@ package com.liferay.oauth.client.admin.web.internal.portlet.action;
 import com.liferay.oauth.client.admin.web.internal.constants.OAuthClientAdminPortletKeys;
 import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
 import com.liferay.oauth.client.persistence.service.OAuthClientEntryService;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -20,8 +22,12 @@ import com.liferay.portal.kernel.util.WebKeys;
 import jakarta.portlet.RenderRequest;
 import jakarta.portlet.RenderResponse;
 
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+
+import java.util.Objects;
 
 /**
  * @author Arthur Chan
@@ -52,11 +58,35 @@ public class UpdateOAuthClientEntryMVCRenderCommand
 					(ThemeDisplay)renderRequest.getAttribute(
 						WebKeys.THEME_DISPLAY);
 
-				renderRequest.setAttribute(
-					OAuthClientEntry.class.getName(),
+				OAuthClientEntry oAuthClientEntry =
 					_oAuthClientEntryService.getOAuthClientEntry(
 						themeDisplay.getCompanyId(), authServerWellKnownURI,
-						clientId));
+						clientId);
+
+				renderRequest.setAttribute(
+					OAuthClientEntry.class.getName(),
+					oAuthClientEntry);
+
+				Configuration[] configurations = null;
+
+				String filterString = StringBundler.concat(
+					"(&(companyId=", oAuthClientEntry.getCompanyId(), ")(discoveryEndpoint=",
+					authServerWellKnownURI, ")(openIdConnectClientId=", clientId,
+					"))");
+
+				try {
+					configurations = _configurationAdmin.listConfigurations(
+						filterString);
+				}
+				catch (Exception exception) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(exception);
+					}
+				}
+
+				boolean isOIDC = ArrayUtil.isNotEmpty(configurations);
+
+				renderRequest.setAttribute("isOIDC", isOIDC);
 			}
 		}
 		catch (PortalException portalException) {
@@ -70,6 +100,9 @@ public class UpdateOAuthClientEntryMVCRenderCommand
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		UpdateOAuthClientEntryMVCRenderCommand.class);
+
+	@Reference
+	private ConfigurationAdmin _configurationAdmin;
 
 	@Reference
 	private OAuthClientEntryService _oAuthClientEntryService;

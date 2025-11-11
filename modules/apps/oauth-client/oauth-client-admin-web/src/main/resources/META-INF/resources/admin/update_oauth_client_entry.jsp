@@ -12,6 +12,8 @@ String redirect = ParamUtil.getString(request, "redirect");
 
 OAuthClientEntry oAuthClientEntry = (OAuthClientEntry)request.getAttribute(OAuthClientEntry.class.getName());
 
+boolean isOIDC = (boolean)request.getAttribute("isOIDC");
+
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(redirect);
 
@@ -54,12 +56,13 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 
 				<h3 class="sheet-subtitle"><liferay-ui:message key="oauth-client-configurations" /></h3>
 
-				<aui:input helpMessage="oauth-client-as-well-known-uri-help" label="oauth-client-as-well-known-uri" name="authServerWellKnownURI" type="text" />
+				<aui:input disabled="<%= isOIDC %>" helpMessage="oauth-client-as-well-known-uri-help" label="oauth-client-as-well-known-uri" name="authServerWellKnownURI" type="text" />
 
-				<aui:input helpMessage="metadata-cache-time-help" label="metadata-cache-time" name="metadataCacheTime" type="text" value="<%= (oAuthClientEntry != null) ? oAuthClientEntry.getMetadataCacheTime() : OAuthClientEntryConstants.METADATA_CACHE_TIME_DEFAULT %>" />
+				<aui:input disabled="<%= isOIDC %>" helpMessage="metadata-cache-time-help" label="metadata-cache-time" name="metadataCacheTime" type="text" value="<%= (oAuthClientEntry != null) ? oAuthClientEntry.getMetadataCacheTime() : OAuthClientEntryConstants.METADATA_CACHE_TIME_DEFAULT %>" />
 
 				<aui:input
 					cssClass="client-info-textarea"
+					disabled="<%= isOIDC %>"
 					helpMessage="oauth-client-info-json-help"
 					label="oauth-client-info-json"
 					name="infoJSON"
@@ -81,10 +84,11 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 					%>'
 				/>
 
-				<aui:input name="oAuthClientEntryId" type="hidden" value="<%= (oAuthClientEntry != null) ? oAuthClientEntry.getOAuthClientEntryId() : 0 %>" />
+				<aui:input disabled="<%= isOIDC %>" name="oAuthClientEntryId" type="hidden" value="<%= (oAuthClientEntry != null) ? oAuthClientEntry.getOAuthClientEntryId() : 0 %>" />
 
 				<aui:input
 					cssClass="request-parameters-textarea"
+					disabled="<%= isOIDC %>"
 					helpMessage='<%= LanguageUtil.format(request, "oauth-client-default-auth-request-parameters-json-help", "https://www.iana.org/assignments/oauth-parameters", false) %>'
 					label="oauth-client-default-auth-request-parameters-json"
 					name="authRequestParametersJSON"
@@ -104,6 +108,7 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 
 				<aui:input
 					cssClass="request-parameters-textarea"
+					disabled="<%= isOIDC %>"
 					helpMessage='<%= LanguageUtil.format(request, "oauth-client-default-token-request-parameters-json-help", "https://www.iana.org/assignments/oauth-parameters", false) %>'
 					label="oauth-client-default-token-request-parameters-json"
 					name="tokenRequestParametersJSON"
@@ -119,12 +124,18 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 
 				<h3 class="sheet-subtitle"><liferay-ui:message key="oauth-client-oidc-specific-configurations" /></h3>
 
-				<aui:input cssClass="info-mapper-textarea" helpMessage="oauth-client-oidc-user-info-mapper-json-help" label="oauth-client-oidc-user-info-mapper-json" name="OIDCUserInfoMapperJSON" type="textarea" value="<%= OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON %>" />
-
-				<aui:button-row>
-					<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "doSubmit();" %>' type="submit" />
-					<aui:button href="<%= redirect %>" type="cancel" />
-				</aui:button-row>
+				<aui:input cssClass="info-mapper-textarea" disabled="<%= isOIDC %>" helpMessage="oauth-client-oidc-user-info-mapper-json-help" label="oauth-client-oidc-user-info-mapper-json" name="OIDCUserInfoMapperJSON" type="textarea" value="<%= OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON %>" />
+				<c:choose>
+					<c:when test='<%= isOIDC %>'>
+						<h3>"OpenID Connect clients should be edited via Instance Settings panel"</h3>
+					</c:when>
+					<c:otherwise>
+						<aui:button-row>
+							<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "doSubmit();" %>' type="submit" />
+							<aui:button href="<%= redirect %>" type="cancel" />
+						</aui:button-row>
+					</c:otherwise>
+				</c:choose>
 			</aui:fieldset>
 		</div>
 	</clay:container-fluid>
