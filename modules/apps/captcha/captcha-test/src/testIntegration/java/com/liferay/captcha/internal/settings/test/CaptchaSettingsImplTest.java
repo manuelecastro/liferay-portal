@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -39,6 +40,8 @@ public class CaptchaSettingsImplTest {
 	@Test
 	public void test() throws Exception {
 		Company company = CompanyTestUtil.addCompany(false);
+		String captchaEnforceDisabled = PropsUtil.get(
+			"captcha.enforce.disabled");
 
 		try (CompanyConfigurationTemporarySwapper
 				companyConfigurationTemporarySwapper1 =
@@ -47,7 +50,7 @@ public class CaptchaSettingsImplTest {
 						CaptchaConfiguration.class.getName(),
 						new HashMapDictionaryBuilder(
 						).<String, Object>put(
-							"createAccountCaptchaEnabled", true
+							"messageBoardsEditMessageCaptchaEnabled", true
 						).build());
 			CompanyConfigurationTemporarySwapper
 				companyConfigurationTemporarySwapper2 =
@@ -56,19 +59,24 @@ public class CaptchaSettingsImplTest {
 						CaptchaConfiguration.class.getName(),
 						new HashMapDictionaryBuilder(
 						).<String, Object>put(
-							"createAccountCaptchaEnabled", false
+							"messageBoardsEditMessageCaptchaEnabled", false
 						).build())) {
 
+			PropsUtil.set("captcha.enforce.disabled", "false");
 			Assert.assertFalse(
-				_captchaSettings.isCreateAccountCaptchaEnabled());
+				_captchaSettings.isMessageBoardsEditMessageCaptchaEnabled());
 
 			try (SafeCloseable safeCloseable =
 					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 						company.getCompanyId())) {
 
 				Assert.assertTrue(
-					_captchaSettings.isCreateAccountCaptchaEnabled());
+					_captchaSettings.
+						isMessageBoardsEditMessageCaptchaEnabled());
 			}
+		}
+		finally {
+			PropsUtil.set("captcha.enforce.disabled", captchaEnforceDisabled);
 		}
 	}
 
