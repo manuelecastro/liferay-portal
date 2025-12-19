@@ -8,6 +8,7 @@ package com.liferay.captcha.internal.settings.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.captcha.configuration.CaptchaConfiguration;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.captcha.CaptchaSettings;
 import com.liferay.portal.kernel.model.Company;
@@ -41,16 +42,7 @@ public class CaptchaSettingsImplTest {
 		Company company = CompanyTestUtil.addCompany(false);
 
 		try (CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper1 =
-					new CompanyConfigurationTemporarySwapper(
-						company.getCompanyId(),
-						CaptchaConfiguration.class.getName(),
-						new HashMapDictionaryBuilder(
-						).<String, Object>put(
-							"createAccountCaptchaEnabled", true
-						).build());
-			CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper2 =
+				companyConfigurationTemporarySwapper =
 					new CompanyConfigurationTemporarySwapper(
 						TestPropsValues.getCompanyId(),
 						CaptchaConfiguration.class.getName(),
@@ -66,6 +58,16 @@ public class CaptchaSettingsImplTest {
 					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 						company.getCompanyId())) {
 
+				_configurationProvider.saveCompanyConfiguration(
+					company.getCompanyId(),
+					CaptchaConfiguration.class.getName(),
+					new HashMapDictionaryBuilder(
+					).<String, Object>put(
+						"createAccountCaptchaEnabled", true
+					).build());
+
+				Thread.sleep(10000);
+
 				Assert.assertTrue(
 					_captchaSettings.isCreateAccountCaptchaEnabled());
 			}
@@ -74,5 +76,8 @@ public class CaptchaSettingsImplTest {
 
 	@Inject
 	private CaptchaSettings _captchaSettings;
+
+	@Inject
+	private ConfigurationProvider _configurationProvider;
 
 }
