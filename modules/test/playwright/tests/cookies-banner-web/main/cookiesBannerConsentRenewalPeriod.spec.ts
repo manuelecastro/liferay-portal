@@ -45,15 +45,13 @@ test.beforeEach(async ({page, systemSettingsPage}) => {
 	await test.step('Enable Cookie Manager', async () => {
 		await systemSettingsPage.goToSystemSetting('Privacy', 'Cookie Manager');
 
-		const enabledButton = page.getByLabel('Enabled');
+		await page
+			.getByText('Explicit Cookie Consent Mode')
+			.waitFor({state: 'visible'});
 
-		await enabledButton.waitFor({state: 'visible'});
+		await page.getByLabel('Enabled').setChecked(true);
 
-		await page.waitForLoadState();
-
-		await enabledButton.setChecked(true);
-
-		await page.getByRole('button', {name: 'Save'}).click();
+		await page.getByRole('button', {name: /save|update/i}).click();
 
 		await waitForAlert(page);
 	});

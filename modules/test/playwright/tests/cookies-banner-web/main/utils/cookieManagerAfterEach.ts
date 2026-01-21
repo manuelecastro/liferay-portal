@@ -51,7 +51,11 @@ export async function resetAllCookieManagerConfigurations(systemSettingsPage) {
 export async function resetCookieManagerConfiguration(systemSettingsPage) {
 	await systemSettingsPage.goToSystemSetting('Privacy', 'Cookie Manager');
 
-	await systemSettingsPage.page.waitForLoadState();
+	const consentRenewalPeriodField = systemSettingsPage.page.getByLabel(
+		'Consent Renewal Period'
+	);
+
+	await consentRenewalPeriodField.waitFor({state: 'visible'});
 
 	if (
 		await systemSettingsPage.page

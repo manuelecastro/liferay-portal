@@ -22,6 +22,8 @@ const cookieKeys = [
 	'PRODUCT_ANALYTICS_CONFIGURED_DATE',
 ];
 
+let resetCookieManagerConfiguration = true;
+
 export const test = mergeTests(
 	featureFlagsTest({
 		'LPD-51356': {enabled: true},
@@ -33,28 +35,32 @@ export const test = mergeTests(
 );
 
 test.afterEach(async ({page, systemSettingsPage}) => {
-	await systemSettingsPage.goToSystemSetting('Privacy', 'Product Analytics');
+	if (resetCookieManagerConfiguration) {
+		await systemSettingsPage.goToSystemSetting(
+			'Privacy',
+			'Product Analytics'
+		);
 
-	await page.getByRole('heading', {name: 'Product Analytics'}).waitFor();
+		await expect(page.getByText('These settings apply to')).toBeVisible();
 
-	if (
-		await systemSettingsPage.page
-			.getByRole('button', {name: 'Actions'})
-			.isVisible()
-	) {
-		page.once('dialog', async (dialogWindow) => {
-			await dialogWindow.accept();
-		});
-
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: systemSettingsPage.page.getByRole('menuitem', {
-				name: 'Reset Default Values',
-			}),
-			trigger: systemSettingsPage.page.getByRole('button', {
-				name: 'Actions',
-			}),
-		});
+		if (
+			await systemSettingsPage.page
+				.getByRole('button', {name: 'Actions'})
+				.isVisible()
+		) {
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: systemSettingsPage.page.getByRole('menuitem', {
+					name: 'Reset Default Values',
+				}),
+				trigger: systemSettingsPage.page.getByRole('button', {
+					name: 'Actions',
+				}),
+			});
+		}
+	}
+	else {
+		resetCookieManagerConfiguration = true;
 	}
 
 	await test.step('Clear Product Analytics cookies if present', async () => {
@@ -64,30 +70,21 @@ test.afterEach(async ({page, systemSettingsPage}) => {
 
 test.beforeEach(
 	async ({page, productAnalyticsBannerPage, systemSettingsPage}) => {
-		const productAnalyticsHeading = await page.getByRole('heading', {
-			name: 'Product Analytics',
-		});
-
 		await test.step('Verify Product Analytics Instance Level Configuration', async () => {
 			await systemSettingsPage.goToSystemSetting(
 				'Privacy',
 				'Product Analytics'
 			);
 
-			await productAnalyticsHeading.waitFor();
+			await expect(
+				page.getByText('These settings apply to')
+			).toBeVisible();
 
-			const enabledButton = await page.getByLabel('Enabled');
+			await page.getByLabel('Enabled').setChecked(true);
 
-			await enabledButton.setChecked(true);
+			await page.getByRole('button', {name: /save|update/i}).click();
 
-			if (await page.getByRole('button', {name: 'Save'}).isVisible()) {
-				await page.getByRole('button', {name: 'Save'}).click();
-			}
-			else {
-				await page.getByRole('button', {name: 'Update'}).click();
-			}
-
-			await page.waitForTimeout(1000);
+			await waitForAlert(page);
 		});
 
 		await test.step('Verify Product Analytics Banner appears, then Accept All cookies', async () => {
@@ -180,6 +177,8 @@ test(
 					name: 'Actions',
 				}),
 			});
+
+			await page.waitForLoadState();
 		});
 
 		await test.step('Verify accepting dialog resets the configuration and Product Analytics Banner appears again', async () => {
@@ -187,26 +186,20 @@ test(
 				await dialogWindow.accept();
 			});
 
-			await clickAndExpectToBeVisible({
-				autoClick: true,
-				target: page.getByRole('menuitem', {
-					name: 'Reset Default Values',
-				}),
-				trigger: page.getByRole('button', {
-					name: 'Actions',
-				}),
-			});
-
 			await page.waitForLoadState();
 
-			await expect(await consentRenewalPeriodField).toHaveValue('12');
-			await expect(await page.getByLabel('Enabled')).not.toBeChecked();
+			await expect(consentRenewalPeriodField).toHaveValue('12');
+
+			await expect(page.getByLabel('Enabled')).not.toBeChecked();
+
 			await expect(
-				await page.getByRole('menuitem', {
+				page.getByRole('menuitem', {
 					name: 'Reset Default Values',
 				})
 			).not.toBeVisible();
 		});
+
+		resetCookieManagerConfiguration = false;
 	}
 );
 
