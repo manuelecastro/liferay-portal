@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
+import java.util.Date;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
@@ -46,6 +47,14 @@ public class ProductAnalyticsConfigurationFormRenderer
 			ParamUtil.getInteger(httpServletRequest, "consentRenewalPeriod")
 		).put(
 			"enabled", ParamUtil.getBoolean(httpServletRequest, "enabled")
+		).put(
+			"lastModified",
+			() -> {
+				Date now = new Date();
+
+				return ParamUtil.getLong(
+					httpServletRequest, "lastModified", now.getTime());
+			}
 		).build();
 	}
 
