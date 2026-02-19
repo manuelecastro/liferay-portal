@@ -16,7 +16,6 @@ import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.expando.kernel.service.ExpandoValueLocalService;
 import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
@@ -56,19 +55,15 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 import com.liferay.portal.security.sso.openid.connect.internal.exception.StrangersNotAllowedException;
-import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectProviderUtil;
 import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectUser;
 import com.liferay.portal.security.sso.openid.connect.persistence.service.OpenIdConnectUserLocalService;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Dictionary;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-import org.osgi.service.cm.Configuration;
-import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -80,13 +75,11 @@ public class OIDCUserInfoProcessor {
 
 	public long processUserInfo(
 			long companyId, String issuer, OAuthClientEntry oAuthClientEntry,
-			ServiceContext serviceContext, String tokenEndpoint,
-			String userInfoJSON)
+			ServiceContext serviceContext, String userInfoJSON)
 		throws Exception {
 
 		User user = _addOrUpdateUser(
-			companyId, issuer, oAuthClientEntry, serviceContext, tokenEndpoint,
-			userInfoJSON);
+			companyId, issuer, oAuthClientEntry, serviceContext, userInfoJSON);
 
 		try {
 			_addAddress(
@@ -227,8 +220,7 @@ public class OIDCUserInfoProcessor {
 
 	private User _addOrUpdateUser(
 			long companyId, String issuer, OAuthClientEntry oAuthClientEntry,
-			ServiceContext serviceContext, String tokenEndpoint,
-			String userInfoJSON)
+			ServiceContext serviceContext, String userInfoJSON)
 		throws Exception {
 
 		JSONObject userInfoMapperJSONObject = _jsonFactory.createJSONObject(
@@ -250,15 +242,14 @@ public class OIDCUserInfoProcessor {
 			"screenName", userMapperJSONObject, userInfoJSONObject);
 		String subject = userInfoJSONObject.getString("sub");
 
-		String matcherField = _getMatcherField(
-			oAuthClientEntry.getAuthServerWellKnownURI(),
-			oAuthClientEntry.getClientId(), companyId, issuer, tokenEndpoint);
+		String matcherField = oAuthClientEntry.getMatcherField();
 
 		User user = _fetchUser(
 			companyId, emailAddress, issuer, matcherField, screenName, subject);
 
 		_validate(
-			companyId, emailAddress, firstName, lastName, matcherField, user);
+			companyId, emailAddress, firstName, lastName, matcherField,
+			screenName, user);
 
 		JSONObject contactMapperJSONObject =
 			userInfoMapperJSONObject.getJSONObject("contact");
@@ -573,42 +564,6 @@ public class OIDCUserInfoProcessor {
 		return company.getLocale();
 	}
 
-	private String _getMatcherField(
-			String authServerWellKnownURI, String clientId, long companyId,
-			String issuer, String tokenEndpoint)
-		throws Exception {
-
-		String filterString = null;
-
-		if (authServerWellKnownURI.equals(
-				OpenIdConnectProviderUtil.generateLocalWellKnownURI(
-					issuer, tokenEndpoint))) {
-
-			filterString = StringBundler.concat(
-				"(&(companyId=", companyId, ")(issuerURL=", issuer,
-				")(openIdConnectClientId=", clientId, ")(tokenEndpoint=",
-				tokenEndpoint, "))");
-		}
-		else {
-			filterString = StringBundler.concat(
-				"(&(companyId=", companyId, ")(discoveryEndpoint=",
-				authServerWellKnownURI, ")(openIdConnectClientId=", clientId,
-				"))");
-		}
-
-		Configuration[] configurations = _configurationAdmin.listConfigurations(
-			filterString);
-
-		if (ArrayUtil.isEmpty(configurations)) {
-			return "email";
-		}
-
-		Dictionary<String, Object> properties =
-			configurations[0].getProperties();
-
-		return GetterUtil.getString(properties.get("matcherField"));
-	}
-
 	private ExpandoColumn _getOrAddExpandoColumn(
 			String className, long companyId)
 		throws Exception {
@@ -829,7 +784,7 @@ public class OIDCUserInfoProcessor {
 
 	private void _validate(
 			long companyId, String emailAddress, String firstName,
-			String lastName, String matcherField, User user)
+			String lastName, String matcherField, String screenName, User user)
 		throws Exception {
 
 		if (Validator.isNull(emailAddress) &&
@@ -839,6 +794,11 @@ public class OIDCUserInfoProcessor {
 
 			throw new OpenIdConnectServiceException.UserMappingException(
 				"Email address is null");
+		}
+
+		if (Validator.isNull(screenName) && matcherField.equals("screenName")) {
+			throw new OpenIdConnectServiceException.UserMappingException(
+				"Screen Name is null");
 		}
 
 		if (user != null) {
@@ -886,9 +846,6 @@ public class OIDCUserInfoProcessor {
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
-
-	@Reference
-	private ConfigurationAdmin _configurationAdmin;
 
 	@Reference
 	private CountryLocalService _countryLocalService;
