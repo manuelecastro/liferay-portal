@@ -51,6 +51,8 @@ page import="com.liferay.portal.kernel.util.WebKeys" %>
 
 <%@ page import="jakarta.portlet.PortletURL" %>
 
+<%@ page import="java.util.Objects" %>
+
 <liferay-frontend:defineObjects />
 
 <liferay-theme:defineObjects />

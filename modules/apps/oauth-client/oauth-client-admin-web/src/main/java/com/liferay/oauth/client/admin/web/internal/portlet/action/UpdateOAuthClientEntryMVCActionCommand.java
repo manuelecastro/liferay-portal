@@ -47,7 +47,11 @@ public class UpdateOAuthClientEntryMVCActionCommand
 				actionRequest, "authRequestParametersJSON");
 			String authServerWellKnownURI = ParamUtil.getString(
 				actionRequest, "authServerWellKnownURI");
+			String customClaimsJSON = ParamUtil.getString(
+				actionRequest, "customClaimsJSON");
 			String infoJSON = ParamUtil.getString(actionRequest, "infoJSON");
+			String matcherField = ParamUtil.getString(
+				actionRequest, "matcherField");
 			long metadataCacheTime = ParamUtil.getLong(
 				actionRequest, "metadataCacheTime");
 			String oidcUserInfoMapperJSON = ParamUtil.getString(
@@ -58,8 +62,8 @@ public class UpdateOAuthClientEntryMVCActionCommand
 			if (oAuthClientEntryId > 0) {
 				_oAuthClientEntryService.updateOAuthClientEntry(
 					oAuthClientEntryId, authRequestParametersJSON,
-					authServerWellKnownURI, null, infoJSON, null,
-					metadataCacheTime, oidcUserInfoMapperJSON,
+					authServerWellKnownURI, customClaimsJSON, infoJSON,
+					matcherField, metadataCacheTime, oidcUserInfoMapperJSON,
 					tokenRequestParametersJSON);
 			}
 			else {
@@ -69,8 +73,8 @@ public class UpdateOAuthClientEntryMVCActionCommand
 
 				_oAuthClientEntryService.addOAuthClientEntry(
 					themeDisplay.getUserId(), authRequestParametersJSON,
-					authServerWellKnownURI, null, infoJSON, null,
-					metadataCacheTime, oidcUserInfoMapperJSON,
+					authServerWellKnownURI, customClaimsJSON, infoJSON,
+					matcherField, metadataCacheTime, oidcUserInfoMapperJSON,
 					tokenRequestParametersJSON);
 			}
 
