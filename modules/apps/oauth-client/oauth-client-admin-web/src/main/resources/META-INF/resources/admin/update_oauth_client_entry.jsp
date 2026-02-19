@@ -119,13 +119,24 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 
 				<h3 class="sheet-subtitle"><liferay-ui:message key="oauth-client-oidc-specific-configurations" /></h3>
 
+				<%
+				String matcherField = (oAuthClientEntry != null) ? oAuthClientEntry.getMatcherField() : "email";
+				%>
+
+				<aui:select helpMessage="matcher-field-help" label="matcher-field" name="matcherField" required="<%= true %>" type="text">
+					<aui:option label="email" selected='<%= Objects.equals(matcherField, "email") %>' value="email" />
+					<aui:option label="screen-name" selected='<%= Objects.equals(matcherField, "screenName") %>' value="screenName" />
+				</aui:select>
+
 				<aui:input cssClass="info-mapper-textarea" helpMessage="oauth-client-oidc-user-info-mapper-json-help" label="oauth-client-oidc-user-info-mapper-json" name="OIDCUserInfoMapperJSON" type="textarea" value="<%= OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON %>" />
 
-				<aui:button-row>
-					<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "doSubmit();" %>' type="submit" />
-					<aui:button href="<%= redirect %>" type="cancel" />
-				</aui:button-row>
+				<aui:input cssClass="request-parameters-textarea" helpMessage="custom-claims-help" label="custom-claims" name="customClaimsJSON" type="textarea" value='<%= (JSONObject)request.getAttribute("customClaimsJSONValue") %>' />
 			</aui:fieldset>
+
+			<aui:button-row>
+				<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "doSubmit();" %>' type="submit" />
+				<aui:button href="<%= redirect %>" type="cancel" />
+			</aui:button-row>
 		</div>
 	</clay:container-fluid>
 </aui:form>
@@ -190,13 +201,47 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 			'<portlet:namespace />tokenRequestParametersJSON'
 		).value = tokenRequestParametersJSON;
 
-		var oidcUserInfoMapperJSON = document.getElementById(
-			'<portlet:namespace />OIDCUserInfoMapperJSON'
+		var customClaimsJSON = document.getElementById(
+			'<portlet:namespace />customClaimsJSON'
 		).value;
 
 		try {
+			customClaimsJSON = JSON.stringify(
+				JSON.parse(customClaimsJSON),
+				null,
+				0
+			);
+		}
+		catch (e) {
+			alert('Ill-formatted Default Custom Claims JSON');
+			return;
+		}
+
+		document.getElementById('<portlet:namespace />customClaimsJSON').value =
+			customClaimsJSON;
+
+		var oidcUserInfoMapperJSON = JSON.parse(
+			document.getElementById('<portlet:namespace />OIDCUserInfoMapperJSON')
+				.value
+		);
+
+		var matcherFieldValue = document.getElementById(
+			'<portlet:namespace />matcherField'
+		).value;
+
+		if (
+			matcherFieldValue == 'screenName' &&
+			!oidcUserInfoMapperJSON.user.screenName
+		) {
+			alert(
+				'Missing screenName value at OpenId Connect User Information Mapper JSON'
+			);
+			return;
+		}
+
+		try {
 			oidcUserInfoMapperJSON = JSON.stringify(
-				JSON.parse(oidcUserInfoMapperJSON),
+				oidcUserInfoMapperJSON,
 				null,
 				0
 			);
@@ -236,6 +281,16 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 
 		tokenRequestParametersJSON.value = JSON.stringify(
 			JSON.parse(tokenRequestParametersJSON.value),
+			null,
+			4
+		);
+
+		var customClaimsJSON = document.getElementById(
+			'<portlet:namespace />customClaimsJSON'
+		);
+
+		customClaimsJSON.value = JSON.stringify(
+			JSON.parse(customClaimsJSON.value),
 			null,
 			4
 		);
