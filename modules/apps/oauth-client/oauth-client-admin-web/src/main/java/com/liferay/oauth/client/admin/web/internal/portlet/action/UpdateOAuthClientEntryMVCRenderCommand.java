@@ -5,14 +5,11 @@
 
 package com.liferay.oauth.client.admin.web.internal.portlet.action;
 
-import com.liferay.expando.kernel.model.ExpandoColumn;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.oauth.client.admin.web.internal.constants.OAuthClientAdminPortletKeys;
 import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
 import com.liferay.oauth.client.persistence.service.OAuthClientEntryService;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactory;
-import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
@@ -25,8 +22,6 @@ import com.liferay.portal.kernel.util.WebKeys;
 
 import jakarta.portlet.RenderRequest;
 import jakarta.portlet.RenderResponse;
-
-import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -50,7 +45,9 @@ public class UpdateOAuthClientEntryMVCRenderCommand
 
 		try {
 			renderRequest.setAttribute(
-				"customClaimsJSONValue", _getCustomClaimsJSONObject());
+				"expandoColumns",
+				_expandoColumnLocalService.getDefaultTableColumns(
+					CompanyThreadLocal.getCompanyId(), User.class.getName()));
 
 			String authServerWellKnownURI = ParamUtil.getString(
 				renderRequest, "authServerWellKnownURI");
@@ -79,32 +76,11 @@ public class UpdateOAuthClientEntryMVCRenderCommand
 		return "/admin/update_oauth_client_entry.jsp";
 	}
 
-	private JSONObject _getCustomClaimsJSONObject() {
-		List<ExpandoColumn> expandoColumns =
-			_expandoColumnLocalService.getDefaultTableColumns(
-				CompanyThreadLocal.getCompanyId(), User.class.getName());
-
-		JSONObject jsonObject = _jsonFactory.createJSONObject();
-
-		if (expandoColumns.isEmpty()) {
-			return jsonObject;
-		}
-
-		for (ExpandoColumn expandoColumn : expandoColumns) {
-			jsonObject.put(expandoColumn.getName(), "");
-		}
-
-		return jsonObject;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		UpdateOAuthClientEntryMVCRenderCommand.class);
 
 	@Reference
 	private ExpandoColumnLocalService _expandoColumnLocalService;
-
-	@Reference
-	private JSONFactory _jsonFactory;
 
 	@Reference
 	private OAuthClientEntryService _oAuthClientEntryService;

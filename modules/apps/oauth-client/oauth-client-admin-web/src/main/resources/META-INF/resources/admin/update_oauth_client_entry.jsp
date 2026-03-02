@@ -130,7 +130,27 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 
 				<aui:input cssClass="info-mapper-textarea" helpMessage="oauth-client-oidc-user-info-mapper-json-help" label="oauth-client-oidc-user-info-mapper-json" name="OIDCUserInfoMapperJSON" type="textarea" value="<%= OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON %>" />
 
-				<aui:input cssClass="request-parameters-textarea" helpMessage="custom-claims-help" label="custom-claims" name="customClaimsJSON" type="textarea" value='<%= (JSONObject)request.getAttribute("customClaimsJSONValue") %>' />
+				<div class="lfr-form-rows" id="<portlet:namespace />_cssURLs_field">
+
+					<%
+					String[] strings = {"able", "baker", "charlie"};
+
+					for (String cssURL : strings) {
+					%>
+
+						<aui:field-wrapper cssClass="form-group">
+							<aui:input ignoreRequestValue="<%= true %>" label="css-url" name="cssURLs" type="text" value="<%= cssURL %>" />
+
+							<div class="form-text form-text-repeat">
+								<liferay-ui:message key="enter-individual-urls-for-each-of-your-client-extension-css-files" />
+							</div>
+						</aui:field-wrapper>
+
+					<%
+					}
+					%>
+
+				</div>
 			</aui:fieldset>
 
 			<aui:button-row>
@@ -140,6 +160,14 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 		</div>
 	</clay:container-fluid>
 </aui:form>
+
+<aui:script use="liferay-auto-fields">
+	new Liferay.AutoFields({
+		contentBox: '#<portlet:namespace />_cssURLs_field',
+		minimumRows: 1,
+		namespace: '<portlet:namespace />',
+	}).render();
+</aui:script>
 
 <aui:script>
 	<portlet:namespace />init();
@@ -200,25 +228,6 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 		document.getElementById(
 			'<portlet:namespace />tokenRequestParametersJSON'
 		).value = tokenRequestParametersJSON;
-
-		var customClaimsJSON = document.getElementById(
-			'<portlet:namespace />customClaimsJSON'
-		).value;
-
-		try {
-			customClaimsJSON = JSON.stringify(
-				JSON.parse(customClaimsJSON),
-				null,
-				0
-			);
-		}
-		catch (e) {
-			alert('Ill-formatted Default Custom Claims JSON');
-			return;
-		}
-
-		document.getElementById('<portlet:namespace />customClaimsJSON').value =
-			customClaimsJSON;
 
 		var oidcUserInfoMapperJSON = JSON.parse(
 			document.getElementById('<portlet:namespace />OIDCUserInfoMapperJSON')
@@ -281,16 +290,6 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 
 		tokenRequestParametersJSON.value = JSON.stringify(
 			JSON.parse(tokenRequestParametersJSON.value),
-			null,
-			4
-		);
-
-		var customClaimsJSON = document.getElementById(
-			'<portlet:namespace />customClaimsJSON'
-		);
-
-		customClaimsJSON.value = JSON.stringify(
-			JSON.parse(customClaimsJSON.value),
 			null,
 			4
 		);

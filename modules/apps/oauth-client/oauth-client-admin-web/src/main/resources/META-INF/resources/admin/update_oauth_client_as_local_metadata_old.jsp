@@ -67,6 +67,28 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 					%>'
 				/>
 
+				<div class="lfr-form-rows" id="<portlet:namespace />_cssURLs_field">
+
+					<%
+					String[] strings = {"able", "baker", "charlie"};
+
+					for (String cssURL : strings) {
+					%>
+
+						<aui:field-wrapper cssClass="form-group">
+							<aui:input ignoreRequestValue="<%= true %>" label="css-url" name="cssURLs" type="text" value="<%= cssURL %>" />
+
+							<div class="form-text form-text-repeat">
+								<liferay-ui:message key="enter-individual-urls-for-each-of-your-client-extension-css-files" />
+							</div>
+						</aui:field-wrapper>
+
+					<%
+					}
+					%>
+
+				</div>
+
 				<aui:button-row>
 					<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "doSubmit();" %>' type="submit" />
 					<aui:button href="<%= redirect %>" type="cancel" />
@@ -75,6 +97,15 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 		</div>
 	</clay:container-fluid>
 </aui:form>
+
+
+<aui:script use="liferay-auto-fields">
+	new Liferay.AutoFields({
+		contentBox: '#<portlet:namespace />_cssURLs_field',
+		minimumRows: 1,
+		namespace: '<portlet:namespace />',
+	}).render();
+</aui:script>
 
 <aui:script>
 	<portlet:namespace />init();
