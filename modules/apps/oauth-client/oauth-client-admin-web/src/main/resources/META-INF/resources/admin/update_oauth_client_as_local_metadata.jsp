@@ -90,9 +90,10 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 
 					<aui:input helpMessage="oauth-client-as-local-well-known-uri-openid-configuration-help" label="oauth-client-as-local-well-known-uri-openid-configuration" name="localWellKnownURI" readonly="true" type="text" />
 
+				<div class="hide" id="advancedModeInput">
 					<aui:input
-						helpMessage="oauth-client-as-local-metadata-json-openid-configuration-help"
-						label="oauth-client-as-local-metadata-json-openid-configuration"
+						helpMessage="oauth-client-as-local-metadata-json-help"
+						label="oauth-client-as-local-metadata-json"
 						name="metadataJSON"
 						readonly="true"
 						style="min-height: 600px;"
@@ -113,29 +114,36 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 							)
 						%>'
 					/>
+				</aui:fieldset>
+
+				<div id="friendlyModeInputs">
+					<aui:input helpMessage="authorization-endpoint-help" label="authorization-endpoint" name="authorizationEndpoint" type="text" />
+
+					<aui:input helpMessage="issuer-url-help" label="issuer-url" name="issuerURL" type="text" />
+
+					<aui:input helpMessage="jwks-uri-help" label="jwks-uri" name="jwksURI" type="text" />
 
 					<div class="lfr-form-rows" id="<portlet:namespace />_cssURLs_field">
-
-						<%
-						String[] strings = {"able", "baker", "charlie"};
-
-						for (String cssURL : strings) {
-						%>
-
+						<div class="lfr-form-row">
 							<aui:field-wrapper cssClass="form-group">
-								<aui:input ignoreRequestValue="<%= true %>" label="css-url" name="cssURLs" type="text" value="<%= cssURL %>" />
+								<aui:input ignoreRequestValue="<%= true %>" label="subject-types" name="cssURLs" type="text" />
 
 								<div class="form-text form-text-repeat">
-									<liferay-ui:message key="enter-individual-urls-for-each-of-your-client-extension-css-files" />
+									<liferay-ui:message key="subject-types-help" />
 								</div>
 							</aui:field-wrapper>
-
-						<%
-						}
-						%>
-
+						</div>
 					</div>
-				</aui:fieldset>
+
+					<aui:input helpMessage="token-endpoint-help" label="token-endpoint" name="tokenEndpoint" type="text" />
+
+					<aui:input helpMessage="user-info-endpoint-help" label="user-info-endpoint" name="userInfoEndpoint" type="text" />
+				</div>
+
+				<aui:button-row cssClass="mb-3">
+					<aui:button id="advancedMode" value="switch-to-advanced-mode" />
+					<aui:button cssClass="hide" id="friendlyMode" value="switch-to-friendly-mode" />
+				</aui:button-row>
 
 				<aui:button-row>
 					<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "doSubmit();" %>' type="submit" />
@@ -145,6 +153,23 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 		</div>
 	</clay:container-fluid>
 </aui:form>
+
+<aui:script sandbox="<%= true %>">
+	var alternatingElements = document.querySelectorAll(
+		'#<portlet:namespace />advancedMode, #<portlet:namespace />friendlyMode, #advancedModeInput, #friendlyModeInputs'
+	);
+
+	Liferay.Util.delegate(
+		document.getElementById('<portlet:namespace />oauth-client-as-fm'),
+		'click',
+		'#<portlet:namespace />advancedMode, #<portlet:namespace />friendlyMode',
+		(event) => {
+			Array.prototype.forEach.call(alternatingElements, (element) => {
+				element.classList.toggle('hide');
+			});
+		}
+	);
+</aui:script>
 
 <aui:script use="liferay-auto-fields">
 	new Liferay.AutoFields({

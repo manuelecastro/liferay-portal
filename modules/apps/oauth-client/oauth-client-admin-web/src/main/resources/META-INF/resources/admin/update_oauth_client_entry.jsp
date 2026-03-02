@@ -131,25 +131,56 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 				<aui:input cssClass="info-mapper-textarea" helpMessage="oauth-client-oidc-user-info-mapper-json-help" label="oauth-client-oidc-user-info-mapper-json" name="OIDCUserInfoMapperJSON" type="textarea" value="<%= OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON %>" />
 
 				<div class="lfr-form-rows" id="<portlet:namespace />_cssURLs_field">
-
+					<c:if test="<%= oAuthClientEntry != null %>">
+					
 					<%
-					String[] strings = {"able", "baker", "charlie"};
+					JSONObject customClaimsJSONObject = JSONFactoryUtil.createJSONObject(oAuthClientEntry.getCustomClaimsJSON());
 
-					for (String cssURL : strings) {
+					Set<String> customClaimsIterator = customClaimsJSONObject.keySet();
+
+					int index = 0;
+
+					for (String key : customClaimsIterator) {
+						index++;
 					%>
+					</c:if>
+						<%
+						String claimColumnId = "customClaimsKey-";
+						String fieldId = "customClaimsValue-";
+						%>
 
-						<aui:field-wrapper cssClass="form-group">
-							<aui:input ignoreRequestValue="<%= true %>" label="css-url" name="cssURLs" type="text" value="<%= cssURL %>" />
+						<div class="lfr-form-row">
+							<aui:field-wrapper cssClass="form-group">
+								<div class="form-group-item">
+									<aui:select fieldParam="<%= claimColumnId %>" id="<%= claimColumnId %>" inlineField="<%= true %>" label="user-custom-fields" name="<%= claimColumnId %>" showEmptyOption="<%= true %>">
 
-							<div class="form-text form-text-repeat">
-								<liferay-ui:message key="enter-individual-urls-for-each-of-your-client-extension-css-files" />
-							</div>
-						</aui:field-wrapper>
+										<%
+										for (ExpandoColumn expandoColumn : (List<ExpandoColumn>)request.getAttribute("expandoColumns")) {
+										%>
 
-					<%
-					}
-					%>
+											<aui:option label="<%= expandoColumn.getName() %>" selected="<%= Objects.equals(expandoColumn.getName(), (oAuthClientEntry != null) ? key : null) %>" value="<%= expandoColumn.getName() %>"></aui:option>
 
+										<%
+										}
+										%>
+
+									</aui:select>
+								</div>
+
+								<div class="form-group-item">
+									<aui:input fieldParam="<%= fieldId %>" id="<%= fieldId %>" label="custom-claim" name="<%= fieldId %>" type="text" value="<%= (oAuthClientEntry != null) ? customClaimsJSONObject.get(key) : null %>" />
+								</div>
+
+								<div class="form-text form-text-repeat">
+									<liferay-ui:message key="custom-claims-help" />
+								</div>
+							</aui:field-wrapper>
+						</div>
+						<c:if test="<%= oAuthClientEntry != null %>">
+							<%
+							}
+							%>
+						</c:if>
 				</div>
 			</aui:fieldset>
 
