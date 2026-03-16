@@ -54,7 +54,7 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 
 				<h3 class="sheet-subtitle"><liferay-ui:message key="oauth-client-configurations" /></h3>
 
-				<aui:input helpMessage="oauth-client-as-well-known-uri-help" label="oauth-client-as-well-known-uri" name="authServerWellKnownURI" type="text" />
+				<aui:input helpMessage="oauth-client-as-well-known-uri-help" label="oauth-client-as-well-known-uri" name="authServerWellKnownURI" required="<%= true %>" type="text" />
 
 				<aui:input helpMessage="metadata-cache-time-help" label="metadata-cache-time" name="metadataCacheTime" type="text" value="<%= (oAuthClientEntry != null) ? oAuthClientEntry.getMetadataCacheTime() : OAuthClientEntryConstants.METADATA_CACHE_TIME_DEFAULT %>" />
 
@@ -218,6 +218,8 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 	<portlet:namespace />init();
 
 	function <portlet:namespace />doSubmit() {
+		var illFormattedJSONs = [];
+
 		var infoJSON = document.getElementById(
 			'<portlet:namespace />infoJSON'
 		).value;
@@ -226,11 +228,10 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 			infoJSON = JSON.stringify(JSON.parse(infoJSON), null, 0);
 		}
 		catch (e) {
-			alert('Ill-formatted Info JSON');
-			return;
+			illFormattedJSONs.push(
+				'<liferay-ui:message key="oauth-client-info-json" />'
+			);
 		}
-
-		document.getElementById('<portlet:namespace />infoJSON').value = infoJSON;
 
 		var authRequestParametersJSON = document.getElementById(
 			'<portlet:namespace />authRequestParametersJSON'
@@ -244,15 +245,10 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 			);
 		}
 		catch (e) {
-			alert('Ill-formatted Default Authorization Request Parameters JSON');
-			return;
+			illFormattedJSONs.push(
+				'<liferay-ui:message key="oauth-client-default-auth-request-parameters-json" />'
+			);
 		}
-
-		document.getElementById(
-			'<portlet:namespace />authRequestParametersJSON'
-		).value = authRequestParametersJSON;
-
-		document.getElementById('<portlet:namespace />infoJSON').value = infoJSON;
 
 		var tokenRequestParametersJSON = document.getElementById(
 			'<portlet:namespace />tokenRequestParametersJSON'
@@ -266,18 +262,45 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 			);
 		}
 		catch (e) {
-			alert('Ill-formatted Default Token Request Parameters JSON');
-			return;
+			illFormattedJSONs.push(
+				'<liferay-ui:message key="oauth-client-default-token-request-parameters-json" />'
+			);
 		}
 
-		document.getElementById(
-			'<portlet:namespace />tokenRequestParametersJSON'
-		).value = tokenRequestParametersJSON;
+		var oidcUserInfoMapperJSONValue = document.getElementById(
+			'<portlet:namespace />OIDCUserInfoMapperJSON'
+		).value;
 
-		var oidcUserInfoMapperJSON = JSON.parse(
-			document.getElementById('<portlet:namespace />OIDCUserInfoMapperJSON')
-				.value
-		);
+		var oidcUserInfoMapperJSON = null;
+
+		try {
+			oidcUserInfoMapperJSONValue = JSON.parse(oidcUserInfoMapperJSONValue);
+
+			oidcUserInfoMapperJSON = JSON.stringify(
+				oidcUserInfoMapperJSONValue,
+				null,
+				0
+			);
+		}
+		catch (e) {
+			illFormattedJSONs.push(
+				'<liferay-ui:message key="oauth-client-oidc-user-info-mapper-json" />'
+			);
+		}
+
+		if (illFormattedJSONs.length > 0) {
+			illFormattedJSONs.forEach((illFormattedJSONName) => {
+				Liferay.Util.openToast({
+					message: Liferay.Util.sub(
+						'<liferay-ui:message key="the-following-json-is-not-formatted-correctly-x" />',
+						illFormattedJSONName
+					),
+					type: 'danger',
+				});
+			});
+
+			return;
+		}
 
 		var matcherFieldValue = document.getElementById(
 			'<portlet:namespace />matcherField'
@@ -285,25 +308,28 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 
 		if (
 			matcherFieldValue == 'screenName' &&
-			!oidcUserInfoMapperJSON.user.screenName
+			!oidcUserInfoMapperJSONValue?.user?.screenName
 		) {
-			alert(
-				'Missing screenName value at OpenId Connect User Information Mapper JSON'
-			);
+			Liferay.Util.openToast({
+				message: Liferay.Util.sub(
+					'<liferay-ui:message key="x-is-empty" />',
+					'screenName'
+				),
+				type: 'danger',
+			});
+
 			return;
 		}
 
-		try {
-			oidcUserInfoMapperJSON = JSON.stringify(
-				oidcUserInfoMapperJSON,
-				null,
-				0
-			);
-		}
-		catch (e) {
-			alert('Ill-formatted OIDC User Info Mapper JSON');
-			return;
-		}
+		document.getElementById('<portlet:namespace />infoJSON').value = infoJSON;
+
+		document.getElementById(
+			'<portlet:namespace />authRequestParametersJSON'
+		).value = authRequestParametersJSON;
+
+		document.getElementById(
+			'<portlet:namespace />tokenRequestParametersJSON'
+		).value = tokenRequestParametersJSON;
 
 		document.getElementById(
 			'<portlet:namespace />OIDCUserInfoMapperJSON'
