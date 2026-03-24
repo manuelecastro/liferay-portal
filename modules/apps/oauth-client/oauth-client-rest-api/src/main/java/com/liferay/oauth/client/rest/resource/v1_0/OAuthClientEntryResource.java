@@ -45,10 +45,14 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface OAuthClientEntryResource {
 
+	public void deleteOAuthClientEntryByExternalReferenceCode(
+			String externalReferenceCode)
+		throws Exception;
+
 	public Page<OAuthClientEntry> getOAuthClientEntriesPage() throws Exception;
 
-	public OAuthClientEntry getOAuthClientEntry(
-			String oauthClientEntryExternalReferenceCode)
+	public OAuthClientEntry getOAuthClientEntryByExternalReferenceCode(
+			String externalReferenceCode)
 		throws Exception;
 
 	public Response postOAuthClientEntriesPageExportBatch(
@@ -62,14 +66,8 @@ public interface OAuthClientEntryResource {
 	public Response postOAuthClientEntryBatch(String callbackURL, Object object)
 		throws Exception;
 
-	public OAuthClientEntry putOAuthClientEntry(
-			String oauthClientEntryExternalReferenceCode,
-			OAuthClientEntry oAuthClientEntry)
-		throws Exception;
-
-	public Response putOAuthClientEntryBatch(
-			String oauthClientEntryExternalReferenceCode, String callbackURL,
-			Object object)
+	public OAuthClientEntry putOAuthClientEntryByExternalReferenceCode(
+			String externalReferenceCode, OAuthClientEntry oAuthClientEntry)
 		throws Exception;
 
 	public default void setContextAcceptLanguage(

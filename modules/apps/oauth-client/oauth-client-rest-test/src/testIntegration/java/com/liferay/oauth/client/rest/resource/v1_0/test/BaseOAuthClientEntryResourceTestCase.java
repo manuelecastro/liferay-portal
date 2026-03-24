@@ -13,6 +13,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 
+import com.liferay.headless.batch.engine.client.dto.v1_0.ImportTask;
+import com.liferay.headless.batch.engine.client.http.HttpInvoker.HttpResponse;
+import com.liferay.headless.batch.engine.client.resource.v1_0.ImportTaskResource;
 import com.liferay.oauth.client.rest.client.dto.v1_0.OAuthClientEntry;
 import com.liferay.oauth.client.rest.client.http.HttpInvoker;
 import com.liferay.oauth.client.rest.client.pagination.Page;
@@ -108,6 +111,16 @@ public abstract class BaseOAuthClientEntryResourceTestCase {
 		).locale(
 			LocaleUtil.getDefault()
 		).build();
+
+		importTaskResource = ImportTaskResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
+			LocaleUtil.getDefault()
+		).build();
 	}
 
 	@After
@@ -172,7 +185,6 @@ public abstract class BaseOAuthClientEntryResourceTestCase {
 		oAuthClientEntry.setExternalReferenceCode(regex);
 		oAuthClientEntry.setInfoJSON(regex);
 		oAuthClientEntry.setMatcherField(regex);
-		oAuthClientEntry.setMetadataCacheTime(regex);
 		oAuthClientEntry.setOidcUserInfoMapperJSON(regex);
 		oAuthClientEntry.setTokenRequestParametersJSON(regex);
 
@@ -190,11 +202,43 @@ public abstract class BaseOAuthClientEntryResourceTestCase {
 		Assert.assertEquals(regex, oAuthClientEntry.getExternalReferenceCode());
 		Assert.assertEquals(regex, oAuthClientEntry.getInfoJSON());
 		Assert.assertEquals(regex, oAuthClientEntry.getMatcherField());
-		Assert.assertEquals(regex, oAuthClientEntry.getMetadataCacheTime());
 		Assert.assertEquals(
 			regex, oAuthClientEntry.getOidcUserInfoMapperJSON());
 		Assert.assertEquals(
 			regex, oAuthClientEntry.getTokenRequestParametersJSON());
+	}
+
+	@Test
+	public void testDeleteOAuthClientEntryByExternalReferenceCode()
+		throws Exception {
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		OAuthClientEntry oAuthClientEntry =
+			testDeleteOAuthClientEntryByExternalReferenceCode_addOAuthClientEntry();
+
+		assertHttpResponseStatusCode(
+			204,
+			oAuthClientEntryResource.
+				deleteOAuthClientEntryByExternalReferenceCodeHttpResponse(
+					oAuthClientEntry.getExternalReferenceCode()));
+
+		assertHttpResponseStatusCode(
+			404,
+			oAuthClientEntryResource.
+				getOAuthClientEntryByExternalReferenceCodeHttpResponse(
+					oAuthClientEntry.getExternalReferenceCode()));
+		assertHttpResponseStatusCode(
+			404,
+			oAuthClientEntryResource.
+				getOAuthClientEntryByExternalReferenceCodeHttpResponse("-"));
+	}
+
+	protected OAuthClientEntry
+			testDeleteOAuthClientEntryByExternalReferenceCode_addOAuthClientEntry()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Test
@@ -242,27 +286,22 @@ public abstract class BaseOAuthClientEntryResourceTestCase {
 	}
 
 	@Test
-	public void testGetOAuthClientEntry() throws Exception {
+	public void testGetOAuthClientEntryByExternalReferenceCode()
+		throws Exception {
+
 		OAuthClientEntry postOAuthClientEntry =
-			testGetOAuthClientEntry_addOAuthClientEntry();
+			testGetOAuthClientEntryByExternalReferenceCode_addOAuthClientEntry();
 
 		OAuthClientEntry getOAuthClientEntry =
-			oAuthClientEntryResource.getOAuthClientEntry(
-				testGetOAuthClientEntry_getOauthClientEntryExternalReferenceCode());
+			oAuthClientEntryResource.getOAuthClientEntryByExternalReferenceCode(
+				postOAuthClientEntry.getExternalReferenceCode());
 
 		assertEquals(postOAuthClientEntry, getOAuthClientEntry);
 		assertValid(getOAuthClientEntry);
 	}
 
-	protected OAuthClientEntry testGetOAuthClientEntry_addOAuthClientEntry()
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	protected String
-			testGetOAuthClientEntry_getOauthClientEntryExternalReferenceCode()
+	protected OAuthClientEntry
+			testGetOAuthClientEntryByExternalReferenceCode_addOAuthClientEntry()
 		throws Exception {
 
 		throw new UnsupportedOperationException(
@@ -290,46 +329,113 @@ public abstract class BaseOAuthClientEntryResourceTestCase {
 	}
 
 	@Test
-	public void testPutOAuthClientEntry() throws Exception {
+	public void testPutOAuthClientEntryByExternalReferenceCode()
+		throws Exception {
+
 		OAuthClientEntry postOAuthClientEntry =
-			testPutOAuthClientEntry_addOAuthClientEntry();
+			testPutOAuthClientEntryByExternalReferenceCode_addOAuthClientEntry();
 
 		OAuthClientEntry randomOAuthClientEntry = randomOAuthClientEntry();
 
 		OAuthClientEntry putOAuthClientEntry =
-			oAuthClientEntryResource.putOAuthClientEntry(
-				testPutOAuthClientEntry_getOauthClientEntryExternalReferenceCode(),
+			oAuthClientEntryResource.putOAuthClientEntryByExternalReferenceCode(
+				postOAuthClientEntry.getExternalReferenceCode(),
 				randomOAuthClientEntry);
 
 		assertEquals(randomOAuthClientEntry, putOAuthClientEntry);
 		assertValid(putOAuthClientEntry);
 
 		OAuthClientEntry getOAuthClientEntry =
-			oAuthClientEntryResource.getOAuthClientEntry(
-				testPutOAuthClientEntry_getOauthClientEntryExternalReferenceCode());
+			oAuthClientEntryResource.getOAuthClientEntryByExternalReferenceCode(
+				putOAuthClientEntry.getExternalReferenceCode());
 
 		assertEquals(randomOAuthClientEntry, getOAuthClientEntry);
 		assertValid(getOAuthClientEntry);
+
+		OAuthClientEntry newOAuthClientEntry =
+			testPutOAuthClientEntryByExternalReferenceCode_createOAuthClientEntry();
+
+		putOAuthClientEntry =
+			oAuthClientEntryResource.putOAuthClientEntryByExternalReferenceCode(
+				newOAuthClientEntry.getExternalReferenceCode(),
+				newOAuthClientEntry);
+
+		assertEquals(newOAuthClientEntry, putOAuthClientEntry);
+		assertValid(putOAuthClientEntry);
+
+		getOAuthClientEntry =
+			oAuthClientEntryResource.getOAuthClientEntryByExternalReferenceCode(
+				putOAuthClientEntry.getExternalReferenceCode());
+
+		assertEquals(newOAuthClientEntry, getOAuthClientEntry);
+
+		Assert.assertEquals(
+			newOAuthClientEntry.getExternalReferenceCode(),
+			putOAuthClientEntry.getExternalReferenceCode());
 	}
 
-	protected OAuthClientEntry testPutOAuthClientEntry_addOAuthClientEntry()
+	protected OAuthClientEntry
+			testPutOAuthClientEntryByExternalReferenceCode_addOAuthClientEntry()
 		throws Exception {
 
 		throw new UnsupportedOperationException(
 			"This method needs to be implemented");
 	}
 
-	protected String
-			testPutOAuthClientEntry_getOauthClientEntryExternalReferenceCode()
+	protected OAuthClientEntry
+			testPutOAuthClientEntryByExternalReferenceCode_createOAuthClientEntry()
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
+		return randomOAuthClientEntry();
 	}
 
 	@Test
 	public void testBatchEngineDeleteImportTask() throws Exception {
-		Assert.assertTrue(true);
+		OAuthClientEntry oAuthClientEntry1 =
+			testBatchEngineDeleteImportTask_addOAuthClientEntry();
+
+		testBatchEngineDeleteImportTask_deleteOAuthClientEntry(
+			200, oAuthClientEntry1.getExternalReferenceCode());
+	}
+
+	protected OAuthClientEntry
+			testBatchEngineDeleteImportTask_addOAuthClientEntry()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected void testBatchEngineDeleteImportTask_deleteOAuthClientEntry(
+			int expectedStatusCode, String externalReferenceCode,
+			String... parameters)
+		throws Exception {
+
+		ImportTaskResource importTaskResource = ImportTaskResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).parameters(
+			parameters
+		).build();
+
+		HttpResponse httpResponse =
+			importTaskResource.deleteImportTaskHttpResponse(
+				"com.liferay.oauth.client.rest.dto.v1_0.OAuthClientEntry", null,
+				null, null, null,
+				JSONUtil.putAll(
+					JSONUtil.put(
+						"externalReferenceCode", () -> externalReferenceCode)));
+
+		Assert.assertEquals(expectedStatusCode, httpResponse.getStatusCode());
+
+		if (expectedStatusCode == 200) {
+			waitForFinish(
+				"COMPLETED",
+				JSONFactoryUtil.createJSONObject(httpResponse.getContent()));
+		}
 	}
 
 	protected void assertContains(
@@ -1254,49 +1360,8 @@ public abstract class BaseOAuthClientEntryResourceTestCase {
 		}
 
 		if (entityFieldName.equals("metadataCacheTime")) {
-			Object object = oAuthClientEntry.getMetadataCacheTime();
-
-			String value = String.valueOf(object);
-
-			if (operator.equals("contains")) {
-				sb = new StringBundler();
-
-				sb.append("contains(");
-				sb.append(entityFieldName);
-				sb.append(",'");
-
-				if ((object != null) && (value.length() > 2)) {
-					sb.append(value.substring(1, value.length() - 1));
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append("')");
-			}
-			else if (operator.equals("startswith")) {
-				sb = new StringBundler();
-
-				sb.append("startswith(");
-				sb.append(entityFieldName);
-				sb.append(",'");
-
-				if ((object != null) && (value.length() > 1)) {
-					sb.append(value.substring(0, value.length() - 1));
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append("')");
-			}
-			else {
-				sb.append("'");
-				sb.append(value);
-				sb.append("'");
-			}
-
-			return sb.toString();
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
 		}
 
 		if (entityFieldName.equals("oidcUserInfoMapperJSON")) {
@@ -1450,8 +1515,7 @@ public abstract class BaseOAuthClientEntryResourceTestCase {
 					RandomTestUtil.randomString());
 				matcherField = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
-				metadataCacheTime = StringUtil.toLowerCase(
-					RandomTestUtil.randomString());
+				metadataCacheTime = RandomTestUtil.randomLong();
 				oidcUserInfoMapperJSON = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				tokenRequestParametersJSON = StringUtil.toLowerCase(
@@ -1473,7 +1537,30 @@ public abstract class BaseOAuthClientEntryResourceTestCase {
 		return randomOAuthClientEntry();
 	}
 
+	protected final JSONObject waitForFinish(
+			String expectedExecuteStatus, JSONObject jsonObject)
+		throws Exception {
+
+		while (true) {
+			ImportTask importTask = importTaskResource.getImportTask(
+				jsonObject.getLong("id"));
+
+			ImportTask.ExecuteStatus executeStatus =
+				importTask.getExecuteStatus();
+
+			if (StringUtil.equals(executeStatus.getValue(), "COMPLETED") ||
+				StringUtil.equals(executeStatus.getValue(), "FAILED")) {
+
+				Assert.assertEquals(
+					expectedExecuteStatus, executeStatus.getValue());
+
+				return jsonObject;
+			}
+		}
+	}
+
 	protected OAuthClientEntryResource oAuthClientEntryResource;
+	protected ImportTaskResource importTaskResource;
 	protected com.liferay.portal.kernel.model.Group irrelevantGroup;
 	protected com.liferay.portal.kernel.model.Company testCompany;
 	protected com.liferay.portal.kernel.model.Group testGroup;

@@ -71,6 +71,38 @@ public abstract class BaseOAuthClientEntryResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
+	 * curl -X 'DELETE' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-entries/by-external-reference-code/{externalReferenceCode}'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "externalReferenceCode"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "OAuthClientEntry")
+		}
+	)
+	@jakarta.ws.rs.DELETE
+	@jakarta.ws.rs.Path(
+		"/oauth-client-entries/by-external-reference-code/{externalReferenceCode}"
+	)
+	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public void deleteOAuthClientEntryByExternalReferenceCode(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("externalReferenceCode")
+			String externalReferenceCode)
+		throws Exception {
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-entries'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.tags.Tags(
@@ -89,13 +121,13 @@ public abstract class BaseOAuthClientEntryResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-entries/{oauthClientEntryExternalReferenceCode}'  -u 'test@liferay.com:test'
+	 * curl -X 'GET' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-entries/by-external-reference-code/{externalReferenceCode}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "oauthClientEntryExternalReferenceCode"
+				name = "externalReferenceCode"
 			)
 		}
 	)
@@ -106,15 +138,15 @@ public abstract class BaseOAuthClientEntryResourceImpl
 	)
 	@jakarta.ws.rs.GET
 	@jakarta.ws.rs.Path(
-		"/oauth-client-entries/{oauthClientEntryExternalReferenceCode}"
+		"/oauth-client-entries/by-external-reference-code/{externalReferenceCode}"
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public OAuthClientEntry getOAuthClientEntry(
+	public OAuthClientEntry getOAuthClientEntryByExternalReferenceCode(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.validation.constraints.NotNull
-			@jakarta.ws.rs.PathParam("oauthClientEntryExternalReferenceCode")
-			String oauthClientEntryExternalReferenceCode)
+			@jakarta.ws.rs.PathParam("externalReferenceCode")
+			String externalReferenceCode)
 		throws Exception {
 
 		return new OAuthClientEntry();
@@ -254,13 +286,13 @@ public abstract class BaseOAuthClientEntryResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-entries/{oauthClientEntryExternalReferenceCode}' -d $'{"authRequestParametersJSON": ___, "authServerWellKnownURI": ___, "clientId": ___, "customClaims": ___, "dateCreated": ___, "dateModified": ___, "externalReferenceCode": ___, "infoJSON": ___, "matcherField": ___, "metadataCacheTime": ___, "oidcUserInfoMapperJSON": ___, "tokenRequestParametersJSON": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-entries/by-external-reference-code/{externalReferenceCode}' -d $'{"authRequestParametersJSON": ___, "authServerWellKnownURI": ___, "clientId": ___, "customClaims": ___, "dateCreated": ___, "dateModified": ___, "externalReferenceCode": ___, "infoJSON": ___, "matcherField": ___, "metadataCacheTime": ___, "oidcUserInfoMapperJSON": ___, "tokenRequestParametersJSON": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "oauthClientEntryExternalReferenceCode"
+				name = "externalReferenceCode"
 			)
 		}
 	)
@@ -271,76 +303,20 @@ public abstract class BaseOAuthClientEntryResourceImpl
 	)
 	@jakarta.ws.rs.Consumes({"application/json", "application/xml"})
 	@jakarta.ws.rs.Path(
-		"/oauth-client-entries/{oauthClientEntryExternalReferenceCode}"
+		"/oauth-client-entries/by-external-reference-code/{externalReferenceCode}"
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@jakarta.ws.rs.PUT
 	@Override
-	public OAuthClientEntry putOAuthClientEntry(
+	public OAuthClientEntry putOAuthClientEntryByExternalReferenceCode(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.validation.constraints.NotNull
-			@jakarta.ws.rs.PathParam("oauthClientEntryExternalReferenceCode")
-			String oauthClientEntryExternalReferenceCode,
+			@jakarta.ws.rs.PathParam("externalReferenceCode")
+			String externalReferenceCode,
 			OAuthClientEntry oAuthClientEntry)
 		throws Exception {
 
 		return new OAuthClientEntry();
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-entries/{oauthClientEntryExternalReferenceCode}/batch'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "oauthClientEntryExternalReferenceCode"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "callbackURL"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "OAuthClientEntry")
-		}
-	)
-	@jakarta.ws.rs.Consumes("application/json")
-	@jakarta.ws.rs.Path(
-		"/oauth-client-entries/{oauthClientEntryExternalReferenceCode}/batch"
-	)
-	@jakarta.ws.rs.Produces("application/json")
-	@jakarta.ws.rs.PUT
-	@Override
-	public Response putOAuthClientEntryBatch(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.validation.constraints.NotNull
-			@jakarta.ws.rs.PathParam("oauthClientEntryExternalReferenceCode")
-			String oauthClientEntryExternalReferenceCode,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("callbackURL")
-			String callbackURL,
-			Object object)
-		throws Exception {
-
-		vulcanBatchEngineImportTaskResource.setContextAcceptLanguage(
-			contextAcceptLanguage);
-		vulcanBatchEngineImportTaskResource.setContextCompany(contextCompany);
-		vulcanBatchEngineImportTaskResource.setContextHttpServletRequest(
-			contextHttpServletRequest);
-		vulcanBatchEngineImportTaskResource.setContextUriInfo(contextUriInfo);
-		vulcanBatchEngineImportTaskResource.setContextUser(contextUser);
-
-		Response.ResponseBuilder responseBuilder = Response.accepted();
-
-		return responseBuilder.entity(
-			vulcanBatchEngineImportTaskResource.putImportTask(
-				OAuthClientEntry.class.getName(), callbackURL, object)
-		).build();
 	}
 
 	@Override
@@ -359,6 +335,24 @@ public abstract class BaseOAuthClientEntryResourceImpl
 		if (StringUtil.equalsIgnoreCase(createStrategy, "INSERT")) {
 			oAuthClientEntryUnsafeFunction =
 				oAuthClientEntry -> postOAuthClientEntry(oAuthClientEntry);
+		}
+
+		if (StringUtil.equalsIgnoreCase(createStrategy, "UPSERT")) {
+			String updateStrategy = (String)parameters.getOrDefault(
+				"updateStrategy", "UPDATE");
+
+			if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
+				oAuthClientEntryUnsafeFunction = oAuthClientEntry -> {
+					OAuthClientEntry persistedOAuthClientEntry = null;
+
+					persistedOAuthClientEntry =
+						putOAuthClientEntryByExternalReferenceCode(
+							oAuthClientEntry.getExternalReferenceCode(),
+							oAuthClientEntry);
+
+					return persistedOAuthClientEntry;
+				};
+			}
 		}
 
 		if (oAuthClientEntryUnsafeFunction == null) {
@@ -388,16 +382,40 @@ public abstract class BaseOAuthClientEntryResourceImpl
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
+		UnsafeFunction<OAuthClientEntry, OAuthClientEntry, Exception>
+			oAuthClientEntryUnsafeFunction = oAuthClientEntry -> {
+				if (oAuthClientEntry.getExternalReferenceCode() != null) {
+					deleteOAuthClientEntryByExternalReferenceCode(
+						oAuthClientEntry.getExternalReferenceCode());
+
+					return oAuthClientEntry;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
+			};
+
+		if (contextBatchUnsafeBiConsumer != null) {
+			contextBatchUnsafeBiConsumer.accept(
+				oAuthClientEntries, oAuthClientEntryUnsafeFunction);
+		}
+		else if (contextBatchUnsafeConsumer != null) {
+			contextBatchUnsafeConsumer.accept(
+				oAuthClientEntries, oAuthClientEntryUnsafeFunction::apply);
+		}
+		else {
+			for (OAuthClientEntry oAuthClientEntry : oAuthClientEntries) {
+				oAuthClientEntryUnsafeFunction.apply(oAuthClientEntry);
+			}
+		}
 	}
 
 	public Set<String> getAvailableCreateStrategies() {
-		return SetUtil.fromArray("INSERT");
+		return SetUtil.fromArray("INSERT", "UPSERT");
 	}
 
 	public Set<String> getAvailableUpdateStrategies() {
-		return SetUtil.fromArray("UPDATE");
+		return SetUtil.fromArray();
 	}
 
 	@Override
@@ -455,39 +473,8 @@ public abstract class BaseOAuthClientEntryResourceImpl
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		UnsafeFunction<OAuthClientEntry, OAuthClientEntry, Exception>
-			oAuthClientEntryUnsafeFunction = null;
-
-		String updateStrategy = (String)parameters.getOrDefault(
-			"updateStrategy", "UPDATE");
-
-		if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
-			oAuthClientEntryUnsafeFunction =
-				oAuthClientEntry -> putOAuthClientEntry(
-					(String)parameters.get(
-						"oauthClientEntryExternalReferenceCode"),
-					oAuthClientEntry);
-		}
-
-		if (oAuthClientEntryUnsafeFunction == null) {
-			throw new NotSupportedException(
-				"Update strategy \"" + updateStrategy +
-					"\" is not supported for OAuthClientEntry");
-		}
-
-		if (contextBatchUnsafeBiConsumer != null) {
-			contextBatchUnsafeBiConsumer.accept(
-				oAuthClientEntries, oAuthClientEntryUnsafeFunction);
-		}
-		else if (contextBatchUnsafeConsumer != null) {
-			contextBatchUnsafeConsumer.accept(
-				oAuthClientEntries, oAuthClientEntryUnsafeFunction::apply);
-		}
-		else {
-			for (OAuthClientEntry oAuthClientEntry : oAuthClientEntries) {
-				oAuthClientEntryUnsafeFunction.apply(oAuthClientEntry);
-			}
-		}
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Override

@@ -469,7 +469,7 @@ public class OAuthClientEntry implements Serializable {
 	private Supplier<String> _matcherFieldSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema
-	public String getMetadataCacheTime() {
+	public Long getMetadataCacheTime() {
 		if (_metadataCacheTimeSupplier != null) {
 			metadataCacheTime = _metadataCacheTimeSupplier.get();
 
@@ -479,7 +479,7 @@ public class OAuthClientEntry implements Serializable {
 		return metadataCacheTime;
 	}
 
-	public void setMetadataCacheTime(String metadataCacheTime) {
+	public void setMetadataCacheTime(Long metadataCacheTime) {
 		this.metadataCacheTime = metadataCacheTime;
 
 		_metadataCacheTimeSupplier = null;
@@ -487,7 +487,7 @@ public class OAuthClientEntry implements Serializable {
 
 	@JsonIgnore
 	public void setMetadataCacheTime(
-		UnsafeSupplier<String, Exception> metadataCacheTimeUnsafeSupplier) {
+		UnsafeSupplier<Long, Exception> metadataCacheTimeUnsafeSupplier) {
 
 		_metadataCacheTimeSupplier = () -> {
 			try {
@@ -504,10 +504,10 @@ public class OAuthClientEntry implements Serializable {
 
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected String metadataCacheTime;
+	protected Long metadataCacheTime;
 
 	@JsonIgnore
-	private Supplier<String> _metadataCacheTimeSupplier;
+	private Supplier<Long> _metadataCacheTimeSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema
 	public String getOidcUserInfoMapperJSON() {
@@ -788,7 +788,7 @@ public class OAuthClientEntry implements Serializable {
 			sb.append("\"");
 		}
 
-		String metadataCacheTime = getMetadataCacheTime();
+		Long metadataCacheTime = getMetadataCacheTime();
 
 		if (metadataCacheTime != null) {
 			if (sb.length() > 1) {
@@ -797,11 +797,7 @@ public class OAuthClientEntry implements Serializable {
 
 			sb.append("\"metadataCacheTime\": ");
 
-			sb.append("\"");
-
-			sb.append(_escape(metadataCacheTime));
-
-			sb.append("\"");
+			sb.append(metadataCacheTime);
 		}
 
 		String oidcUserInfoMapperJSON = getOidcUserInfoMapperJSON();

@@ -71,7 +71,8 @@ components:
                 matcherField:
                     type: string
                 metadataCacheTime:
-                    type: string
+                    format: int64
+                    type: integer
                 oidcUserInfoMapperJSON:
                     type: string
                 tokenRequestParametersJSON:
@@ -143,11 +144,11 @@ paths:
         put:
             operationId: putOAuthClientASLocalMetadata
             parameters:
-                - in: path
-                  name: oauthClientASLocalMetadataExternalReferenceCode
-                  required: true
-                  schema:
-                      type: string
+                -   in: path
+                    name: oauthClientASLocalMetadataExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
             requestBody:
                 content:
                     application/json:
@@ -165,7 +166,7 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/OAuthClientASLocalMetadata"
-            tags: [ "OAuthClientASLocalMetadata" ]
+            tags: ["OAuthClientASLocalMetadata"]
     "/oauth-client-entries":
         get:
             operationId: getOAuthClientEntriesPage
@@ -203,12 +204,26 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/OAuthClientEntry"
             tags: ["OAuthClientEntry"]
-    "/oauth-client-entries/{oauthClientEntryExternalReferenceCode}":
-        get:
-            operationId: getOAuthClientEntry
+    "/oauth-client-entries/by-external-reference-code/{externalReferenceCode}":
+        delete:
+            operationId: deleteOAuthClientEntryByExternalReferenceCode
             parameters:
                 -   in: path
-                    name: oauthClientEntryExternalReferenceCode
+                    name: externalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["OAuthClientEntry"]
+        get:
+            operationId: getOAuthClientEntryByExternalReferenceCode
+            parameters:
+                -   in: path
+                    name: externalReferenceCode
                     required: true
                     schema:
                         type: string
@@ -223,13 +238,13 @@ paths:
                                 $ref: "#/components/schemas/OAuthClientEntry"
             tags: ["OAuthClientEntry"]
         put:
-            operationId: putOAuthClientEntry
+            operationId: putOAuthClientEntryByExternalReferenceCode
             parameters:
-                - in: path
-                  name: oauthClientEntryExternalReferenceCode
-                  required: true
-                  schema:
-                      type: string
+                -   in: path
+                    name: externalReferenceCode
+                    required: true
+                    schema:
+                        type: string
             requestBody:
                 content:
                     application/json:
@@ -247,4 +262,4 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/OAuthClientEntry"
-            tags: [ "OAuthClientEntry" ]
+            tags: ["OAuthClientEntry"]
