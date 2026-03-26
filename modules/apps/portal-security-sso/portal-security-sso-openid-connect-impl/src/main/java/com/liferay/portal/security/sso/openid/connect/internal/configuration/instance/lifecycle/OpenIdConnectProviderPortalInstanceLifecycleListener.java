@@ -107,7 +107,7 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 		throws Exception {
 
 		_oAuthClientEntryLocalService.addOAuthClientEntry(
-			guestUserId, _generateAuthRequestParametersJSON(properties),
+			null, guestUserId, _generateAuthRequestParametersJSON(properties),
 			_updateOAuthClientASLocalMetadata(guestUserId, properties),
 			_generateCustomClaimsJSON(properties),
 			_generateInfoJSON(properties),
