@@ -45,8 +45,13 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface OAuthClientASLocalMetadataResource {
 
-	public OAuthClientASLocalMetadata getOAuthClientASLocalMetadata(
-			String oauthClientASLocalMetadataExternalReferenceCode)
+	public void deleteOAuthClientASLocalMetadataByExternalReferenceCode(
+			String externalReferenceCode)
+		throws Exception;
+
+	public OAuthClientASLocalMetadata
+			getOAuthClientASLocalMetadataByExternalReferenceCode(
+				String externalReferenceCode)
 		throws Exception;
 
 	public Page<OAuthClientASLocalMetadata> getOAuthClientASLocalMetadatasPage()
@@ -64,14 +69,10 @@ public interface OAuthClientASLocalMetadataResource {
 			String callbackURL, String contentType, String fieldNames)
 		throws Exception;
 
-	public OAuthClientASLocalMetadata putOAuthClientASLocalMetadata(
-			String oauthClientASLocalMetadataExternalReferenceCode,
-			OAuthClientASLocalMetadata oAuthClientASLocalMetadata)
-		throws Exception;
-
-	public Response putOAuthClientASLocalMetadataBatch(
-			String oauthClientASLocalMetadataExternalReferenceCode,
-			String callbackURL, Object object)
+	public OAuthClientASLocalMetadata
+			putOAuthClientASLocalMetadataByExternalReferenceCode(
+				String externalReferenceCode,
+				OAuthClientASLocalMetadata oAuthClientASLocalMetadata)
 		throws Exception;
 
 	public default void setContextAcceptLanguage(

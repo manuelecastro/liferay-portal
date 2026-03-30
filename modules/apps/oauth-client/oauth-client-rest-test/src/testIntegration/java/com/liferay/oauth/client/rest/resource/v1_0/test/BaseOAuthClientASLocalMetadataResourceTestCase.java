@@ -13,6 +13,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 
+import com.liferay.headless.batch.engine.client.dto.v1_0.ImportTask;
+import com.liferay.headless.batch.engine.client.http.HttpInvoker.HttpResponse;
+import com.liferay.headless.batch.engine.client.resource.v1_0.ImportTaskResource;
 import com.liferay.oauth.client.rest.client.dto.v1_0.OAuthClientASLocalMetadata;
 import com.liferay.oauth.client.rest.client.http.HttpInvoker;
 import com.liferay.oauth.client.rest.client.pagination.Page;
@@ -109,6 +112,16 @@ public abstract class BaseOAuthClientASLocalMetadataResourceTestCase {
 			).locale(
 				LocaleUtil.getDefault()
 			).build();
+
+		importTaskResource = ImportTaskResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
+			LocaleUtil.getDefault()
+		).build();
 	}
 
 	@After
@@ -204,13 +217,50 @@ public abstract class BaseOAuthClientASLocalMetadataResourceTestCase {
 	}
 
 	@Test
-	public void testGetOAuthClientASLocalMetadata() throws Exception {
+	public void testDeleteOAuthClientASLocalMetadataByExternalReferenceCode()
+		throws Exception {
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+			testDeleteOAuthClientASLocalMetadataByExternalReferenceCode_addOAuthClientASLocalMetadata();
+
+		assertHttpResponseStatusCode(
+			204,
+			oAuthClientASLocalMetadataResource.
+				deleteOAuthClientASLocalMetadataByExternalReferenceCodeHttpResponse(
+					oAuthClientASLocalMetadata.getExternalReferenceCode()));
+
+		assertHttpResponseStatusCode(
+			404,
+			oAuthClientASLocalMetadataResource.
+				getOAuthClientASLocalMetadataByExternalReferenceCodeHttpResponse(
+					oAuthClientASLocalMetadata.getExternalReferenceCode()));
+		assertHttpResponseStatusCode(
+			404,
+			oAuthClientASLocalMetadataResource.
+				getOAuthClientASLocalMetadataByExternalReferenceCodeHttpResponse(
+					"-"));
+	}
+
+	protected OAuthClientASLocalMetadata
+			testDeleteOAuthClientASLocalMetadataByExternalReferenceCode_addOAuthClientASLocalMetadata()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGetOAuthClientASLocalMetadataByExternalReferenceCode()
+		throws Exception {
+
 		OAuthClientASLocalMetadata postOAuthClientASLocalMetadata =
-			testGetOAuthClientASLocalMetadata_addOAuthClientASLocalMetadata();
+			testGetOAuthClientASLocalMetadataByExternalReferenceCode_addOAuthClientASLocalMetadata();
 
 		OAuthClientASLocalMetadata getOAuthClientASLocalMetadata =
-			oAuthClientASLocalMetadataResource.getOAuthClientASLocalMetadata(
-				testGetOAuthClientASLocalMetadata_getOauthClientASLocalMetadataExternalReferenceCode());
+			oAuthClientASLocalMetadataResource.
+				getOAuthClientASLocalMetadataByExternalReferenceCode(
+					postOAuthClientASLocalMetadata.getExternalReferenceCode());
 
 		assertEquals(
 			postOAuthClientASLocalMetadata, getOAuthClientASLocalMetadata);
@@ -218,15 +268,7 @@ public abstract class BaseOAuthClientASLocalMetadataResourceTestCase {
 	}
 
 	protected OAuthClientASLocalMetadata
-			testGetOAuthClientASLocalMetadata_addOAuthClientASLocalMetadata()
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	protected String
-			testGetOAuthClientASLocalMetadata_getOauthClientASLocalMetadataExternalReferenceCode()
+			testGetOAuthClientASLocalMetadataByExternalReferenceCode_addOAuthClientASLocalMetadata()
 		throws Exception {
 
 		throw new UnsupportedOperationException(
@@ -307,50 +349,123 @@ public abstract class BaseOAuthClientASLocalMetadataResourceTestCase {
 	}
 
 	@Test
-	public void testPutOAuthClientASLocalMetadata() throws Exception {
+	public void testPutOAuthClientASLocalMetadataByExternalReferenceCode()
+		throws Exception {
+
 		OAuthClientASLocalMetadata postOAuthClientASLocalMetadata =
-			testPutOAuthClientASLocalMetadata_addOAuthClientASLocalMetadata();
+			testPutOAuthClientASLocalMetadataByExternalReferenceCode_addOAuthClientASLocalMetadata();
 
 		OAuthClientASLocalMetadata randomOAuthClientASLocalMetadata =
 			randomOAuthClientASLocalMetadata();
 
 		OAuthClientASLocalMetadata putOAuthClientASLocalMetadata =
-			oAuthClientASLocalMetadataResource.putOAuthClientASLocalMetadata(
-				testPutOAuthClientASLocalMetadata_getOauthClientASLocalMetadataExternalReferenceCode(),
-				randomOAuthClientASLocalMetadata);
+			oAuthClientASLocalMetadataResource.
+				putOAuthClientASLocalMetadataByExternalReferenceCode(
+					postOAuthClientASLocalMetadata.getExternalReferenceCode(),
+					randomOAuthClientASLocalMetadata);
 
 		assertEquals(
 			randomOAuthClientASLocalMetadata, putOAuthClientASLocalMetadata);
 		assertValid(putOAuthClientASLocalMetadata);
 
 		OAuthClientASLocalMetadata getOAuthClientASLocalMetadata =
-			oAuthClientASLocalMetadataResource.getOAuthClientASLocalMetadata(
-				testPutOAuthClientASLocalMetadata_getOauthClientASLocalMetadataExternalReferenceCode());
+			oAuthClientASLocalMetadataResource.
+				getOAuthClientASLocalMetadataByExternalReferenceCode(
+					putOAuthClientASLocalMetadata.getExternalReferenceCode());
 
 		assertEquals(
 			randomOAuthClientASLocalMetadata, getOAuthClientASLocalMetadata);
 		assertValid(getOAuthClientASLocalMetadata);
+
+		OAuthClientASLocalMetadata newOAuthClientASLocalMetadata =
+			testPutOAuthClientASLocalMetadataByExternalReferenceCode_createOAuthClientASLocalMetadata();
+
+		putOAuthClientASLocalMetadata =
+			oAuthClientASLocalMetadataResource.
+				putOAuthClientASLocalMetadataByExternalReferenceCode(
+					newOAuthClientASLocalMetadata.getExternalReferenceCode(),
+					newOAuthClientASLocalMetadata);
+
+		assertEquals(
+			newOAuthClientASLocalMetadata, putOAuthClientASLocalMetadata);
+		assertValid(putOAuthClientASLocalMetadata);
+
+		getOAuthClientASLocalMetadata =
+			oAuthClientASLocalMetadataResource.
+				getOAuthClientASLocalMetadataByExternalReferenceCode(
+					putOAuthClientASLocalMetadata.getExternalReferenceCode());
+
+		assertEquals(
+			newOAuthClientASLocalMetadata, getOAuthClientASLocalMetadata);
+
+		Assert.assertEquals(
+			newOAuthClientASLocalMetadata.getExternalReferenceCode(),
+			putOAuthClientASLocalMetadata.getExternalReferenceCode());
 	}
 
 	protected OAuthClientASLocalMetadata
-			testPutOAuthClientASLocalMetadata_addOAuthClientASLocalMetadata()
+			testPutOAuthClientASLocalMetadataByExternalReferenceCode_addOAuthClientASLocalMetadata()
 		throws Exception {
 
 		throw new UnsupportedOperationException(
 			"This method needs to be implemented");
 	}
 
-	protected String
-			testPutOAuthClientASLocalMetadata_getOauthClientASLocalMetadataExternalReferenceCode()
+	protected OAuthClientASLocalMetadata
+			testPutOAuthClientASLocalMetadataByExternalReferenceCode_createOAuthClientASLocalMetadata()
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
+		return randomOAuthClientASLocalMetadata();
 	}
 
 	@Test
 	public void testBatchEngineDeleteImportTask() throws Exception {
-		Assert.assertTrue(true);
+		OAuthClientASLocalMetadata oAuthClientASLocalMetadata1 =
+			testBatchEngineDeleteImportTask_addOAuthClientASLocalMetadata();
+
+		testBatchEngineDeleteImportTask_deleteOAuthClientASLocalMetadata(
+			200, oAuthClientASLocalMetadata1.getExternalReferenceCode());
+	}
+
+	protected OAuthClientASLocalMetadata
+			testBatchEngineDeleteImportTask_addOAuthClientASLocalMetadata()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected void
+			testBatchEngineDeleteImportTask_deleteOAuthClientASLocalMetadata(
+				int expectedStatusCode, String externalReferenceCode,
+				String... parameters)
+		throws Exception {
+
+		ImportTaskResource importTaskResource = ImportTaskResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).parameters(
+			parameters
+		).build();
+
+		HttpResponse httpResponse =
+			importTaskResource.deleteImportTaskHttpResponse(
+				"com.liferay.oauth.client.rest.dto.v1_0.OAuthClientASLocalMetadata",
+				null, null, null, null,
+				JSONUtil.putAll(
+					JSONUtil.put(
+						"externalReferenceCode", () -> externalReferenceCode)));
+
+		Assert.assertEquals(expectedStatusCode, httpResponse.getStatusCode());
+
+		if (expectedStatusCode == 200) {
+			waitForFinish(
+				"COMPLETED",
+				JSONFactoryUtil.createJSONObject(httpResponse.getContent()));
+		}
 	}
 
 	protected void assertContains(
@@ -1330,8 +1445,31 @@ public abstract class BaseOAuthClientASLocalMetadataResourceTestCase {
 		return randomOAuthClientASLocalMetadata();
 	}
 
+	protected final JSONObject waitForFinish(
+			String expectedExecuteStatus, JSONObject jsonObject)
+		throws Exception {
+
+		while (true) {
+			ImportTask importTask = importTaskResource.getImportTask(
+				jsonObject.getLong("id"));
+
+			ImportTask.ExecuteStatus executeStatus =
+				importTask.getExecuteStatus();
+
+			if (StringUtil.equals(executeStatus.getValue(), "COMPLETED") ||
+				StringUtil.equals(executeStatus.getValue(), "FAILED")) {
+
+				Assert.assertEquals(
+					expectedExecuteStatus, executeStatus.getValue());
+
+				return jsonObject;
+			}
+		}
+	}
+
 	protected OAuthClientASLocalMetadataResource
 		oAuthClientASLocalMetadataResource;
+	protected ImportTaskResource importTaskResource;
 	protected com.liferay.portal.kernel.model.Group irrelevantGroup;
 	protected com.liferay.portal.kernel.model.Company testCompany;
 	protected com.liferay.portal.kernel.model.Group testGroup;

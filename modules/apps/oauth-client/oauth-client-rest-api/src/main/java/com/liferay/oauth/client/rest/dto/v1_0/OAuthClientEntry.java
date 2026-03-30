@@ -510,6 +510,53 @@ public class OAuthClientEntry implements Serializable {
 	private Supplier<Long> _metadataCacheTimeSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema
+	@Valid
+	public OAuthClientASLocalMetadata getOAuthClientASLocalMetadata() {
+		if (_oAuthClientASLocalMetadataSupplier != null) {
+			oAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataSupplier.get();
+
+			_oAuthClientASLocalMetadataSupplier = null;
+		}
+
+		return oAuthClientASLocalMetadata;
+	}
+
+	public void setOAuthClientASLocalMetadata(
+		OAuthClientASLocalMetadata oAuthClientASLocalMetadata) {
+
+		this.oAuthClientASLocalMetadata = oAuthClientASLocalMetadata;
+
+		_oAuthClientASLocalMetadataSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setOAuthClientASLocalMetadata(
+		UnsafeSupplier<OAuthClientASLocalMetadata, Exception>
+			oAuthClientASLocalMetadataUnsafeSupplier) {
+
+		_oAuthClientASLocalMetadataSupplier = () -> {
+			try {
+				return oAuthClientASLocalMetadataUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected OAuthClientASLocalMetadata oAuthClientASLocalMetadata;
+
+	@JsonIgnore
+	private Supplier<OAuthClientASLocalMetadata>
+		_oAuthClientASLocalMetadataSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
 	public String getOidcUserInfoMapperJSON() {
 		if (_oidcUserInfoMapperJSONSupplier != null) {
 			oidcUserInfoMapperJSON = _oidcUserInfoMapperJSONSupplier.get();
@@ -798,6 +845,19 @@ public class OAuthClientEntry implements Serializable {
 			sb.append("\"metadataCacheTime\": ");
 
 			sb.append(metadataCacheTime);
+		}
+
+		OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+			getOAuthClientASLocalMetadata();
+
+		if (oAuthClientASLocalMetadata != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"oAuthClientASLocalMetadata\": ");
+
+			sb.append(String.valueOf(oAuthClientASLocalMetadata));
 		}
 
 		String oidcUserInfoMapperJSON = getOidcUserInfoMapperJSON();

@@ -5,33 +5,32 @@
 
 package com.liferay.oauth.client.rest.internal.resource.v1_0;
 
-import com.liferay.expando.kernel.model.ExpandoColumn;
-import com.liferay.expando.kernel.model.ExpandoTable;
-import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
-import com.liferay.expando.kernel.service.ExpandoTableLocalService;
+import com.liferay.expando.kernel.model.ExpandoBridge;
+import com.liferay.expando.kernel.util.ExpandoBridgeFactoryUtil;
 import com.liferay.exportimport.vulcan.batch.engine.ExportImportVulcanBatchEngineTaskItemDelegate;
-import com.liferay.headless.delivery.dto.v1_0.Creator;
 import com.liferay.headless.delivery.dto.v1_0.util.CreatorUtil;
+import com.liferay.oauth.client.constants.OAuthClientAdminPortletKeys;
+import com.liferay.oauth.client.persistence.exception.NoSuchOAuthClientEntryException;
+import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataLocalService;
+import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataService;
 import com.liferay.oauth.client.persistence.service.OAuthClientEntryService;
 import com.liferay.oauth.client.rest.dto.v1_0.CustomClaim;
 import com.liferay.oauth.client.rest.dto.v1_0.CustomField;
+import com.liferay.oauth.client.rest.dto.v1_0.OAuthClientASLocalMetadata;
 import com.liferay.oauth.client.rest.dto.v1_0.OAuthClientEntry;
 import com.liferay.oauth.client.rest.resource.v1_0.OAuthClientEntryResource;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.GuestOrUserUtil;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.pagination.Page;
-
-import jakarta.ws.rs.core.MultivaluedHashMap;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -54,16 +53,21 @@ public class OAuthClientEntryResourceImpl
 			String oauthClientEntryExternalReferenceCode)
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
+		com.liferay.oauth.client.persistence.model.OAuthClientEntry
+			oAuthClientEntry =
+				_oAuthClientEntryService.
+					fetchOAuthClientEntryByExternalReferenceCode(
+						oauthClientEntryExternalReferenceCode,
+						contextCompany.getCompanyId());
 
-	@Override
-	public EntityModel getEntityModel(Map<String, List<String>> multivaluedMap)
-		throws Exception {
+		if (oAuthClientEntry == null) {
+			throw new NoSuchOAuthClientEntryException(
+				"Unable to find OAuthClientEntry with external reference " +
+					"code " + oauthClientEntryExternalReferenceCode);
+		}
 
-		return getEntityModel(
-			new MultivaluedHashMap<String, Object>(multivaluedMap));
+		_oAuthClientEntryService.deleteOAuthClientEntry(
+			oAuthClientEntry.getOAuthClientEntryId());
 	}
 
 	@Override
@@ -80,8 +84,7 @@ public class OAuthClientEntryResourceImpl
 
 			@Override
 			public String getLabelLanguageKey() {
-				return "jakarta.portlet.title.com_liferay_oauth_client_admin" +
-					"_web_internal_portlet_OAuthClientAdminPortlet";
+				return "oauth-client-entries";
 			}
 
 			@Override
@@ -95,8 +98,7 @@ public class OAuthClientEntryResourceImpl
 
 			@Override
 			public String getPortletId() {
-				return "com_liferay_oauth_client_admin_web_internal_portlet" +
-					"_OAuthClientAdminPortlet";
+				return OAuthClientAdminPortletKeys.OAUTH_CLIENT_ADMIN;
 			}
 
 			@Override
@@ -128,7 +130,14 @@ public class OAuthClientEntryResourceImpl
 			String oauthClientEntryExternalReferenceCode)
 		throws Exception {
 
-		return new OAuthClientEntry();
+		com.liferay.oauth.client.persistence.model.OAuthClientEntry
+			serviceBuilderOAuthClientEntry =
+				_oAuthClientEntryService.
+					fetchOAuthClientEntryByExternalReferenceCode(
+						oauthClientEntryExternalReferenceCode,
+						contextCompany.getCompanyId());
+
+		return _toOAuthClientEntry(serviceBuilderOAuthClientEntry);
 	}
 
 	@Override
@@ -136,12 +145,36 @@ public class OAuthClientEntryResourceImpl
 			OAuthClientEntry oAuthClientEntry)
 		throws Exception {
 
-		Creator creator = oAuthClientEntry.getCreator();
+		String authServerWellKnownURI =
+			oAuthClientEntry.getAuthServerWellKnownURI();
+
+		if (authServerWellKnownURI.endsWith("local")) {
+			OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+				oAuthClientEntry.getOAuthClientASLocalMetadata();
+
+			if (oAuthClientASLocalMetadata != null) {
+				com.liferay.oauth.client.persistence.model.
+					OAuthClientASLocalMetadata
+						serviceBuilderOAuthClientASLocalMetadata =
+							_oAuthClientASLocalMetadataService.
+								fetchOAuthClientASLocalMetadata(
+									contextCompany.getCompanyId(),
+									oAuthClientASLocalMetadata.getIssuer());
+
+				if (serviceBuilderOAuthClientASLocalMetadata == null) {
+					_oAuthClientASLocalMetadataService.
+						addOAuthClientASLocalMetadata(
+							oAuthClientASLocalMetadata.getOAuthASMetadataJSON(),
+							"openid-configuration");
+				}
+			}
+		}
 
 		com.liferay.oauth.client.persistence.model.OAuthClientEntry
 			serviceBuilderOAuthClientEntry =
 				_oAuthClientEntryService.addOAuthClientEntry(
-					creator.getId(),
+					oAuthClientEntry.getExternalReferenceCode(),
+					GuestOrUserUtil.getUserId(),
 					oAuthClientEntry.getAuthRequestParametersJSON(),
 					oAuthClientEntry.getAuthServerWellKnownURI(),
 					_getCustomClaimsJSON(oAuthClientEntry.getCustomClaims()),
@@ -162,20 +195,18 @@ public class OAuthClientEntryResourceImpl
 
 		com.liferay.oauth.client.persistence.model.OAuthClientEntry
 			serviceBuilderOAuthClientEntry =
-			_oAuthClientEntryService.getOAuthClientEntry(
-				contextCompany.getCompanyId(),
-				oAuthClientEntry.getAuthServerWellKnownURI(),
-				oAuthClientEntry.getClientId());
+				_oAuthClientEntryService.
+					fetchOAuthClientEntryByExternalReferenceCode(
+						oauthClientEntryExternalReferenceCode,
+						contextCompany.getCompanyId());
 
 		oAuthClientEntry.setExternalReferenceCode(
 			() -> oauthClientEntryExternalReferenceCode);
 
 		if (serviceBuilderOAuthClientEntry != null) {
-			Creator creator = oAuthClientEntry.getCreator();
-
 			serviceBuilderOAuthClientEntry =
 				_oAuthClientEntryService.updateOAuthClientEntry(
-					creator.getId(),
+					serviceBuilderOAuthClientEntry.getOAuthClientEntryId(),
 					oAuthClientEntry.getAuthRequestParametersJSON(),
 					oAuthClientEntry.getAuthServerWellKnownURI(),
 					_getCustomClaimsJSON(oAuthClientEntry.getCustomClaims()),
@@ -201,15 +232,22 @@ public class OAuthClientEntryResourceImpl
 				continue;
 			}
 
-			customClaimsJSONObject.put(customField.getName(),
-				customClaim::getCustomClaimValue);
+			ExpandoBridge expandoBridge =
+				ExpandoBridgeFactoryUtil.getExpandoBridge(
+					contextCompany.getCompanyId(), User.class.getName());
+
+			if (!expandoBridge.hasAttribute(customField.getName())) {
+				continue;
+			}
+
+			customClaimsJSONObject.put(
+				customField.getName(), customClaim::getCustomClaimValue);
 		}
 
 		return customClaimsJSONObject.toString();
 	}
 
-	private CustomClaim[] _toCustomClaims(
-			Long companyId, String customClaimsJSON)
+	private CustomClaim[] _toCustomClaims(String customClaimsJSON)
 		throws Exception {
 
 		if (Validator.isNull(customClaimsJSON)) {
@@ -226,7 +264,7 @@ public class OAuthClientEntryResourceImpl
 		while (iterator.hasNext()) {
 			String key = iterator.next();
 
-			CustomField customField = _toCustomField(companyId, key);
+			CustomField customField = _toCustomField(key);
 
 			if (customField == null) {
 				continue;
@@ -245,27 +283,72 @@ public class OAuthClientEntryResourceImpl
 		return customClaimsList.toArray(CustomClaim[]::new);
 	}
 
-	private CustomField _toCustomField(Long companyId, String key) {
-		ExpandoTable expandoTable = _expandoTableLocalService.fetchDefaultTable(
-			companyId, User.class.getName());
+	private CustomField _toCustomField(String key) {
+		ExpandoBridge expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(
+			contextCompany.getCompanyId(), User.class.getName());
 
-		if (expandoTable == null) {
-			return null;
-		}
-
-		ExpandoColumn expandoColumn = _expandoColumnLocalService.fetchColumn(
-			expandoTable.getTableId(), key);
-
-		if (expandoColumn == null) {
+		if (!expandoBridge.hasAttribute(key)) {
 			return null;
 		}
 
 		return new CustomField() {
 			{
-				setDefaultData(expandoColumn::getDefaultData);
-				setFieldType(expandoColumn::getType);
-				setFieldTypeSettings(expandoColumn::getTypeSettings);
+				setDefaultData(
+					() -> String.valueOf(
+						expandoBridge.getAttributeDefault(key)));
+				setFieldType(() -> expandoBridge.getAttributeType(key));
+				setFieldTypeSettings(
+					() -> String.valueOf(
+						expandoBridge.getAttributeProperties(key)));
 				setName(() -> key);
+			}
+		};
+	}
+
+	private OAuthClientASLocalMetadata _toOAuthClientASLocalMetadata(
+		String wellKnownURI) {
+
+		if (!wellKnownURI.endsWith("local")) {
+			return null;
+		}
+
+		com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata
+			serviceBuilderOAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataLocalService.
+					fetchOAuthClientASLocalMetadata(
+						contextCompany.getCompanyId(), wellKnownURI);
+
+		if (serviceBuilderOAuthClientASLocalMetadata == null) {
+			return null;
+		}
+
+		return new OAuthClientASLocalMetadata() {
+			{
+				setCreator(
+					() -> CreatorUtil.toCreator(
+						null, _portal,
+						_userLocalService.fetchUser(
+							serviceBuilderOAuthClientASLocalMetadata.
+								getUserId())));
+				setDateCreated(
+					serviceBuilderOAuthClientASLocalMetadata::getCreateDate);
+				setDateModified(
+					serviceBuilderOAuthClientASLocalMetadata::getModifiedDate);
+				setIssuer(serviceBuilderOAuthClientASLocalMetadata::getIssuer);
+				setLocalWellKnownEnabled(
+					serviceBuilderOAuthClientASLocalMetadata::
+						getLocalWellKnownEnabled);
+				setLocalWellKnownURI(
+					serviceBuilderOAuthClientASLocalMetadata::
+						getLocalWellKnownURI);
+				setMetadataJSON(
+					serviceBuilderOAuthClientASLocalMetadata::getMetadataJSON);
+				setOAuthASLocalWellKnownURI(
+					serviceBuilderOAuthClientASLocalMetadata::
+						getOAuthASLocalWellKnownURI);
+				setOAuthASMetadataJSON(
+					serviceBuilderOAuthClientASLocalMetadata::
+						getOAuthASMetadataJSON);
 			}
 		};
 	}
@@ -289,7 +372,6 @@ public class OAuthClientEntryResourceImpl
 							serviceBuilderOAuthClientEntry.getUserId())));
 				setCustomClaims(
 					() -> _toCustomClaims(
-						serviceBuilderOAuthClientEntry.getCompanyId(),
 						serviceBuilderOAuthClientEntry.getCustomClaimsJSON()));
 				setDateCreated(serviceBuilderOAuthClientEntry::getCreateDate);
 				setDateModified(
@@ -301,6 +383,10 @@ public class OAuthClientEntryResourceImpl
 					serviceBuilderOAuthClientEntry::getMatcherField);
 				setMetadataCacheTime(
 					serviceBuilderOAuthClientEntry::getMetadataCacheTime);
+				setOAuthClientASLocalMetadata(
+					() -> _toOAuthClientASLocalMetadata(
+						serviceBuilderOAuthClientEntry.
+							getAuthServerWellKnownURI()));
 				setOidcUserInfoMapperJSON(
 					serviceBuilderOAuthClientEntry::getOIDCUserInfoMapperJSON);
 				setTokenRequestParametersJSON(
@@ -311,13 +397,15 @@ public class OAuthClientEntryResourceImpl
 	}
 
 	@Reference
-	private ExpandoColumnLocalService _expandoColumnLocalService;
-
-	@Reference
-	private ExpandoTableLocalService _expandoTableLocalService;
-
-	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private OAuthClientASLocalMetadataLocalService
+		_oAuthClientASLocalMetadataLocalService;
+
+	@Reference
+	private OAuthClientASLocalMetadataService
+		_oAuthClientASLocalMetadataService;
 
 	@Reference
 	private OAuthClientEntryService _oAuthClientEntryService;
