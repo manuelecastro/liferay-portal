@@ -71,13 +71,47 @@ public abstract class BaseOAuthClientASLocalMetadataResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-as-local-metadatas/{oauthClientASLocalMetadataExternalReferenceCode}'  -u 'test@liferay.com:test'
+	 * curl -X 'DELETE' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-as-local-metadata/by-external-reference-code/{externalReferenceCode}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "oauthClientASLocalMetadataExternalReferenceCode"
+				name = "externalReferenceCode"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(
+				name = "OAuthClientASLocalMetadata"
+			)
+		}
+	)
+	@jakarta.ws.rs.DELETE
+	@jakarta.ws.rs.Path(
+		"/oauth-client-as-local-metadata/by-external-reference-code/{externalReferenceCode}"
+	)
+	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public void deleteOAuthClientASLocalMetadataByExternalReferenceCode(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("externalReferenceCode")
+			String externalReferenceCode)
+		throws Exception {
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'GET' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-as-local-metadata/by-external-reference-code/{externalReferenceCode}'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "externalReferenceCode"
 			)
 		}
 	)
@@ -90,17 +124,16 @@ public abstract class BaseOAuthClientASLocalMetadataResourceImpl
 	)
 	@jakarta.ws.rs.GET
 	@jakarta.ws.rs.Path(
-		"/oauth-client-as-local-metadatas/{oauthClientASLocalMetadataExternalReferenceCode}"
+		"/oauth-client-as-local-metadata/by-external-reference-code/{externalReferenceCode}"
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public OAuthClientASLocalMetadata getOAuthClientASLocalMetadata(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.validation.constraints.NotNull
-			@jakarta.ws.rs.PathParam(
-				"oauthClientASLocalMetadataExternalReferenceCode"
-			)
-			String oauthClientASLocalMetadataExternalReferenceCode)
+	public OAuthClientASLocalMetadata
+			getOAuthClientASLocalMetadataByExternalReferenceCode(
+				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+				@jakarta.validation.constraints.NotNull
+				@jakarta.ws.rs.PathParam("externalReferenceCode")
+				String externalReferenceCode)
 		throws Exception {
 
 		return new OAuthClientASLocalMetadata();
@@ -269,13 +302,13 @@ public abstract class BaseOAuthClientASLocalMetadataResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-as-local-metadatas/{oauthClientASLocalMetadataExternalReferenceCode}' -d $'{"dateCreated": ___, "dateModified": ___, "externalReferenceCode": ___, "issuer": ___, "localWellKnownEnabled": ___, "localWellKnownURI": ___, "metadataJSON": ___, "oAuthASLocalWellKnownURI": ___, "oAuthASMetadataJSON": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-as-local-metadata/by-external-reference-code/{externalReferenceCode}' -d $'{"dateCreated": ___, "dateModified": ___, "externalReferenceCode": ___, "issuer": ___, "localWellKnownEnabled": ___, "localWellKnownURI": ___, "metadataJSON": ___, "oAuthASLocalWellKnownURI": ___, "oAuthASMetadataJSON": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "oauthClientASLocalMetadataExternalReferenceCode"
+				name = "externalReferenceCode"
 			)
 		}
 	)
@@ -288,82 +321,21 @@ public abstract class BaseOAuthClientASLocalMetadataResourceImpl
 	)
 	@jakarta.ws.rs.Consumes({"application/json", "application/xml"})
 	@jakarta.ws.rs.Path(
-		"/oauth-client-as-local-metadatas/{oauthClientASLocalMetadataExternalReferenceCode}"
+		"/oauth-client-as-local-metadata/by-external-reference-code/{externalReferenceCode}"
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@jakarta.ws.rs.PUT
 	@Override
-	public OAuthClientASLocalMetadata putOAuthClientASLocalMetadata(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.validation.constraints.NotNull
-			@jakarta.ws.rs.PathParam(
-				"oauthClientASLocalMetadataExternalReferenceCode"
-			)
-			String oauthClientASLocalMetadataExternalReferenceCode,
-			OAuthClientASLocalMetadata oAuthClientASLocalMetadata)
+	public OAuthClientASLocalMetadata
+			putOAuthClientASLocalMetadataByExternalReferenceCode(
+				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+				@jakarta.validation.constraints.NotNull
+				@jakarta.ws.rs.PathParam("externalReferenceCode")
+				String externalReferenceCode,
+				OAuthClientASLocalMetadata oAuthClientASLocalMetadata)
 		throws Exception {
 
 		return new OAuthClientASLocalMetadata();
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/oauth-client/v1.0/oauth-client-as-local-metadatas/{oauthClientASLocalMetadataExternalReferenceCode}/batch'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "oauthClientASLocalMetadataExternalReferenceCode"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "callbackURL"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(
-				name = "OAuthClientASLocalMetadata"
-			)
-		}
-	)
-	@jakarta.ws.rs.Consumes("application/json")
-	@jakarta.ws.rs.Path(
-		"/oauth-client-as-local-metadatas/{oauthClientASLocalMetadataExternalReferenceCode}/batch"
-	)
-	@jakarta.ws.rs.Produces("application/json")
-	@jakarta.ws.rs.PUT
-	@Override
-	public Response putOAuthClientASLocalMetadataBatch(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.validation.constraints.NotNull
-			@jakarta.ws.rs.PathParam(
-				"oauthClientASLocalMetadataExternalReferenceCode"
-			)
-			String oauthClientASLocalMetadataExternalReferenceCode,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("callbackURL")
-			String callbackURL,
-			Object object)
-		throws Exception {
-
-		vulcanBatchEngineImportTaskResource.setContextAcceptLanguage(
-			contextAcceptLanguage);
-		vulcanBatchEngineImportTaskResource.setContextCompany(contextCompany);
-		vulcanBatchEngineImportTaskResource.setContextHttpServletRequest(
-			contextHttpServletRequest);
-		vulcanBatchEngineImportTaskResource.setContextUriInfo(contextUriInfo);
-		vulcanBatchEngineImportTaskResource.setContextUser(contextUser);
-
-		Response.ResponseBuilder responseBuilder = Response.accepted();
-
-		return responseBuilder.entity(
-			vulcanBatchEngineImportTaskResource.putImportTask(
-				OAuthClientASLocalMetadata.class.getName(), callbackURL, object)
-		).build();
 	}
 
 	@Override
@@ -384,6 +356,27 @@ public abstract class BaseOAuthClientASLocalMetadataResourceImpl
 			oAuthClientASLocalMetadataUnsafeFunction =
 				oAuthClientASLocalMetadata -> postOAuthClientASLocalMetadata(
 					oAuthClientASLocalMetadata);
+		}
+
+		if (StringUtil.equalsIgnoreCase(createStrategy, "UPSERT")) {
+			String updateStrategy = (String)parameters.getOrDefault(
+				"updateStrategy", "UPDATE");
+
+			if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
+				oAuthClientASLocalMetadataUnsafeFunction =
+					oAuthClientASLocalMetadata -> {
+						OAuthClientASLocalMetadata
+							persistedOAuthClientASLocalMetadata = null;
+
+						persistedOAuthClientASLocalMetadata =
+							putOAuthClientASLocalMetadataByExternalReferenceCode(
+								oAuthClientASLocalMetadata.
+									getExternalReferenceCode(),
+								oAuthClientASLocalMetadata);
+
+						return persistedOAuthClientASLocalMetadata;
+					};
+			}
 		}
 
 		if (oAuthClientASLocalMetadataUnsafeFunction == null) {
@@ -418,16 +411,50 @@ public abstract class BaseOAuthClientASLocalMetadataResourceImpl
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
+		UnsafeFunction
+			<OAuthClientASLocalMetadata, OAuthClientASLocalMetadata, Exception>
+				oAuthClientASLocalMetadataUnsafeFunction =
+					oAuthClientASLocalMetadata -> {
+						if (oAuthClientASLocalMetadata.
+								getExternalReferenceCode() != null) {
+
+							deleteOAuthClientASLocalMetadataByExternalReferenceCode(
+								oAuthClientASLocalMetadata.
+									getExternalReferenceCode());
+
+							return oAuthClientASLocalMetadata;
+						}
+
+						throw new UnsupportedOperationException(
+							"Unable to delete by external reference code or ID");
+					};
+
+		if (contextBatchUnsafeBiConsumer != null) {
+			contextBatchUnsafeBiConsumer.accept(
+				oAuthClientASLocalMetadatas,
+				oAuthClientASLocalMetadataUnsafeFunction);
+		}
+		else if (contextBatchUnsafeConsumer != null) {
+			contextBatchUnsafeConsumer.accept(
+				oAuthClientASLocalMetadatas,
+				oAuthClientASLocalMetadataUnsafeFunction::apply);
+		}
+		else {
+			for (OAuthClientASLocalMetadata oAuthClientASLocalMetadata :
+					oAuthClientASLocalMetadatas) {
+
+				oAuthClientASLocalMetadataUnsafeFunction.apply(
+					oAuthClientASLocalMetadata);
+			}
+		}
 	}
 
 	public Set<String> getAvailableCreateStrategies() {
-		return SetUtil.fromArray("INSERT");
+		return SetUtil.fromArray("INSERT", "UPSERT");
 	}
 
 	public Set<String> getAvailableUpdateStrategies() {
-		return SetUtil.fromArray("UPDATE");
+		return SetUtil.fromArray();
 	}
 
 	@Override
@@ -485,45 +512,8 @@ public abstract class BaseOAuthClientASLocalMetadataResourceImpl
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		UnsafeFunction
-			<OAuthClientASLocalMetadata, OAuthClientASLocalMetadata, Exception>
-				oAuthClientASLocalMetadataUnsafeFunction = null;
-
-		String updateStrategy = (String)parameters.getOrDefault(
-			"updateStrategy", "UPDATE");
-
-		if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
-			oAuthClientASLocalMetadataUnsafeFunction =
-				oAuthClientASLocalMetadata -> putOAuthClientASLocalMetadata(
-					(String)parameters.get(
-						"oauthClientASLocalMetadataExternalReferenceCode"),
-					oAuthClientASLocalMetadata);
-		}
-
-		if (oAuthClientASLocalMetadataUnsafeFunction == null) {
-			throw new NotSupportedException(
-				"Update strategy \"" + updateStrategy +
-					"\" is not supported for OAuthClientASLocalMetadata");
-		}
-
-		if (contextBatchUnsafeBiConsumer != null) {
-			contextBatchUnsafeBiConsumer.accept(
-				oAuthClientASLocalMetadatas,
-				oAuthClientASLocalMetadataUnsafeFunction);
-		}
-		else if (contextBatchUnsafeConsumer != null) {
-			contextBatchUnsafeConsumer.accept(
-				oAuthClientASLocalMetadatas,
-				oAuthClientASLocalMetadataUnsafeFunction::apply);
-		}
-		else {
-			for (OAuthClientASLocalMetadata oAuthClientASLocalMetadata :
-					oAuthClientASLocalMetadatas) {
-
-				oAuthClientASLocalMetadataUnsafeFunction.apply(
-					oAuthClientASLocalMetadata);
-			}
-		}
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Override

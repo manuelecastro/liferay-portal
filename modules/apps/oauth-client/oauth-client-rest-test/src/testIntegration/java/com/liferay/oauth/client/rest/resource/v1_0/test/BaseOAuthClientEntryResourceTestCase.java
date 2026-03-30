@@ -610,6 +610,16 @@ public abstract class BaseOAuthClientEntryResourceTestCase {
 			}
 
 			if (Objects.equals(
+					"oAuthClientASLocalMetadata", additionalAssertFieldName)) {
+
+				if (oAuthClientEntry.getOAuthClientASLocalMetadata() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
 					"oidcUserInfoMapperJSON", additionalAssertFieldName)) {
 
 				if (oAuthClientEntry.getOidcUserInfoMapperJSON() == null) {
@@ -874,6 +884,19 @@ public abstract class BaseOAuthClientEntryResourceTestCase {
 				if (!Objects.deepEquals(
 						oAuthClientEntry1.getMetadataCacheTime(),
 						oAuthClientEntry2.getMetadataCacheTime())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"oAuthClientASLocalMetadata", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						oAuthClientEntry1.getOAuthClientASLocalMetadata(),
+						oAuthClientEntry2.getOAuthClientASLocalMetadata())) {
 
 					return false;
 				}
@@ -1360,6 +1383,11 @@ public abstract class BaseOAuthClientEntryResourceTestCase {
 		}
 
 		if (entityFieldName.equals("metadataCacheTime")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("oAuthClientASLocalMetadata")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
