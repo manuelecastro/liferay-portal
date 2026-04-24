@@ -5,6 +5,7 @@
 
 package com.liferay.saml.opensaml.integration.internal.certificate;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -100,8 +101,8 @@ public class CertificateToolImplTest {
 
 	@Test
 	public void testGenerateKeyPairDefaultMode() throws Exception {
-		_assertKeyPair(_certificateToolImpl.generateKeyPair("RSA", 512), 512);
-		_assertKeyPair(_certificateToolImpl.generateKeyPair("RSA", 2048), 2048);
+		_assertKeyPair(512, _certificateToolImpl.generateKeyPair("RSA", 512));
+		_assertKeyPair(2048, _certificateToolImpl.generateKeyPair("RSA", 2048));
 
 		KeyPair dsaKeyPair = _certificateToolImpl.generateKeyPair("DSA", 2048);
 
@@ -120,12 +121,12 @@ public class CertificateToolImplTest {
 		_assertRejected("RSA", 512);
 		_assertRejected("RSA", 1024);
 
-		_assertKeyPair(_certificateToolImpl.generateKeyPair("RSA", 2048), 2048);
-		_assertKeyPair(_certificateToolImpl.generateKeyPair("RSA", 3072), 3072);
-		_assertKeyPair(_certificateToolImpl.generateKeyPair("RSA", 4096), 4096);
+		_assertKeyPair(2048, _certificateToolImpl.generateKeyPair("RSA", 2048));
+		_assertKeyPair(3072, _certificateToolImpl.generateKeyPair("RSA", 3072));
+		_assertKeyPair(4096, _certificateToolImpl.generateKeyPair("RSA", 4096));
 	}
 
-	private void _assertKeyPair(KeyPair keyPair, int expectedBitLength) {
+	private void _assertKeyPair(int expectedBitLength, KeyPair keyPair) {
 		Assert.assertNotNull(keyPair);
 
 		PublicKey publicKey = keyPair.getPublic();
@@ -144,15 +145,13 @@ public class CertificateToolImplTest {
 			_certificateToolImpl.generateKeyPair(algorithm, keySize);
 
 			Assert.fail(
-				"Expected InvalidParameterException for " + algorithm + " " +
-					keySize);
-		}
-		catch (InvalidParameterException invalidParameterException) {
+				StringBundler.concat(
+					"Expected InvalidParameterException for ", algorithm, " ",
+					keySize));
 		}
 		catch (Exception exception) {
-			Assert.fail(
-				"Expected InvalidParameterException but got " +
-					exception.getClass());
+			Assert.assertEquals(
+				InvalidParameterException.class, exception.getClass());
 		}
 	}
 

@@ -137,7 +137,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			Store.VERSION_DEFAULT,
 			new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
 
-		_setSamlConfiguration("jks", null);
+		_setSamlConfiguration(null, "jks");
 
 		_upgradeProcess.upgrade();
 
@@ -175,7 +175,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 	@Test
 	public void testUpgradeConfigurationAlreadyPKCS12() throws Exception {
-		_setSamlConfiguration("PKCS12", "/data/keystore.p12");
+		_setSamlConfiguration("/data/keystore.p12", "PKCS12");
 
 		_upgradeProcess.upgrade();
 
@@ -189,7 +189,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 	@Test
 	public void testUpgradeConfigurationFromJKSToPKCS12() throws Exception {
-		_setSamlConfiguration("jks", "/data/keystore.jks");
+		_setSamlConfiguration("/data/keystore.jks", "jks");
 
 		_upgradeProcess.upgrade();
 
@@ -215,7 +215,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 			Store.VERSION_DEFAULT, new ByteArrayInputStream(jksBytes));
 
-		_setSamlConfiguration("jks", null);
+		_setSamlConfiguration(null, "jks");
 
 		_upgradeProcess.upgrade();
 
@@ -254,7 +254,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 			Store.VERSION_DEFAULT, new ByteArrayInputStream(jksBytes));
 
-		_setSamlConfiguration("jks", null);
+		_setSamlConfiguration(null, "jks");
 
 		_upgradeProcess.upgrade();
 
@@ -289,7 +289,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 			Store.VERSION_DEFAULT, new ByteArrayInputStream(jksBytes));
 
-		_setSamlConfiguration("jks", null);
+		_setSamlConfiguration(null, "jks");
 
 		_upgradeProcess.upgrade();
 
@@ -326,7 +326,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 			Store.VERSION_DEFAULT, new ByteArrayInputStream(jksBytes));
 
-		_setSamlConfiguration("jks", null);
+		_setSamlConfiguration(null, "jks");
 
 		_upgradeProcess.upgrade();
 
@@ -354,7 +354,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 	@Test
 	public void testUpgradeDLKeystoreNeitherExists() throws Exception {
-		_setSamlConfiguration("PKCS12", null);
+		_setSamlConfiguration(null, "PKCS12");
 
 		_upgradeProcess.upgrade();
 
@@ -384,7 +384,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			fileOutputStream.write(jksBytes);
 		}
 
-		_setSamlConfiguration("jks", null);
+		_setSamlConfiguration(null, "jks");
 
 		_upgradeProcess.upgrade();
 
@@ -516,7 +516,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		_originalSamlProperties = null;
 	}
 
-	private void _setSamlConfiguration(String keyStoreType, String keyStorePath)
+	private void _setSamlConfiguration(String keyStorePath, String keyStoreType)
 		throws Exception {
 
 		Configuration configuration = _configurationAdmin.getConfiguration(
