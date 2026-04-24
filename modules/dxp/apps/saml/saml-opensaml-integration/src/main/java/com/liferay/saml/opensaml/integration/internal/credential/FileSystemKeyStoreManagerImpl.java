@@ -101,7 +101,8 @@ public class FileSystemKeyStoreManagerImpl extends BaseKeyStoreManagerImpl {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						"Atomic move not supported, falling back to " +
-							"non-atomic replace for " + samlKeyStoreFile);
+							"non-atomic replace for " + samlKeyStoreFile,
+						atomicMoveNotSupportedException);
 				}
 
 				Files.move(

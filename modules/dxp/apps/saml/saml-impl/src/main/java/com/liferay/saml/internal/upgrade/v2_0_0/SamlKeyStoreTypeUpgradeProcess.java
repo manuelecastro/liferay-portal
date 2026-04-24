@@ -169,7 +169,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 	}
 
 	private void _saveDLKeyStore(
-			long companyId, String path, KeyStore keyStore, char[] password)
+			long companyId, KeyStore keyStore, char[] password, String path)
 		throws Exception {
 
 		File tempFile = File.createTempFile("saml-ks", ".p12");
@@ -207,12 +207,12 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 
 		String name = principal.getName(X500Principal.RFC2253);
 
-		String cn = _x500Attribute(name, "CN");
-		String o = _x500Attribute(name, "O");
-		String ou = _x500Attribute(name, "OU");
-		String l = _x500Attribute(name, "L");
-		String st = _x500Attribute(name, "ST");
-		String c = _x500Attribute(name, "C");
+		String cn = _x500Attribute("CN", name);
+		String o = _x500Attribute("O", name);
+		String ou = _x500Attribute("OU", name);
+		String l = _x500Attribute("L", name);
+		String st = _x500Attribute("ST", name);
+		String c = _x500Attribute("C", name);
 
 		return new CertificateEntityId(cn, o, ou, l, st, c);
 	}
@@ -364,8 +364,8 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 								inputStream, passwordChars);
 
 							_saveDLKeyStore(
-								companyId, _PKCS12_DL_KEYSTORE_PATH,
-								pkcs12KeyStore, passwordChars);
+								companyId, pkcs12KeyStore, passwordChars,
+								_PKCS12_DL_KEYSTORE_PATH);
 						}
 
 						_store.deleteDirectory(
@@ -391,8 +391,8 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 
 							if (_upgradeCertificates(keyStore, passwordChars)) {
 								_saveDLKeyStore(
-									companyId, _PKCS12_DL_KEYSTORE_PATH,
-									keyStore, passwordChars);
+									companyId, keyStore, passwordChars,
+									_PKCS12_DL_KEYSTORE_PATH);
 							}
 						}
 					}
@@ -486,7 +486,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 		}
 	}
 
-	private String _x500Attribute(String dn, String attribute) {
+	private String _x500Attribute(String attribute, String dn) {
 		String prefix = attribute + "=";
 
 		for (String part : dn.split(",")) {

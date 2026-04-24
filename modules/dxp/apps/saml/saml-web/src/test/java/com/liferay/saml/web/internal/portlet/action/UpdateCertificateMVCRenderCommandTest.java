@@ -60,11 +60,11 @@ public class UpdateCertificateMVCRenderCommandTest {
 		_renderCommand.render(_renderRequest, _renderResponse);
 
 		_assertRequestAttribute(
-			SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS,
-			new String[] {"RSA", "DSA"});
+			new String[] {"RSA", "DSA"},
+			SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS);
 		_assertRequestAttribute(
-			SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES,
-			new String[] {"4096", "2048", "1024", "512"});
+			new String[] {"4096", "2048", "1024", "512"},
+			SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES);
 
 		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
 			PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
@@ -74,10 +74,10 @@ public class UpdateCertificateMVCRenderCommandTest {
 		_renderCommand.render(_renderRequest, _renderResponse);
 
 		_assertRequestAttribute(
-			SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS, new String[] {"RSA"});
+			new String[] {"RSA"}, SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS);
 		_assertRequestAttribute(
-			SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES,
-			new String[] {"4096", "3072", "2048"});
+			new String[] {"4096", "3072", "2048"},
+			SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES);
 	}
 
 	@Test
@@ -87,7 +87,7 @@ public class UpdateCertificateMVCRenderCommandTest {
 		Assert.assertEquals("/admin/update_certificate.jsp", path);
 	}
 
-	private void _assertRequestAttribute(String key, String[] expectedValue) {
+	private void _assertRequestAttribute(String[] expectedValue, String key) {
 		ArgumentCaptor<String[]> argumentCaptor = ArgumentCaptor.forClass(
 			String[].class);
 
