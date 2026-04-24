@@ -56,7 +56,7 @@ public class JWTTokenUtil {
 		return signedJWT.serialize();
 	}
 
-	public static long getUserId(String token) {
+	public static long getUserId(String token, String issuer) {
 		JWTClaimsSet jwtClaimsSet = null;
 
 		try {
@@ -76,6 +76,14 @@ public class JWTTokenUtil {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
 					"Unable to parse and verify the JWT token", exception);
+			}
+
+			return 0;
+		}
+
+		if (!issuer.equals(jwtClaimsSet.getIssuer())) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Invalid JWT issuer");
 			}
 
 			return 0;
