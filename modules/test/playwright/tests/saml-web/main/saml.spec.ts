@@ -142,94 +142,103 @@ test.afterAll(async ({browser}) => {
 test.afterEach(async ({browser}) => {
 	const defaultBaseUrl = liferayConfig.environment.baseUrl;
 
-	for (const instanceName of resetAfterTestGeneralPage) {
-		liferayConfig.environment.baseUrl = `http://${instanceName}:8080`;
+	try {
+		for (const instanceName of resetAfterTestGeneralPage) {
+			await safeCleanup(async () => {
+				liferayConfig.environment.baseUrl = `http://${instanceName}:8080`;
 
-		// Reset general tab
+				// Reset general tab
 
-		const newPage = await performSamlSafeLogin(browser, instanceName);
+				const newPage = await performSamlSafeLogin(browser, instanceName);
 
-		const instanceSettingsPage = new InstanceSettingsPage(newPage);
+				const instanceSettingsPage = new InstanceSettingsPage(newPage);
 
-		await instanceSettingsPage.goToInstanceSetting(
-			'Instance Configuration',
-			'General',
-			false
-		);
+				await instanceSettingsPage.goToInstanceSetting(
+					'Instance Configuration',
+					'General',
+					false
+				);
 
-		const generalPage = new GeneralPage(instanceSettingsPage.page);
+				const generalPage = new GeneralPage(instanceSettingsPage.page);
 
-		await generalPage.resetNavigationFields();
+				await generalPage.resetNavigationFields();
 
-		await newPage.close();
-	}
-
-	for (const instanceName of deleteAfterTestProviderConnections) {
-		liferayConfig.environment.baseUrl = `http://${instanceName}:8080`;
-
-		// Reset general tab
-
-		const newPage = await performSamlSafeLogin(browser, instanceName);
-
-		const samlAdminPage = new SamlAdminPage(newPage);
-
-		await samlAdminPage.configureSAML(false);
-
-		// Delete all connections
-
-		if ((await samlAdminPage.samlRoleField.inputValue()) !== 'idp') {
-			const identityProviderConnectionsPage =
-				new IdentityProviderConnectionsPage(samlAdminPage.page);
-
-			await identityProviderConnectionsPage.goTo();
-
-			await identityProviderConnectionsPage.deleteIdentityProviderConnections();
-
-			await configureServiceProvider(newPage);
-
-			await samlAdminPage.globalMenuPage.goToControlPanel();
+				await newPage.close();
+			}, `resetGeneralPage:${instanceName}`);
 		}
 
-		if ((await samlAdminPage.samlRoleField.inputValue()) !== 'sp') {
-			const serviceProviderConnectionsPage =
-				new ServiceProviderConnectionsPage(samlAdminPage.page);
+		for (const instanceName of deleteAfterTestProviderConnections) {
+			await safeCleanup(async () => {
+				liferayConfig.environment.baseUrl = `http://${instanceName}:8080`;
 
-			await serviceProviderConnectionsPage.goTo();
+				// Reset general tab
 
-			await serviceProviderConnectionsPage.deleteServiceProviderConnections();
+				const newPage = await performSamlSafeLogin(browser, instanceName);
 
-			await configureIdentityProvider(newPage);
+				const samlAdminPage = new SamlAdminPage(newPage);
+
+				await samlAdminPage.configureSAML(false);
+
+				// Delete all connections
+
+				if ((await samlAdminPage.samlRoleField.inputValue()) !== 'idp') {
+					const identityProviderConnectionsPage =
+						new IdentityProviderConnectionsPage(samlAdminPage.page);
+
+					await identityProviderConnectionsPage.goTo();
+
+					await identityProviderConnectionsPage.deleteIdentityProviderConnections();
+
+					await configureServiceProvider(newPage);
+
+					await samlAdminPage.globalMenuPage.goToControlPanel();
+				}
+
+				if ((await samlAdminPage.samlRoleField.inputValue()) !== 'sp') {
+					const serviceProviderConnectionsPage =
+						new ServiceProviderConnectionsPage(samlAdminPage.page);
+
+					await serviceProviderConnectionsPage.goTo();
+
+					await serviceProviderConnectionsPage.deleteServiceProviderConnections();
+
+					await configureIdentityProvider(newPage);
+				}
+
+				await newPage.close();
+			}, `deleteProviderConnections:${instanceName}`);
 		}
 
-		await newPage.close();
+		if (resetSystemSettings) {
+			await safeCleanup(async () => {
+				const newPage = await browser.newPage();
+
+				await performLogin(newPage, 'test');
+
+				const systemSettingsPage = new SystemSettingsPage(newPage);
+
+				await systemSettingsPage.goToSystemSetting('Login', 'Login');
+
+				await waitForLoading(systemSettingsPage.page);
+
+				await clickAndExpectToBeVisible({
+					autoClick: true,
+					target: systemSettingsPage.page.getByRole('menuitem', {
+						name: 'Reset Default Values',
+					}),
+					trigger: systemSettingsPage.page.getByRole('button', {
+						name: 'Actions',
+					}),
+				});
+
+				await waitForAlert(systemSettingsPage.page);
+			}, 'resetSystemSettings');
+
+			resetSystemSettings = false;
+		}
 	}
-
-	liferayConfig.environment.baseUrl = defaultBaseUrl;
-
-	if (resetSystemSettings) {
-		const newPage = await browser.newPage();
-
-		await performLogin(newPage, 'test');
-
-		const systemSettingsPage = new SystemSettingsPage(newPage);
-
-		await systemSettingsPage.goToSystemSetting('Login', 'Login');
-
-		await waitForLoading(systemSettingsPage.page);
-
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: systemSettingsPage.page.getByRole('menuitem', {
-				name: 'Reset Default Values',
-			}),
-			trigger: systemSettingsPage.page.getByRole('button', {
-				name: 'Actions',
-			}),
-		});
-
-		await waitForAlert(systemSettingsPage.page);
-
-		resetSystemSettings = false;
+	finally {
+		liferayConfig.environment.baseUrl = defaultBaseUrl;
 	}
 });
 
