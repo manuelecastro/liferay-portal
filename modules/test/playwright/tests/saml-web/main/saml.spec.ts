@@ -104,6 +104,18 @@ const resetAfterTestGeneralPage = new Set<string>();
 
 let resetSystemSettings = false;
 
+async function safeCleanup(
+	fn: () => Promise<void>,
+	label: string
+): Promise<void> {
+	try {
+		await fn();
+	}
+	catch (error) {
+		console.error(`Cleanup failed [${label}]:`, error);
+	}
+}
+
 test.afterAll(async ({browser}) => {
 
 	// Remove virtual instances
