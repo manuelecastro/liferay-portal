@@ -106,10 +106,19 @@ let resetSystemSettings = false;
 
 async function safeCleanup(
 	fn: () => Promise<void>,
-	label: string
+	label: string,
+	timeoutMs = 30_000
 ): Promise<void> {
 	try {
-		await fn();
+		await Promise.race([
+			fn(),
+			new Promise<never>((_, reject) =>
+				setTimeout(
+					() => reject(new Error(`timed out after ${timeoutMs}ms`)),
+					timeoutMs
+				)
+			),
+		]);
 	}
 	catch (error) {
 		console.error(`Cleanup failed [${label}]:`, error);
