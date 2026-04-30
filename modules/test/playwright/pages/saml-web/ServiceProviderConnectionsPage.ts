@@ -176,7 +176,7 @@ export class ServiceProviderConnectionsPage {
 
 		await expect(await this.successMessage).toBeVisible();
 
-		await this.page.getByLabel('Close').click();
+		await this.page.locator('.alert').getByLabel('Close').click();
 	}
 
 	private async populateAndSaveServiceProviderConnectionDetails(
@@ -242,6 +242,6 @@ export class ServiceProviderConnectionsPage {
 
 		await this.saveButton.click();
 		await expect(await this.successMessage).toBeVisible();
-		await this.page.getByLabel('Close').click();
+		await this.page.locator('.alert').getByLabel('Close').click();
 	}
 }

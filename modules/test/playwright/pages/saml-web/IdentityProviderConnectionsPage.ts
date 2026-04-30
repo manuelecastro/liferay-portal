@@ -182,7 +182,7 @@ export class IdentityProviderConnectionsPage {
 
 		await expect(await this.successMessage).toBeVisible();
 
-		await this.page.getByLabel('Close').click();
+		await this.page.locator('.alert').getByLabel('Close').click();
 	}
 
 	private async populateAndSaveIdentityProviderConnectionDetails(
