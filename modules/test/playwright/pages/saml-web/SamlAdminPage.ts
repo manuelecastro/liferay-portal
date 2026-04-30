@@ -51,7 +51,7 @@ export class SamlAdminPage {
 
 			await expect(await this.successMessage).toBeVisible();
 
-			await this.page.getByLabel('Close').click();
+			await this.page.locator('.alert').getByLabel('Close').click();
 		}
 		else if (enabled === undefined) {
 			enabled = false;
@@ -76,7 +76,7 @@ export class SamlAdminPage {
 
 			await expect(await this.successMessage).toBeVisible();
 
-			await this.page.getByLabel('Close').click();
+			await this.page.locator('.alert').getByLabel('Close').click();
 		}
 
 		if (enabled) {
@@ -93,7 +93,7 @@ export class SamlAdminPage {
 
 			await expect(await this.successMessage).toBeVisible();
 
-			await this.page.getByLabel('Close').click();
+			await this.page.locator('.alert').getByLabel('Close').click();
 		}
 	}
 

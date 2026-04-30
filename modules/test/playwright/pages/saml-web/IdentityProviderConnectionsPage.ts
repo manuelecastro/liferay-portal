@@ -125,7 +125,7 @@ export class IdentityProviderConnectionsPage {
 
 			// Prevent the above expect from passing due to previous success
 
-			await this.page.getByLabel('Close').click();
+			await this.page.locator('.alert').getByLabel('Close').click();
 		}
 	}
 
@@ -283,7 +283,7 @@ export class IdentityProviderConnectionsPage {
 		else {
 			await expect(await this.successMessage).toBeVisible();
 
-			await this.page.getByLabel('Close').click();
+			await this.page.locator('.alert').getByLabel('Close').click();
 		}
 	}
 }

@@ -123,7 +123,7 @@ export class ServiceProviderConnectionsPage {
 
 			// Prevent the above expect from passing due to previous success
 
-			await this.page.getByLabel('Close').click();
+			await this.page.locator('.alert').getByLabel('Close').click();
 		}
 	}
 
