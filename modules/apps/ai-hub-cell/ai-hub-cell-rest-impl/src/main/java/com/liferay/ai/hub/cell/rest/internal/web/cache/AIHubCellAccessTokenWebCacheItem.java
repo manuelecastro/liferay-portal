@@ -75,7 +75,10 @@ public class AIHubCellAccessTokenWebCacheItem implements WebCacheItem {
 				responseJSON);
 
 			_refreshTime =
-				(long)(jsonObject.getLong("expires_in") * 0.8 * Time.SECOND);
+				jsonObject.getLong("expires_in") *
+					_aiHubCellConfiguration.
+						accessTokenCacheDurationPercentage() / 100 *
+							Time.SECOND;
 
 			return jsonObject;
 		}

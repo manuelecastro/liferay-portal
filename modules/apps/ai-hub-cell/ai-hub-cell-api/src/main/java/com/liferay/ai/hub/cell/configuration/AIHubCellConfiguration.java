@@ -23,6 +23,13 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 )
 public interface AIHubCellConfiguration {
 
+	@Meta.AD(
+		deflt = "90",
+		description = "access-token-cache-duration-percentage-description",
+		max = "100", min = "1", name = "access-token-cache-duration-percentage"
+	)
+	public int accessTokenCacheDurationPercentage();
+
 	@Meta.AD(name = "client-id")
 	public String clientId();
 
