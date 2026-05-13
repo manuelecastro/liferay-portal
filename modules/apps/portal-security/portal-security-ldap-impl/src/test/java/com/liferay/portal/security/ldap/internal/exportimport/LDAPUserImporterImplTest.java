@@ -20,6 +20,7 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Date;
 
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -134,6 +135,37 @@ public class LDAPUserImporterImplTest {
 					Mockito.eq(modifiedDateString), Mockito.eq(LocaleUtil.US)),
 				Mockito.times(1));
 		}
+	}
+
+	@Test
+	public void testActivateStoresNonNullClusterNodeId() {
+		ReflectionTestUtil.invoke(
+			_ldapUserImporterImpl, "_initClusterNodeId", new Class<?>[0]);
+
+		String nodeId = ReflectionTestUtil.getFieldValue(
+			_ldapUserImporterImpl, "_clusterNodeId");
+
+		Assert.assertNotNull("cluster node ID must be set after activation", nodeId);
+		Assert.assertFalse(
+			"cluster node ID must not be empty after activation", nodeId.isEmpty());
+	}
+
+	@Test
+	public void testBuildLockOwnerContainsNodeId() {
+		String nodeId = RandomTestUtil.randomString();
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_clusterNodeId", nodeId);
+
+		String owner = ReflectionTestUtil.invoke(
+			_ldapUserImporterImpl, "_buildLockOwner", new Class<?>[0]);
+
+		Assert.assertTrue(
+			"owner must start with the node ID",
+			owner.startsWith(nodeId + "::"));
+		Assert.assertTrue(
+			"owner must end with the implementation class name",
+			owner.endsWith(LDAPUserImporterImpl.class.getName()));
 	}
 
 	private static final LDAPUserImporterImpl _ldapUserImporterImpl =

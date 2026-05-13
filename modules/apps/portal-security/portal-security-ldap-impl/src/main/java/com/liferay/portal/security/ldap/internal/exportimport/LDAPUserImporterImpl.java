@@ -20,6 +20,8 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanProperties;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.SingleVMPool;
+import com.liferay.portal.kernel.cluster.ClusterExecutor;
+import com.liferay.portal.kernel.cluster.ClusterNode;
 import com.liferay.portal.kernel.exception.GroupFriendlyURLException;
 import com.liferay.portal.kernel.exception.NoSuchRoleException;
 import com.liferay.portal.kernel.exception.NoSuchUserGroupException;
@@ -38,6 +40,7 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.security.exportimport.UserGroupImportTransactionThreadLocal;
 import com.liferay.portal.kernel.security.ldap.AttributesTransformer;
 import com.liferay.portal.kernel.security.ldap.LDAPSettings;
@@ -104,6 +107,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.naming.Binding;
 import javax.naming.NameNotFoundException;
@@ -483,7 +487,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 
 			Lock lock = _lockManager.lock(
 				userId, UserImporter.class.getName(), companyId,
-				LDAPUserImporterImpl.class.getName(), false,
+				_buildLockOwner(), false,
 				ldapImportConfiguration.importLockExpirationTime(), false);
 
 			if (!lock.isNew()) {
@@ -618,6 +622,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 
 	@Activate
 	protected void activate() {
+		_initClusterNodeId();
+
 		_companySecurityAuthType = GetterUtil.getString(
 			PropsUtil.get(PropsKeys.COMPANY_SECURITY_AUTH_TYPE));
 		_portalCache = (PortalCache<String, Long>)_singleVMPool.getPortalCache(
@@ -2064,6 +2070,26 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 		}
 	}
 
+	private String _buildLockOwner() {
+		return _clusterNodeId + "::" + LDAPUserImporterImpl.class.getName();
+	}
+
+	private void _initClusterNodeId() {
+		ClusterExecutor clusterExecutor = _clusterExecutorSnapshot.get();
+
+		if (clusterExecutor != null) {
+			ClusterNode localClusterNode = clusterExecutor.getLocalClusterNode();
+
+			if (localClusterNode != null) {
+				_clusterNodeId = localClusterNode.getClusterNodeId();
+
+				return;
+			}
+		}
+
+		_clusterNodeId = UUID.randomUUID().toString();
+	}
+
 	private static final String[] _CONTACT_PROPERTY_NAMES = {
 		"birthday", "employeeNumber", "facebookSn", "jabberSn", "male",
 		"prefixListTypeId", "skypeSn", "smsSn", "suffixListTypeId", "twitterSn"
@@ -2083,6 +2109,9 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 
 	private static final String _USER_SYNC_STRATEGY_UUID = "uuid";
 
+	private static final Snapshot<ClusterExecutor> _clusterExecutorSnapshot =
+		new Snapshot<>(LDAPUserImporterImpl.class, ClusterExecutor.class);
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		LDAPUserImporterImpl.class);
 
@@ -2097,6 +2126,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
+
+	private String _clusterNodeId;
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
