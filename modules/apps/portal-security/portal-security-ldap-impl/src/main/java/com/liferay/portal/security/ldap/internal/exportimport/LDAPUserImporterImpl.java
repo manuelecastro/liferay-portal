@@ -628,6 +628,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 			PropsUtil.get(PropsKeys.COMPANY_SECURITY_AUTH_TYPE));
 		_portalCache = (PortalCache<String, Long>)_singleVMPool.getPortalCache(
 			UserImporter.class.getName());
+
+		_companyLocalService.forEachCompanyId(this::_clearOrphanedLock);
 	}
 
 	protected User addUser(long companyId, LDAPUser ldapUser, String password)
@@ -2072,6 +2074,61 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 
 	private String _buildLockOwner() {
 		return _clusterNodeId + "::" + LDAPUserImporterImpl.class.getName();
+	}
+
+	private void _clearOrphanedLock(long companyId) {
+		Lock lock = _lockManager.fetchLock(
+			UserImporter.class.getName(), companyId);
+
+		if (lock == null) {
+			return;
+		}
+
+		String owner = lock.getOwner();
+
+		if (owner == null) {
+			_lockManager.unlock(UserImporter.class.getName(), companyId);
+
+			return;
+		}
+
+		int separatorIndex = owner.indexOf("::");
+
+		if (separatorIndex < 0) {
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					StringBundler.concat(
+						"Clearing legacy-format LDAP import lock for company ",
+						companyId, " (owner=", owner, ")"));
+			}
+
+			_lockManager.unlock(UserImporter.class.getName(), companyId);
+
+			return;
+		}
+
+		String lockNodeId = owner.substring(0, separatorIndex);
+
+		if (lockNodeId.equals(_clusterNodeId)) {
+			return;
+		}
+
+		ClusterExecutor clusterExecutor = _clusterExecutorSnapshot.get();
+
+		if ((clusterExecutor != null) && clusterExecutor.isEnabled() &&
+			clusterExecutor.isClusterNodeAlive(lockNodeId)) {
+
+			return;
+		}
+
+		if (_log.isInfoEnabled()) {
+			_log.info(
+				StringBundler.concat(
+					"Clearing orphaned LDAP import lock for company ", companyId,
+					" (was held by node ", lockNodeId, ")"));
+		}
+
+		_lockManager.unlock(UserImporter.class.getName(), companyId);
 	}
 
 	private void _initClusterNodeId() {

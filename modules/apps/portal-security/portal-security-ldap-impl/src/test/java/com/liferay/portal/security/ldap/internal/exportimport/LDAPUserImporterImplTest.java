@@ -5,7 +5,11 @@
 
 package com.liferay.portal.security.ldap.internal.exportimport;
 
+import com.liferay.portal.kernel.cluster.ClusterExecutor;
+import com.liferay.portal.kernel.lock.Lock;
+import com.liferay.portal.kernel.lock.LockManager;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.security.ldap.LDAPSettings;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -166,6 +170,168 @@ public class LDAPUserImporterImplTest {
 		Assert.assertTrue(
 			"owner must end with the implementation class name",
 			owner.endsWith(LDAPUserImporterImpl.class.getName()));
+	}
+
+	@Test
+	public void testClearOrphanedLockDoesNothingWhenNoLockExists() {
+		String currentNodeId = RandomTestUtil.randomString();
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_clusterNodeId", currentNodeId);
+
+		LockManager lockManager = Mockito.mock(LockManager.class);
+
+		Mockito.when(
+			lockManager.fetchLock(Mockito.anyString(), Mockito.anyLong())
+		).thenReturn(
+			null
+		);
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_lockManager", lockManager);
+
+		ReflectionTestUtil.invoke(
+			_ldapUserImporterImpl, "_clearOrphanedLock",
+			new Class<?>[] {long.class}, 1L);
+
+		Mockito.verify(lockManager, Mockito.never()).unlock(
+			Mockito.anyString(), Mockito.anyLong());
+	}
+
+	@Test
+	public void testClearOrphanedLockRemovesLockFromDeadNode() {
+		String currentNodeId = RandomTestUtil.randomString();
+		String deadNodeId = RandomTestUtil.randomString();
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_clusterNodeId", currentNodeId);
+
+		Lock lock = Mockito.mock(Lock.class);
+
+		Mockito.when(
+			lock.getOwner()
+		).thenReturn(
+			deadNodeId + "::" + LDAPUserImporterImpl.class.getName()
+		);
+
+		LockManager lockManager = Mockito.mock(LockManager.class);
+
+		Mockito.when(
+			lockManager.fetchLock(Mockito.anyString(), Mockito.anyLong())
+		).thenReturn(
+			lock
+		);
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_lockManager", lockManager);
+
+		ReflectionTestUtil.invoke(
+			_ldapUserImporterImpl, "_clearOrphanedLock",
+			new Class<?>[] {long.class}, 1L);
+
+		Mockito.verify(lockManager).unlock(
+			"com.liferay.portal.security.exportimport.UserImporter", 1L);
+	}
+
+	@Test
+	public void testClearOrphanedLockKeepsLockFromActivePeer() {
+		String currentNodeId = RandomTestUtil.randomString();
+		String peerNodeId = RandomTestUtil.randomString();
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_clusterNodeId", currentNodeId);
+
+		Lock lock = Mockito.mock(Lock.class);
+
+		Mockito.when(
+			lock.getOwner()
+		).thenReturn(
+			peerNodeId + "::" + LDAPUserImporterImpl.class.getName()
+		);
+
+		LockManager lockManager = Mockito.mock(LockManager.class);
+
+		Mockito.when(
+			lockManager.fetchLock(Mockito.anyString(), Mockito.anyLong())
+		).thenReturn(
+			lock
+		);
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_lockManager", lockManager);
+
+		ClusterExecutor clusterExecutor = Mockito.mock(ClusterExecutor.class);
+
+		Mockito.when(
+			clusterExecutor.isEnabled()
+		).thenReturn(
+			true
+		);
+
+		Mockito.when(
+			clusterExecutor.isClusterNodeAlive(peerNodeId)
+		).thenReturn(
+			true
+		);
+
+		Snapshot<ClusterExecutor> snapshot = Mockito.mock(Snapshot.class);
+
+		Mockito.when(
+			snapshot.get()
+		).thenReturn(
+			clusterExecutor
+		);
+
+		ReflectionTestUtil.setFieldValue(
+			LDAPUserImporterImpl.class, "_clusterExecutorSnapshot", snapshot);
+
+		try {
+			ReflectionTestUtil.invoke(
+				_ldapUserImporterImpl, "_clearOrphanedLock",
+				new Class<?>[] {long.class}, 1L);
+
+			Mockito.verify(lockManager, Mockito.never()).unlock(
+				Mockito.anyString(), Mockito.anyLong());
+		}
+		finally {
+			ReflectionTestUtil.setFieldValue(
+				LDAPUserImporterImpl.class, "_clusterExecutorSnapshot",
+				new Snapshot<>(LDAPUserImporterImpl.class, ClusterExecutor.class));
+		}
+	}
+
+	@Test
+	public void testClearOrphanedLockRemovesLockWithLegacyOwnerFormat() {
+		String currentNodeId = RandomTestUtil.randomString();
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_clusterNodeId", currentNodeId);
+
+		Lock lock = Mockito.mock(Lock.class);
+
+		Mockito.when(
+			lock.getOwner()
+		).thenReturn(
+			LDAPUserImporterImpl.class.getName()
+		);
+
+		LockManager lockManager = Mockito.mock(LockManager.class);
+
+		Mockito.when(
+			lockManager.fetchLock(Mockito.anyString(), Mockito.anyLong())
+		).thenReturn(
+			lock
+		);
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_lockManager", lockManager);
+
+		ReflectionTestUtil.invoke(
+			_ldapUserImporterImpl, "_clearOrphanedLock",
+			new Class<?>[] {long.class}, 1L);
+
+		Mockito.verify(lockManager).unlock(
+			"com.liferay.portal.security.exportimport.UserImporter", 1L);
 	}
 
 	private static final LDAPUserImporterImpl _ldapUserImporterImpl =
