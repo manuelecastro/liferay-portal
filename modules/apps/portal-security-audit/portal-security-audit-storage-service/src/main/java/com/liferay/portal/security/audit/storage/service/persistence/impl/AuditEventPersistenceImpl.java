@@ -9,6 +9,7 @@ import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.dao.orm.EntityCache;
 import com.liferay.portal.kernel.dao.orm.FinderCache;
 import com.liferay.portal.kernel.dao.orm.FinderPath;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
@@ -72,14 +73,69 @@ public class AuditEventPersistenceImpl
 	public static final String FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION =
 		FINDER_CLASS_NAME_ENTITY + ".List2";
 
+	private FinderPath _finderPathWithPaginationFindByCompanyId;
+	private FinderPath _finderPathWithoutPaginationFindByCompanyId;
+	private FinderPath _finderPathCountByCompanyId;
 	private CollectionPersistenceFinder<AuditEvent>
 		_collectionPersistenceFinderByCompanyId;
+
+	/**
+	 * Returns all the audit events where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the matching audit events
+	 */
+	@Override
+	public List<AuditEvent> findByCompanyId(long companyId) {
+		return findByCompanyId(
+			companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the audit events where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AuditEventModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of audit events
+	 * @param end the upper bound of the range of audit events (not inclusive)
+	 * @return the range of matching audit events
+	 */
+	@Override
+	public List<AuditEvent> findByCompanyId(
+		long companyId, int start, int end) {
+
+		return findByCompanyId(companyId, start, end, null);
+	}
 
 	/**
 	 * Returns an ordered range of all the audit events where companyId = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AuditEventModelImpl</code>.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AuditEventModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of audit events
+	 * @param end the upper bound of the range of audit events (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching audit events
+	 */
+	@Override
+	public List<AuditEvent> findByCompanyId(
+		long companyId, int start, int end,
+		OrderByComparator<AuditEvent> orderByComparator) {
+
+		return findByCompanyId(companyId, start, end, orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the audit events where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AuditEventModelImpl</code>.
 	 * </p>
 	 *
 	 * @param companyId the company ID
@@ -161,6 +217,166 @@ public class AuditEventPersistenceImpl
 	public int countByCompanyId(long companyId) {
 		return _collectionPersistenceFinderByCompanyId.count(
 			dummyFinderCache, new Object[] {companyId});
+	}
+
+	private FinderPath _finderPathWithPaginationFindByC_A;
+	private FinderPath _finderPathWithoutPaginationFindByC_A;
+	private FinderPath _finderPathCountByC_A;
+	private CollectionPersistenceFinder<AuditEvent>
+		_collectionPersistenceFinderByC_A;
+
+	/**
+	 * Returns all the audit events where companyId = &#63; and accountEntryId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param accountEntryId the account entry ID
+	 * @return the matching audit events
+	 */
+	@Override
+	public List<AuditEvent> findByC_A(long companyId, long accountEntryId) {
+		return findByC_A(
+			companyId, accountEntryId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+			null);
+	}
+
+	/**
+	 * Returns a range of all the audit events where companyId = &#63; and accountEntryId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AuditEventModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param accountEntryId the account entry ID
+	 * @param start the lower bound of the range of audit events
+	 * @param end the upper bound of the range of audit events (not inclusive)
+	 * @return the range of matching audit events
+	 */
+	@Override
+	public List<AuditEvent> findByC_A(
+		long companyId, long accountEntryId, int start, int end) {
+
+		return findByC_A(companyId, accountEntryId, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the audit events where companyId = &#63; and accountEntryId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AuditEventModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param accountEntryId the account entry ID
+	 * @param start the lower bound of the range of audit events
+	 * @param end the upper bound of the range of audit events (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching audit events
+	 */
+	@Override
+	public List<AuditEvent> findByC_A(
+		long companyId, long accountEntryId, int start, int end,
+		OrderByComparator<AuditEvent> orderByComparator) {
+
+		return findByC_A(
+			companyId, accountEntryId, start, end, orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the audit events where companyId = &#63; and accountEntryId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AuditEventModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param accountEntryId the account entry ID
+	 * @param start the lower bound of the range of audit events
+	 * @param end the upper bound of the range of audit events (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching audit events
+	 */
+	@Override
+	public List<AuditEvent> findByC_A(
+		long companyId, long accountEntryId, int start, int end,
+		OrderByComparator<AuditEvent> orderByComparator,
+		boolean useFinderCache) {
+
+		return _collectionPersistenceFinderByC_A.find(
+			dummyFinderCache, new Object[] {companyId, accountEntryId}, start,
+			end, orderByComparator, useFinderCache);
+	}
+
+	/**
+	 * Returns the first audit event in the ordered set where companyId = &#63; and accountEntryId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param accountEntryId the account entry ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching audit event
+	 * @throws NoSuchEventException if a matching audit event could not be found
+	 */
+	@Override
+	public AuditEvent findByC_A_First(
+			long companyId, long accountEntryId,
+			OrderByComparator<AuditEvent> orderByComparator)
+		throws NoSuchEventException {
+
+		AuditEvent auditEvent = fetchByC_A_First(
+			companyId, accountEntryId, orderByComparator);
+
+		if (auditEvent != null) {
+			return auditEvent;
+		}
+
+		throw new NoSuchEventException(
+			_collectionPersistenceFinderByC_A.buildNoSuchKeyMessage(
+				_NO_SUCH_ENTITY_WITH_KEY,
+				new Object[] {companyId, accountEntryId}));
+	}
+
+	/**
+	 * Returns the first audit event in the ordered set where companyId = &#63; and accountEntryId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param accountEntryId the account entry ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching audit event, or <code>null</code> if a matching audit event could not be found
+	 */
+	@Override
+	public AuditEvent fetchByC_A_First(
+		long companyId, long accountEntryId,
+		OrderByComparator<AuditEvent> orderByComparator) {
+
+		return _collectionPersistenceFinderByC_A.fetchFirst(
+			dummyFinderCache, new Object[] {companyId, accountEntryId},
+			orderByComparator);
+	}
+
+	/**
+	 * Removes all the audit events where companyId = &#63; and accountEntryId = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 * @param accountEntryId the account entry ID
+	 */
+	@Override
+	public void removeByC_A(long companyId, long accountEntryId) {
+		_collectionPersistenceFinderByC_A.remove(
+			dummyFinderCache, new Object[] {companyId, accountEntryId});
+	}
+
+	/**
+	 * Returns the number of audit events where companyId = &#63; and accountEntryId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param accountEntryId the account entry ID
+	 * @return the number of matching audit events
+	 */
+	@Override
+	public int countByC_A(long companyId, long accountEntryId) {
+		return _collectionPersistenceFinderByC_A.count(
+			dummyFinderCache, new Object[] {companyId, accountEntryId});
 	}
 
 	public AuditEventPersistenceImpl() {
@@ -349,30 +565,65 @@ public class AuditEventPersistenceImpl
 	 */
 	@Activate
 	public void activate() {
+		_finderPathWithPaginationFindByCompanyId = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCompanyId",
+			new String[] {
+				Long.class.getName(), Integer.class.getName(),
+				Integer.class.getName(), OrderByComparator.class.getName()
+			},
+			new String[] {"companyId"}, true);
+
+		_finderPathWithoutPaginationFindByCompanyId = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByCompanyId",
+			new String[] {Long.class.getName()}, new String[] {"companyId"},
+			true);
+
+		_finderPathCountByCompanyId = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByCompanyId",
+			new String[] {Long.class.getName()}, new String[] {"companyId"},
+			false);
+
 		_collectionPersistenceFinderByCompanyId =
 			new CollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCompanyId",
-					new String[] {
-						Long.class.getName(), Integer.class.getName(),
-						Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"findByCompanyId", new String[] {Long.class.getName()},
-					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByCompanyId", new String[] {Long.class.getName()},
-					new String[] {"companyId"}, false),
-				_SQL_SELECT_AUDITEVENT_WHERE, _SQL_COUNT_AUDITEVENT_WHERE,
-				AuditEventModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
+				this, _finderPathWithPaginationFindByCompanyId,
+				_finderPathWithoutPaginationFindByCompanyId,
+				_finderPathCountByCompanyId, _SQL_SELECT_AUDITEVENT_WHERE,
+				_SQL_COUNT_AUDITEVENT_WHERE, AuditEventModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX, "",
 				new FinderColumn<>(
 					"auditEvent.", "companyId", FinderColumn.Type.LONG, "=",
 					true, true, AuditEvent::getCompanyId));
+
+		_finderPathWithPaginationFindByC_A = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_A",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
+			},
+			new String[] {"companyId", "accountEntryId"}, true);
+
+		_finderPathWithoutPaginationFindByC_A = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_A",
+			new String[] {Long.class.getName(), Long.class.getName()},
+			new String[] {"companyId", "accountEntryId"}, true);
+
+		_finderPathCountByC_A = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_A",
+			new String[] {Long.class.getName(), Long.class.getName()},
+			new String[] {"companyId", "accountEntryId"}, false);
+
+		_collectionPersistenceFinderByC_A = new CollectionPersistenceFinder<>(
+			this, _finderPathWithPaginationFindByC_A,
+			_finderPathWithoutPaginationFindByC_A, _finderPathCountByC_A,
+			_SQL_SELECT_AUDITEVENT_WHERE, _SQL_COUNT_AUDITEVENT_WHERE,
+			AuditEventModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
+			new FinderColumn<>(
+				"auditEvent.", "companyId", FinderColumn.Type.LONG, "=", true,
+				true, AuditEvent::getCompanyId),
+			new FinderColumn<>(
+				"auditEvent.", "accountEntryId", FinderColumn.Type.LONG, "=",
+				true, true, AuditEvent::getAccountEntryId));
 
 		AuditEventUtil.setPersistence(this);
 	}
@@ -431,4 +682,4 @@ public class AuditEventPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1550229463
+// LIFERAY-SERVICE-BUILDER-HASH:1175175687
