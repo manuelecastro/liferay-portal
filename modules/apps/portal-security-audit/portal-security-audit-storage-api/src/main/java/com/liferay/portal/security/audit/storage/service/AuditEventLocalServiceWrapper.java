@@ -344,6 +344,47 @@ public class AuditEventLocalServiceWrapper
 			serverPort, sessionID, andSearch, start, end, orderByComparator);
 	}
 
+	@Override
+	public java.util.List
+		<com.liferay.portal.security.audit.storage.model.AuditEvent>
+			getAuditEvents(
+				long companyId, long[] accountEntryIds, long groupId,
+				long userId, String userName, String scope,
+				java.util.Date createDateGT, java.util.Date createDateLT,
+				String eventType, String className, String classPK,
+				String clientHost, String clientIP, String serverName,
+				int serverPort, String sessionID, boolean andSearch, int start,
+				int end) {
+
+		return _auditEventLocalService.getAuditEvents(
+			companyId, accountEntryIds, groupId, userId, userName, scope,
+			createDateGT, createDateLT, eventType, className, classPK,
+			clientHost, clientIP, serverName, serverPort, sessionID, andSearch,
+			start, end);
+	}
+
+	@Override
+	public java.util.List
+		<com.liferay.portal.security.audit.storage.model.AuditEvent>
+			getAuditEvents(
+				long companyId, long[] accountEntryIds, long groupId,
+				long userId, String userName, String scope,
+				java.util.Date createDateGT, java.util.Date createDateLT,
+				String eventType, String className, String classPK,
+				String clientHost, String clientIP, String serverName,
+				int serverPort, String sessionID, boolean andSearch, int start,
+				int end,
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.portal.security.audit.storage.model.AuditEvent>
+						orderByComparator) {
+
+		return _auditEventLocalService.getAuditEvents(
+			companyId, accountEntryIds, groupId, userId, userName, scope,
+			createDateGT, createDateLT, eventType, className, classPK,
+			clientHost, clientIP, serverName, serverPort, sessionID, andSearch,
+			start, end, orderByComparator);
+	}
+
 	/**
 	 * Returns the number of audit events.
 	 *
@@ -371,6 +412,20 @@ public class AuditEventLocalServiceWrapper
 			companyId, groupId, userId, userName, createDateGT, createDateLT,
 			eventType, className, classPK, clientHost, clientIP, serverName,
 			serverPort, sessionID, andSearch);
+	}
+
+	@Override
+	public int getAuditEventsCount(
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, String scope, java.util.Date createDateGT,
+		java.util.Date createDateLT, String eventType, String className,
+		String classPK, String clientHost, String clientIP, String serverName,
+		int serverPort, String sessionID, boolean andSearch) {
+
+		return _auditEventLocalService.getAuditEventsCount(
+			companyId, accountEntryIds, groupId, userId, userName, scope,
+			createDateGT, createDateLT, eventType, className, classPK,
+			clientHost, clientIP, serverName, serverPort, sessionID, andSearch);
 	}
 
 	@Override
@@ -440,4 +495,4 @@ public class AuditEventLocalServiceWrapper
 	private AuditEventLocalService _auditEventLocalService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1834371989
+// LIFERAY-SERVICE-BUILDER-HASH:2005814633

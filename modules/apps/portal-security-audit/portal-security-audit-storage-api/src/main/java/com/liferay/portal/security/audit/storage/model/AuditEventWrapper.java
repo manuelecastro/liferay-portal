@@ -36,6 +36,8 @@ public class AuditEventWrapper
 		attributes.put("auditEventId", getAuditEventId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
+		attributes.put("accountEntryId", getAccountEntryId());
+		attributes.put("scope", getScope());
 		attributes.put("userId", getUserId());
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
@@ -71,6 +73,18 @@ public class AuditEventWrapper
 
 		if (companyId != null) {
 			setCompanyId(companyId);
+		}
+
+		Long accountEntryId = (Long)attributes.get("accountEntryId");
+
+		if (accountEntryId != null) {
+			setAccountEntryId(accountEntryId);
+		}
+
+		String scope = (String)attributes.get("scope");
+
+		if (scope != null) {
+			setScope(scope);
 		}
 
 		Long userId = (Long)attributes.get("userId");
@@ -155,6 +169,16 @@ public class AuditEventWrapper
 	@Override
 	public AuditEvent cloneWithOriginalValues() {
 		return wrap(model.cloneWithOriginalValues());
+	}
+
+	/**
+	 * Returns the account entry ID of this audit event.
+	 *
+	 * @return the account entry ID of this audit event
+	 */
+	@Override
+	public long getAccountEntryId() {
+		return model.getAccountEntryId();
 	}
 
 	/**
@@ -278,6 +302,16 @@ public class AuditEventWrapper
 	}
 
 	/**
+	 * Returns the scope of this audit event.
+	 *
+	 * @return the scope of this audit event
+	 */
+	@Override
+	public String getScope() {
+		return model.getScope();
+	}
+
+	/**
 	 * Returns the server name of this audit event.
 	 *
 	 * @return the server name of this audit event
@@ -340,6 +374,16 @@ public class AuditEventWrapper
 	@Override
 	public void persist() {
 		model.persist();
+	}
+
+	/**
+	 * Sets the account entry ID of this audit event.
+	 *
+	 * @param accountEntryId the account entry ID of this audit event
+	 */
+	@Override
+	public void setAccountEntryId(long accountEntryId) {
+		model.setAccountEntryId(accountEntryId);
 	}
 
 	/**
@@ -463,6 +507,16 @@ public class AuditEventWrapper
 	}
 
 	/**
+	 * Sets the scope of this audit event.
+	 *
+	 * @param scope the scope of this audit event
+	 */
+	@Override
+	public void setScope(String scope) {
+		model.setScope(scope);
+	}
+
+	/**
 	 * Sets the server name of this audit event.
 	 *
 	 * @param serverName the server name of this audit event
@@ -533,4 +587,4 @@ public class AuditEventWrapper
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1416724512
+// LIFERAY-SERVICE-BUILDER-HASH:-1282631170

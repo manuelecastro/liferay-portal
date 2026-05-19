@@ -248,6 +248,23 @@ public interface AuditEventLocalService
 		String serverName, int serverPort, String sessionID, boolean andSearch,
 		int start, int end, OrderByComparator<AuditEvent> orderByComparator);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<AuditEvent> getAuditEvents(
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, String scope, Date createDateGT, Date createDateLT,
+		String eventType, String className, String classPK, String clientHost,
+		String clientIP, String serverName, int serverPort, String sessionID,
+		boolean andSearch, int start, int end);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<AuditEvent> getAuditEvents(
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, String scope, Date createDateGT, Date createDateLT,
+		String eventType, String className, String classPK, String clientHost,
+		String clientIP, String serverName, int serverPort, String sessionID,
+		boolean andSearch, int start, int end,
+		OrderByComparator<AuditEvent> orderByComparator);
+
 	/**
 	 * Returns the number of audit events.
 	 *
@@ -265,6 +282,14 @@ public interface AuditEventLocalService
 		Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
 		String serverName, int serverPort, String sessionID, boolean andSearch);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getAuditEventsCount(
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, String scope, Date createDateGT, Date createDateLT,
+		String eventType, String className, String classPK, String clientHost,
+		String clientIP, String serverName, int serverPort, String sessionID,
+		boolean andSearch);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery();
@@ -298,4 +323,4 @@ public interface AuditEventLocalService
 	public AuditEvent updateAuditEvent(AuditEvent auditEvent);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1100172116
+// LIFERAY-SERVICE-BUILDER-HASH:1048669269

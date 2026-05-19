@@ -77,6 +77,22 @@ public class AuditEventServiceUtil {
 			serverPort, sessionID, andSearch, start, end, orderByComparator);
 	}
 
+	public static List<AuditEvent> getAuditEvents(
+			long companyId, long[] accountEntryIds, long groupId, long userId,
+			String userName, String scope, java.util.Date createDateGT,
+			java.util.Date createDateLT, String eventType, String className,
+			String classPK, String clientHost, String clientIP,
+			String serverName, int serverPort, String sessionID,
+			boolean andSearch, int start, int end)
+		throws PortalException {
+
+		return getService().getAuditEvents(
+			companyId, accountEntryIds, groupId, userId, userName, scope,
+			createDateGT, createDateLT, eventType, className, classPK,
+			clientHost, clientIP, serverName, serverPort, sessionID, andSearch,
+			start, end);
+	}
+
 	public static int getAuditEventsCount(long companyId)
 		throws PortalException {
 
@@ -97,6 +113,21 @@ public class AuditEventServiceUtil {
 			serverPort, sessionID, andSearch);
 	}
 
+	public static int getAuditEventsCount(
+			long companyId, long[] accountEntryIds, long groupId, long userId,
+			String userName, String scope, java.util.Date createDateGT,
+			java.util.Date createDateLT, String eventType, String className,
+			String classPK, String clientHost, String clientIP,
+			String serverName, int serverPort, String sessionID,
+			boolean andSearch)
+		throws PortalException {
+
+		return getService().getAuditEventsCount(
+			companyId, accountEntryIds, groupId, userId, userName, scope,
+			createDateGT, createDateLT, eventType, className, classPK,
+			clientHost, clientIP, serverName, serverPort, sessionID, andSearch);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -114,4 +145,4 @@ public class AuditEventServiceUtil {
 		new Snapshot<>(AuditEventServiceUtil.class, AuditEventService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:2129421729
+// LIFERAY-SERVICE-BUILDER-HASH:1174749975

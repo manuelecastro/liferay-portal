@@ -88,6 +88,26 @@ public class AuditEventServiceWrapper
 	}
 
 	@Override
+	public java.util.List
+		<com.liferay.portal.security.audit.storage.model.AuditEvent>
+				getAuditEvents(
+					long companyId, long[] accountEntryIds, long groupId,
+					long userId, String userName, String scope,
+					java.util.Date createDateGT, java.util.Date createDateLT,
+					String eventType, String className, String classPK,
+					String clientHost, String clientIP, String serverName,
+					int serverPort, String sessionID, boolean andSearch,
+					int start, int end)
+			throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _auditEventService.getAuditEvents(
+			companyId, accountEntryIds, groupId, userId, userName, scope,
+			createDateGT, createDateLT, eventType, className, classPK,
+			clientHost, clientIP, serverName, serverPort, sessionID, andSearch,
+			start, end);
+	}
+
+	@Override
 	public int getAuditEventsCount(long companyId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -107,6 +127,22 @@ public class AuditEventServiceWrapper
 			companyId, groupId, userId, userName, createDateGT, createDateLT,
 			eventType, className, classPK, clientHost, clientIP, serverName,
 			serverPort, sessionID, andSearch);
+	}
+
+	@Override
+	public int getAuditEventsCount(
+			long companyId, long[] accountEntryIds, long groupId, long userId,
+			String userName, String scope, java.util.Date createDateGT,
+			java.util.Date createDateLT, String eventType, String className,
+			String classPK, String clientHost, String clientIP,
+			String serverName, int serverPort, String sessionID,
+			boolean andSearch)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _auditEventService.getAuditEventsCount(
+			companyId, accountEntryIds, groupId, userId, userName, scope,
+			createDateGT, createDateLT, eventType, className, classPK,
+			clientHost, clientIP, serverName, serverPort, sessionID, andSearch);
 	}
 
 	/**
@@ -132,4 +168,4 @@ public class AuditEventServiceWrapper
 	private AuditEventService _auditEventService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-687197414
+// LIFERAY-SERVICE-BUILDER-HASH:-1347229388
