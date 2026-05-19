@@ -35,6 +35,7 @@ public class AuditMessage implements Serializable {
 	public AuditMessage(String message) throws JSONException {
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(message);
 
+		_accountEntryId = jsonObject.getLong(_ACCOUNT_ENTRY_ID);
 		_additionalInfoJSONObject = jsonObject.getJSONObject(_ADDITIONAL_INFO);
 		_className = jsonObject.getString(_CLASS_NAME);
 		_classPK = jsonObject.getString(_CLASS_PK);
@@ -51,6 +52,10 @@ public class AuditMessage implements Serializable {
 		_eventType = jsonObject.getString(_EVENT_TYPE);
 		_groupId = jsonObject.getLong(_GROUP_ID);
 		_message = jsonObject.getString(_MESSAGE);
+
+		if (jsonObject.has(_SCOPE)) {
+			_scope = jsonObject.getString(_SCOPE);
+		}
 
 		if (jsonObject.has(_SERVER_NAME)) {
 			_serverName = jsonObject.getString(_SERVER_NAME);
@@ -93,6 +98,7 @@ public class AuditMessage implements Serializable {
 		AuditRequestThreadLocal auditRequestThreadLocal =
 			AuditRequestThreadLocal.getAuditThreadLocal();
 
+		_accountEntryId = auditRequestThreadLocal.getAccountEntryId();
 		_clientHost = auditRequestThreadLocal.getClientHost();
 		_clientIP = auditRequestThreadLocal.getClientIP();
 		_serverName = auditRequestThreadLocal.getServerName();
@@ -181,6 +187,10 @@ public class AuditMessage implements Serializable {
 			message, null, additionalInfoJSONObject);
 	}
 
+	public long getAccountEntryId() {
+		return _accountEntryId;
+	}
+
 	public JSONObject getAdditionalInfo() {
 		return _additionalInfoJSONObject;
 	}
@@ -217,6 +227,10 @@ public class AuditMessage implements Serializable {
 		return _message;
 	}
 
+	public String getScope() {
+		return _scope;
+	}
+
 	public String getServerName() {
 		return _serverName;
 	}
@@ -247,6 +261,10 @@ public class AuditMessage implements Serializable {
 
 	public String getUserName() {
 		return _userName;
+	}
+
+	public void setAccountEntryId(long accountEntryId) {
+		_accountEntryId = accountEntryId;
 	}
 
 	public void setAdditionalInfo(JSONObject additionalInfoJSONObject) {
@@ -289,6 +307,10 @@ public class AuditMessage implements Serializable {
 		_message = message;
 	}
 
+	public void setScope(String scope) {
+		_scope = scope;
+	}
+
 	public void setServerName(String serverName) {
 		_serverName = serverName;
 	}
@@ -323,6 +345,8 @@ public class AuditMessage implements Serializable {
 
 	public JSONObject toJSONObject() {
 		return JSONUtil.put(
+			_ACCOUNT_ENTRY_ID, _accountEntryId
+		).put(
 			_ADDITIONAL_INFO, _additionalInfoJSONObject
 		).put(
 			_CLASS_NAME, _className
@@ -338,6 +362,8 @@ public class AuditMessage implements Serializable {
 			_EVENT_TYPE, _eventType
 		).put(
 			_MESSAGE, _message
+		).put(
+			_SCOPE, _scope
 		).put(
 			_SERVER_NAME, _serverName
 		).put(
@@ -361,6 +387,8 @@ public class AuditMessage implements Serializable {
 		return DateFormatFactoryUtil.getSimpleDateFormat(_DATE_FORMAT);
 	}
 
+	private static final String _ACCOUNT_ENTRY_ID = "accountEntryId";
+
 	private static final String _ADDITIONAL_INFO = "additionalInfo";
 
 	private static final String _CLASS_NAME = "className";
@@ -381,6 +409,8 @@ public class AuditMessage implements Serializable {
 
 	private static final String _MESSAGE = "message";
 
+	private static final String _SCOPE = "scope";
+
 	private static final String _SERVER_NAME = "serverName";
 
 	private static final String _SERVER_PORT = "serverPort";
@@ -399,6 +429,7 @@ public class AuditMessage implements Serializable {
 
 	private static final Log _log = LogFactoryUtil.getLog(AuditMessage.class);
 
+	private long _accountEntryId;
 	private JSONObject _additionalInfoJSONObject;
 	private String _className;
 	private String _classPK;
@@ -408,6 +439,7 @@ public class AuditMessage implements Serializable {
 	private String _eventType;
 	private long _groupId = -1;
 	private String _message;
+	private String _scope;
 	private String _serverName;
 	private int _serverPort;
 	private String _sessionID;

@@ -16,6 +16,8 @@
 		<!-- Audit fields -->
 
 		<column name="companyId" type="long" />
+		<column name="accountEntryId" type="long" />
+		<column name="scope" type="String" />
 		<column name="userId" type="long" />
 		<column name="userName" type="String" />
 		<column name="createDate" type="Date" />
@@ -43,6 +45,16 @@
 
 		<finder name="CompanyId" return-type="Collection">
 			<finder-column name="companyId" />
+		</finder>
+
+		<finder name="C_A" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column name="accountEntryId" />
+		</finder>
+
+		<finder name="C_S" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column name="scope" />
 		</finder>
 	</entity>
 </service-builder>

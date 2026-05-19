@@ -67,6 +67,17 @@ public class AuditDisplayContext {
 		_yesterday.add(Calendar.DATE, -1);
 	}
 
+	public long getAccountEntryId() {
+		if (_accountEntryId != null) {
+			return _accountEntryId;
+		}
+
+		_accountEntryId = _getParamWithOrWithoutNamespace(
+			ParamUtil::getLong, "accountEntryId", 0L);
+
+		return _accountEntryId;
+	}
+
 	public String getClassName() {
 		if (_className != null) {
 			return _className;
@@ -200,6 +211,17 @@ public class AuditDisplayContext {
 		return _groupId;
 	}
 
+	public String getScope() {
+		if (_scope != null) {
+			return _scope;
+		}
+
+		_scope = _getParamWithOrWithoutNamespace(
+			ParamUtil::getString, "scope", StringPool.BLANK);
+
+		return _scope;
+	}
+
 	public SearchContainer<AuditEvent> getSearchContainer() throws Exception {
 		if (_searchContainer != null) {
 			return _searchContainer;
@@ -238,18 +260,20 @@ public class AuditDisplayContext {
 
 			_searchContainer.setResultsAndTotal(
 				() -> AuditEventManagerUtil.getAuditEvents(
-					_themeDisplay.getCompanyId(), getGroupId(), getUserId(),
-					getUserName(), startDate, endDate, getEventType(),
-					getClassName(), getClassPK(), getClientHost(),
-					getClientIP(), getServerName(), getServerPort(), null,
-					displayTerms.isAndOperator(), range[0], range[1],
-					new AuditEventCreateDateComparator()),
+					_themeDisplay.getCompanyId(),
+					_toAccountEntryIds(getAccountEntryId()), getGroupId(),
+					getUserId(), getUserName(), getScope(), startDate, endDate,
+					getEventType(), getClassName(), getClassPK(),
+					getClientHost(), getClientIP(), getServerName(),
+					getServerPort(), null, displayTerms.isAndOperator(),
+					range[0], range[1], new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
-					_themeDisplay.getCompanyId(), getGroupId(), getUserId(),
-					getUserName(), startDate, endDate, getEventType(),
-					getClassName(), getClassPK(), getClientHost(),
-					getClientIP(), getServerName(), getServerPort(), null,
-					displayTerms.isAndOperator()));
+					_themeDisplay.getCompanyId(),
+					_toAccountEntryIds(getAccountEntryId()), getGroupId(),
+					getUserId(), getUserName(), getScope(), startDate, endDate,
+					getEventType(), getClassName(), getClassPK(),
+					getClientHost(), getClientIP(), getServerName(),
+					getServerPort(), null, displayTerms.isAndOperator()));
 		}
 		else {
 			String keywords = displayTerms.getKeywords();
@@ -259,14 +283,16 @@ public class AuditDisplayContext {
 
 			_searchContainer.setResultsAndTotal(
 				() -> AuditEventManagerUtil.getAuditEvents(
-					_themeDisplay.getCompanyId(), getGroupId(),
-					Long.valueOf(number), keywords, null, null, keywords,
+					_themeDisplay.getCompanyId(),
+					_toAccountEntryIds(getAccountEntryId()), getGroupId(),
+					Long.valueOf(number), keywords, null, null, null, keywords,
 					keywords, keywords, keywords, keywords, keywords,
 					Integer.valueOf(number), null, false, range[0], range[1],
 					new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
-					_themeDisplay.getCompanyId(), getGroupId(),
-					Long.valueOf(number), keywords, null, null, keywords,
+					_themeDisplay.getCompanyId(),
+					_toAccountEntryIds(getAccountEntryId()), getGroupId(),
+					Long.valueOf(number), keywords, null, null, null, keywords,
 					keywords, keywords, keywords, keywords, keywords,
 					Integer.valueOf(number), null, false));
 		}
@@ -461,6 +487,8 @@ public class AuditDisplayContext {
 			PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE + "startDateYear",
 			getStartDateYear()
 		).setParameter(
+			"accountEntryId", getAccountEntryId()
+		).setParameter(
 			"className", getClassName()
 		).setParameter(
 			"classPK", getClassPK()
@@ -472,6 +500,8 @@ public class AuditDisplayContext {
 			"eventType", getEventType()
 		).setParameter(
 			"groupId", getGroupId()
+		).setParameter(
+			"scope", getScope()
 		).setParameter(
 			"serverName", getServerName()
 		).setParameter(
@@ -485,6 +515,15 @@ public class AuditDisplayContext {
 		return _portletURL;
 	}
 
+	private long[] _toAccountEntryIds(long accountEntryId) {
+		if (accountEntryId <= 0) {
+			return null;
+		}
+
+		return new long[] {accountEntryId};
+	}
+
+	private Long _accountEntryId;
 	private String _className;
 	private String _classPK;
 	private String _clientHost;
@@ -502,6 +541,7 @@ public class AuditDisplayContext {
 	private final LiferayPortletResponse _liferayPortletResponse;
 	private boolean _paging = true;
 	private PortletURL _portletURL;
+	private String _scope;
 	private SearchContainer<AuditEvent> _searchContainer;
 	private String _serverName;
 	private Integer _serverPort;
