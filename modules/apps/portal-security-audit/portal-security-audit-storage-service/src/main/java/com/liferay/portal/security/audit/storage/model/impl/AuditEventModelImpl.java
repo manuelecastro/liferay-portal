@@ -71,7 +71,7 @@ public class AuditEventModelImpl
 		{"message", Types.VARCHAR}, {"clientHost", Types.VARCHAR},
 		{"clientIP", Types.VARCHAR}, {"serverName", Types.VARCHAR},
 		{"serverPort", Types.INTEGER}, {"sessionID", Types.VARCHAR},
-		{"additionalInfo", Types.CLOB}
+		{"additionalInfo", Types.CLOB}, {"context", Types.VARCHAR}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -95,10 +95,11 @@ public class AuditEventModelImpl
 		TABLE_COLUMNS_MAP.put("serverPort", Types.INTEGER);
 		TABLE_COLUMNS_MAP.put("sessionID", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("additionalInfo", Types.CLOB);
+		TABLE_COLUMNS_MAP.put("context", Types.VARCHAR);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table Audit_AuditEvent (auditEventId LONG not null primary key,groupId LONG,companyId LONG,accountEntryId LONG,userId LONG,userName VARCHAR(200) null,createDate DATE null,eventType VARCHAR(75) null,className VARCHAR(200) null,classPK VARCHAR(75) null,message STRING null,clientHost VARCHAR(255) null,clientIP VARCHAR(255) null,serverName VARCHAR(255) null,serverPort INTEGER,sessionID VARCHAR(255) null,additionalInfo TEXT null)";
+		"create table Audit_AuditEvent (auditEventId LONG not null primary key,groupId LONG,companyId LONG,accountEntryId LONG,userId LONG,userName VARCHAR(200) null,createDate DATE null,eventType VARCHAR(75) null,className VARCHAR(200) null,classPK VARCHAR(75) null,message STRING null,clientHost VARCHAR(255) null,clientIP VARCHAR(255) null,serverName VARCHAR(255) null,serverPort INTEGER,sessionID VARCHAR(255) null,additionalInfo TEXT null,context VARCHAR(75) null)";
 
 	public static final String TABLE_SQL_DROP = "drop table Audit_AuditEvent";
 
@@ -266,6 +267,7 @@ public class AuditEventModelImpl
 			attributeGetterFunctions.put("sessionID", AuditEvent::getSessionID);
 			attributeGetterFunctions.put(
 				"additionalInfo", AuditEvent::getAdditionalInfo);
+			attributeGetterFunctions.put("context", AuditEvent::getContext);
 
 			_attributeGetterFunctions = Collections.unmodifiableMap(
 				attributeGetterFunctions);
@@ -332,6 +334,9 @@ public class AuditEventModelImpl
 			attributeSetterBiConsumers.put(
 				"additionalInfo",
 				(BiConsumer<AuditEvent, String>)AuditEvent::setAdditionalInfo);
+			attributeSetterBiConsumers.put(
+				"context",
+				(BiConsumer<AuditEvent, String>)AuditEvent::setContext);
 
 			_attributeSetterBiConsumers = Collections.unmodifiableMap(
 				(Map)attributeSetterBiConsumers);
@@ -680,6 +685,26 @@ public class AuditEventModelImpl
 		_additionalInfo = additionalInfo;
 	}
 
+	@JSON
+	@Override
+	public String getContext() {
+		if (_context == null) {
+			return "";
+		}
+		else {
+			return _context;
+		}
+	}
+
+	@Override
+	public void setContext(String context) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_context = context;
+	}
+
 	public long getColumnBitmask() {
 		if (_columnBitmask > 0) {
 			return _columnBitmask;
@@ -753,6 +778,7 @@ public class AuditEventModelImpl
 		auditEventImpl.setServerPort(getServerPort());
 		auditEventImpl.setSessionID(getSessionID());
 		auditEventImpl.setAdditionalInfo(getAdditionalInfo());
+		auditEventImpl.setContext(getContext());
 
 		auditEventImpl.resetOriginalValues();
 
@@ -795,6 +821,8 @@ public class AuditEventModelImpl
 			this.<String>getColumnOriginalValue("sessionID"));
 		auditEventImpl.setAdditionalInfo(
 			this.<String>getColumnOriginalValue("additionalInfo"));
+		auditEventImpl.setContext(
+			this.<String>getColumnOriginalValue("context"));
 
 		return auditEventImpl;
 	}
@@ -971,6 +999,14 @@ public class AuditEventModelImpl
 			auditEventCacheModel.additionalInfo = null;
 		}
 
+		auditEventCacheModel.context = getContext();
+
+		String context = auditEventCacheModel.context;
+
+		if ((context != null) && (context.length() == 0)) {
+			auditEventCacheModel.context = null;
+		}
+
 		return auditEventCacheModel;
 	}
 
@@ -1049,6 +1085,7 @@ public class AuditEventModelImpl
 	private int _serverPort;
 	private String _sessionID;
 	private String _additionalInfo;
+	private String _context;
 
 	public <T> T getColumnValue(String columnName) {
 		Function<AuditEvent, Object> function =
@@ -1095,6 +1132,7 @@ public class AuditEventModelImpl
 		_columnOriginalValues.put("serverPort", _serverPort);
 		_columnOriginalValues.put("sessionID", _sessionID);
 		_columnOriginalValues.put("additionalInfo", _additionalInfo);
+		_columnOriginalValues.put("context", _context);
 	}
 
 	private transient Map<String, Object> _columnOriginalValues;
@@ -1142,6 +1180,8 @@ public class AuditEventModelImpl
 
 		columnBitmasks.put("additionalInfo", 65536L);
 
+		columnBitmasks.put("context", 131072L);
+
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}
 
@@ -1149,4 +1189,4 @@ public class AuditEventModelImpl
 	private AuditEvent _escapedModel;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-12607326
+// LIFERAY-SERVICE-BUILDER-HASH:-224600580

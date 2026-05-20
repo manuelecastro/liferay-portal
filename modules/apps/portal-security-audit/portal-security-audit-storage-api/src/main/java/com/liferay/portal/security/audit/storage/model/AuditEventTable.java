@@ -58,10 +58,12 @@ public class AuditEventTable extends BaseTable<AuditEventTable> {
 		"sessionID", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<AuditEventTable, Clob> additionalInfo = createColumn(
 		"additionalInfo", Clob.class, Types.CLOB, Column.FLAG_DEFAULT);
+	public final Column<AuditEventTable, String> context = createColumn(
+		"context", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 
 	private AuditEventTable() {
 		super("Audit_AuditEvent", AuditEventTable::new);
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-247180787
+// LIFERAY-SERVICE-BUILDER-HASH:-1517312972

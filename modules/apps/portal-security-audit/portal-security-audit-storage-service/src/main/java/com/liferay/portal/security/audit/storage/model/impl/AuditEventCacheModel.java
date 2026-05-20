@@ -53,7 +53,7 @@ public class AuditEventCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(35);
+		StringBundler sb = new StringBundler(37);
 
 		sb.append("{auditEventId=");
 		sb.append(auditEventId);
@@ -89,6 +89,8 @@ public class AuditEventCacheModel
 		sb.append(sessionID);
 		sb.append(", additionalInfo=");
 		sb.append(additionalInfo);
+		sb.append(", context=");
+		sb.append(context);
 		sb.append("}");
 
 		return sb.toString();
@@ -183,6 +185,13 @@ public class AuditEventCacheModel
 			auditEventImpl.setAdditionalInfo(additionalInfo);
 		}
 
+		if (context == null) {
+			auditEventImpl.setContext("");
+		}
+		else {
+			auditEventImpl.setContext(context);
+		}
+
 		auditEventImpl.resetOriginalValues();
 
 		return auditEventImpl;
@@ -214,6 +223,7 @@ public class AuditEventCacheModel
 		serverPort = objectInput.readInt();
 		sessionID = objectInput.readUTF();
 		additionalInfo = (String)objectInput.readObject();
+		context = objectInput.readUTF();
 	}
 
 	@Override
@@ -301,6 +311,13 @@ public class AuditEventCacheModel
 		else {
 			objectOutput.writeObject(additionalInfo);
 		}
+
+		if (context == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(context);
+		}
 	}
 
 	public long auditEventId;
@@ -320,6 +337,7 @@ public class AuditEventCacheModel
 	public int serverPort;
 	public String sessionID;
 	public String additionalInfo;
+	public String context;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1408129140
+// LIFERAY-SERVICE-BUILDER-HASH:-618105272

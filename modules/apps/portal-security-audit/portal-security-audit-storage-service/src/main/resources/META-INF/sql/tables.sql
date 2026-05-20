@@ -15,5 +15,6 @@ create table Audit_AuditEvent (
 	serverName VARCHAR(255) null,
 	serverPort INTEGER,
 	sessionID VARCHAR(255) null,
-	additionalInfo TEXT null
+	additionalInfo TEXT null,
+	context VARCHAR(75) null
 );

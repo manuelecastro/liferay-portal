@@ -50,6 +50,7 @@ public class AuditEventWrapper
 		attributes.put("serverPort", getServerPort());
 		attributes.put("sessionID", getSessionID());
 		attributes.put("additionalInfo", getAdditionalInfo());
+		attributes.put("context", getContext());
 
 		return attributes;
 	}
@@ -157,6 +158,12 @@ public class AuditEventWrapper
 		if (additionalInfo != null) {
 			setAdditionalInfo(additionalInfo);
 		}
+
+		String context = (String)attributes.get("context");
+
+		if (context != null) {
+			setContext(context);
+		}
 	}
 
 	@Override
@@ -242,6 +249,16 @@ public class AuditEventWrapper
 	@Override
 	public long getCompanyId() {
 		return model.getCompanyId();
+	}
+
+	/**
+	 * Returns the context of this audit event.
+	 *
+	 * @return the context of this audit event
+	 */
+	@Override
+	public String getContext() {
+		return model.getContext();
 	}
 
 	/**
@@ -440,6 +457,16 @@ public class AuditEventWrapper
 	}
 
 	/**
+	 * Sets the context of this audit event.
+	 *
+	 * @param context the context of this audit event
+	 */
+	@Override
+	public void setContext(String context) {
+		model.setContext(context);
+	}
+
+	/**
 	 * Sets the create date of this audit event.
 	 *
 	 * @param createDate the create date of this audit event
@@ -560,4 +587,4 @@ public class AuditEventWrapper
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:57412774
+// LIFERAY-SERVICE-BUILDER-HASH:-539565810

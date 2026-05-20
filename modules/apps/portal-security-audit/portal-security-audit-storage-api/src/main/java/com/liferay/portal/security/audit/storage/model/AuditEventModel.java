@@ -311,6 +311,21 @@ public interface AuditEventModel extends BaseModel<AuditEvent>, ShardedModel {
 	 */
 	public void setAdditionalInfo(String additionalInfo);
 
+	/**
+	 * Returns the context of this audit event.
+	 *
+	 * @return the context of this audit event
+	 */
+	@AutoEscape
+	public String getContext();
+
+	/**
+	 * Sets the context of this audit event.
+	 *
+	 * @param context the context of this audit event
+	 */
+	public void setContext(String context);
+
 	@Override
 	public AuditEvent cloneWithOriginalValues();
 
@@ -319,4 +334,4 @@ public interface AuditEventModel extends BaseModel<AuditEvent>, ShardedModel {
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-170073589
+// LIFERAY-SERVICE-BUILDER-HASH:696895017

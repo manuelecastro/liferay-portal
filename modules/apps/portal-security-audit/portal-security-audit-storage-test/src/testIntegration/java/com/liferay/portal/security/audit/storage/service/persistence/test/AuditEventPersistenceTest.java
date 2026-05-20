@@ -146,6 +146,8 @@ public class AuditEventPersistenceTest {
 
 		newAuditEvent.setAdditionalInfo(RandomTestUtil.randomString());
 
+		newAuditEvent.setContext(RandomTestUtil.randomString());
+
 		_auditEvents.add(_persistence.update(newAuditEvent));
 
 		AuditEvent existingAuditEvent = _persistence.findByPrimaryKey(
@@ -189,6 +191,8 @@ public class AuditEventPersistenceTest {
 		Assert.assertEquals(
 			existingAuditEvent.getAdditionalInfo(),
 			newAuditEvent.getAdditionalInfo());
+		Assert.assertEquals(
+			existingAuditEvent.getContext(), newAuditEvent.getContext());
 	}
 
 	@Test
@@ -236,7 +240,7 @@ public class AuditEventPersistenceTest {
 			"userName", true, "createDate", true, "eventType", true,
 			"className", true, "classPK", true, "message", true, "clientHost",
 			true, "clientIP", true, "serverName", true, "serverPort", true,
-			"sessionID", true);
+			"sessionID", true, "context", true);
 	}
 
 	@Test
@@ -485,6 +489,8 @@ public class AuditEventPersistenceTest {
 
 		auditEvent.setAdditionalInfo(RandomTestUtil.randomString());
 
+		auditEvent.setContext(RandomTestUtil.randomString());
+
 		_auditEvents.add(_persistence.update(auditEvent));
 
 		return auditEvent;
@@ -495,4 +501,4 @@ public class AuditEventPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-730317485
+// LIFERAY-SERVICE-BUILDER-HASH:-1468114081

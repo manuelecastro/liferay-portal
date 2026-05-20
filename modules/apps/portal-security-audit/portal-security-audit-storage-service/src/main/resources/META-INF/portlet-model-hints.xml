@@ -35,5 +35,6 @@
 		<field name="additionalInfo" type="String">
 			<hint-collection name="CLOB" />
 		</field>
+		<field name="context" type="String" />
 	</model>
 </model-hints>
