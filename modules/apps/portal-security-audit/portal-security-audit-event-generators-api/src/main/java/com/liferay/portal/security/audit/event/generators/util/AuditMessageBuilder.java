@@ -74,15 +74,10 @@ public class AuditMessageBuilder {
 				"attributes", _getAttributesJSONArray(attributes));
 		}
 
-		AuditMessage auditMessage = new AuditMessage(
-			eventType, companyId, groupId, realUserId, realUserName, className,
-			classPK, null, null, additionalInfoJSONObject);
-
-		if (accountEntryId > 0) {
-			auditMessage.setAccountEntryId(accountEntryId);
-		}
-
-		return auditMessage;
+		return new AuditMessage(
+			eventType, companyId, groupId, accountEntryId, realUserId,
+			realUserName, className, classPK, null, null,
+			additionalInfoJSONObject);
 	}
 
 	public static AuditMessage buildAuditMessage(
