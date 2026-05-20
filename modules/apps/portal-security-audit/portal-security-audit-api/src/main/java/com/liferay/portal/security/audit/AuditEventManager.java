@@ -36,8 +36,8 @@ public interface AuditEventManager {
 		long companyId, long[] accountEntryIds, long groupId, long userId,
 		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
-		String serverName, int serverPort, String sessionID, boolean andSearch,
-		int start, int end,
+		String serverName, int serverPort, String sessionID, String context,
+		boolean andSearch, int start, int end,
 		OrderByComparator
 			<com.liferay.portal.security.audit.storage.model.AuditEvent>
 				orderByComparator);
@@ -48,6 +48,7 @@ public interface AuditEventManager {
 		long companyId, long[] accountEntryIds, long groupId, long userId,
 		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
-		String serverName, int serverPort, String sessionID, boolean andSearch);
+		String serverName, int serverPort, String sessionID, String context,
+		boolean andSearch);
 
 }

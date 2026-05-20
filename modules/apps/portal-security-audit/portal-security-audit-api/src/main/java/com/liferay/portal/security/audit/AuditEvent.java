@@ -32,6 +32,8 @@ public interface AuditEvent {
 
 	public long getCompanyId();
 
+	public String getContext();
+
 	public Date getCreateDate();
 
 	public String getEventType();
@@ -69,6 +71,8 @@ public interface AuditEvent {
 	public void setClientIP(String clientIP);
 
 	public void setCompanyId(long companyId);
+
+	public void setContext(String context);
 
 	public void setCreateDate(Date createDate);
 
