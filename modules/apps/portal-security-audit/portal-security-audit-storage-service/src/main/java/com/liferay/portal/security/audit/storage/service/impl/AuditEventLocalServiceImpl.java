@@ -80,33 +80,32 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 			companyId, start, end, orderByComparator);
 	}
 
-	@Override
 	public List<AuditEvent> getAuditEvents(
 		long companyId, long[] accountEntryIds, long groupId, long userId,
 		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
-		String serverName, int serverPort, String sessionID, boolean andSearch,
-		int start, int end) {
+		String serverName, int serverPort, String sessionID, String context,
+		boolean andSearch, int start, int end) {
 
 		return getAuditEvents(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch, start, end,
+			serverName, serverPort, sessionID, context, andSearch, start, end,
 			new AuditEventCreateDateComparator());
 	}
 
-	@Override
 	public List<AuditEvent> getAuditEvents(
 		long companyId, long[] accountEntryIds, long groupId, long userId,
 		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
-		String serverName, int serverPort, String sessionID, boolean andSearch,
-		int start, int end, OrderByComparator<AuditEvent> orderByComparator) {
+		String serverName, int serverPort, String sessionID, String context,
+		boolean andSearch, int start, int end,
+		OrderByComparator<AuditEvent> orderByComparator) {
 
 		DynamicQuery dynamicQuery = _buildDynamicQuery(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch);
+			serverName, serverPort, sessionID, context, andSearch);
 
 		return dynamicQuery(dynamicQuery, start, end, orderByComparator);
 	}
@@ -116,18 +115,17 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		return auditEventPersistence.countByCompanyId(companyId);
 	}
 
-	@Override
 	public int getAuditEventsCount(
 		long companyId, long[] accountEntryIds, long groupId, long userId,
 		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
-		String serverName, int serverPort, String sessionID,
+		String serverName, int serverPort, String sessionID, String context,
 		boolean andSearch) {
 
 		DynamicQuery dynamicQuery = _buildDynamicQuery(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch);
+			serverName, serverPort, sessionID, context, andSearch);
 
 		return (int)dynamicQueryCount(dynamicQuery);
 	}
@@ -136,7 +134,7 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		long companyId, long[] accountEntryIds, long groupId, long userId,
 		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
-		String serverName, int serverPort, String sessionID,
+		String serverName, int serverPort, String sessionID, String context,
 		boolean andSearch) {
 
 		Junction junction = null;
@@ -224,6 +222,13 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 					StringPool.PERCENT + sessionID + StringPool.PERCENT));
 		}
 
+		if (Validator.isNotNull(context)) {
+			junction.add(
+				RestrictionsFactoryUtil.ilike(
+					"context",
+					StringPool.PERCENT + context + StringPool.PERCENT));
+		}
+
 		DynamicQuery dynamicQuery = dynamicQuery();
 
 		if (companyId > 0) {
@@ -278,6 +283,7 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		auditEvent.setServerName(auditMessage.getServerName());
 		auditEvent.setServerPort(auditMessage.getServerPort());
 		auditEvent.setSessionID(auditMessage.getSessionID());
+		auditEvent.setContext(auditMessage.getContext());
 		auditEvent.setAdditionalInfo(
 			String.valueOf(auditMessage.getAdditionalInfo()));
 
