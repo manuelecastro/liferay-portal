@@ -20,13 +20,13 @@ public class AuditMessageFactory {
 	}
 
 	public AuditMessage getAuditMessage(
-		String eventType, long companyId, long groupId, long userId,
-		String userName, String className, String classPK, String message,
-		Date timestamp, JSONObject additionalInfoJSONObject) {
+		String eventType, long companyId, long groupId, long accountEntryId,
+		long userId, String userName, String className, String classPK,
+		String message, Date timestamp, JSONObject additionalInfoJSONObject) {
 
 		return new AuditMessage(
-			eventType, companyId, groupId, userId, userName, className, classPK,
-			message, timestamp, additionalInfoJSONObject);
+			eventType, companyId, groupId, accountEntryId, userId, userName,
+			className, classPK, message, timestamp, additionalInfoJSONObject);
 	}
 
 	public AuditMessage getAuditMessage(
