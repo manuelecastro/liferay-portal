@@ -52,14 +52,14 @@ public class AuditEventServiceUtil {
 			String userName, java.util.Date createDateGT,
 			java.util.Date createDateLT, String eventType, String className,
 			String classPK, String clientHost, String clientIP,
-			String serverName, int serverPort, String sessionID,
+			String serverName, int serverPort, String sessionID, String context,
 			boolean andSearch, int start, int end)
 		throws PortalException {
 
 		return getService().getAuditEvents(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch, start, end);
+			serverName, serverPort, sessionID, context, andSearch, start, end);
 	}
 
 	public static List<AuditEvent> getAuditEvents(
@@ -67,7 +67,7 @@ public class AuditEventServiceUtil {
 			String userName, java.util.Date createDateGT,
 			java.util.Date createDateLT, String eventType, String className,
 			String classPK, String clientHost, String clientIP,
-			String serverName, int serverPort, String sessionID,
+			String serverName, int serverPort, String sessionID, String context,
 			boolean andSearch, int start, int end,
 			OrderByComparator<AuditEvent> orderByComparator)
 		throws PortalException {
@@ -75,7 +75,7 @@ public class AuditEventServiceUtil {
 		return getService().getAuditEvents(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch, start, end,
+			serverName, serverPort, sessionID, context, andSearch, start, end,
 			orderByComparator);
 	}
 
@@ -90,14 +90,14 @@ public class AuditEventServiceUtil {
 			String userName, java.util.Date createDateGT,
 			java.util.Date createDateLT, String eventType, String className,
 			String classPK, String clientHost, String clientIP,
-			String serverName, int serverPort, String sessionID,
+			String serverName, int serverPort, String sessionID, String context,
 			boolean andSearch)
 		throws PortalException {
 
 		return getService().getAuditEventsCount(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch);
+			serverName, serverPort, sessionID, context, andSearch);
 	}
 
 	/**
@@ -117,4 +117,4 @@ public class AuditEventServiceUtil {
 		new Snapshot<>(AuditEventServiceUtil.class, AuditEventService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:2085786549
+// LIFERAY-SERVICE-BUILDER-HASH:-405956556

@@ -57,13 +57,14 @@ public class AuditEventServiceWrapper
 					java.util.Date createDateLT, String eventType,
 					String className, String classPK, String clientHost,
 					String clientIP, String serverName, int serverPort,
-					String sessionID, boolean andSearch, int start, int end)
+					String sessionID, String context, boolean andSearch,
+					int start, int end)
 			throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _auditEventService.getAuditEvents(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch, start, end);
+			serverName, serverPort, sessionID, context, andSearch, start, end);
 	}
 
 	@Override
@@ -75,7 +76,8 @@ public class AuditEventServiceWrapper
 					java.util.Date createDateLT, String eventType,
 					String className, String classPK, String clientHost,
 					String clientIP, String serverName, int serverPort,
-					String sessionID, boolean andSearch, int start, int end,
+					String sessionID, String context, boolean andSearch,
+					int start, int end,
 					com.liferay.portal.kernel.util.OrderByComparator
 						<com.liferay.portal.security.audit.storage.model.
 							AuditEvent> orderByComparator)
@@ -84,7 +86,7 @@ public class AuditEventServiceWrapper
 		return _auditEventService.getAuditEvents(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch, start, end,
+			serverName, serverPort, sessionID, context, andSearch, start, end,
 			orderByComparator);
 	}
 
@@ -101,14 +103,14 @@ public class AuditEventServiceWrapper
 			String userName, java.util.Date createDateGT,
 			java.util.Date createDateLT, String eventType, String className,
 			String classPK, String clientHost, String clientIP,
-			String serverName, int serverPort, String sessionID,
+			String serverName, int serverPort, String sessionID, String context,
 			boolean andSearch)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _auditEventService.getAuditEventsCount(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch);
+			serverName, serverPort, sessionID, context, andSearch);
 	}
 
 	/**
@@ -134,4 +136,4 @@ public class AuditEventServiceWrapper
 	private AuditEventService _auditEventService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1823489156
+// LIFERAY-SERVICE-BUILDER-HASH:103432587

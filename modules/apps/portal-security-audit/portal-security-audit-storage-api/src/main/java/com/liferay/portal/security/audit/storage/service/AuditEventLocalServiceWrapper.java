@@ -316,12 +316,12 @@ public class AuditEventLocalServiceWrapper
 				java.util.Date createDateLT, String eventType, String className,
 				String classPK, String clientHost, String clientIP,
 				String serverName, int serverPort, String sessionID,
-				boolean andSearch, int start, int end) {
+				String context, boolean andSearch, int start, int end) {
 
 		return _auditEventLocalService.getAuditEvents(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch, start, end);
+			serverName, serverPort, sessionID, context, andSearch, start, end);
 	}
 
 	@Override
@@ -333,7 +333,7 @@ public class AuditEventLocalServiceWrapper
 				java.util.Date createDateLT, String eventType, String className,
 				String classPK, String clientHost, String clientIP,
 				String serverName, int serverPort, String sessionID,
-				boolean andSearch, int start, int end,
+				String context, boolean andSearch, int start, int end,
 				com.liferay.portal.kernel.util.OrderByComparator
 					<com.liferay.portal.security.audit.storage.model.AuditEvent>
 						orderByComparator) {
@@ -341,7 +341,7 @@ public class AuditEventLocalServiceWrapper
 		return _auditEventLocalService.getAuditEvents(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch, start, end,
+			serverName, serverPort, sessionID, context, andSearch, start, end,
 			orderByComparator);
 	}
 
@@ -366,12 +366,12 @@ public class AuditEventLocalServiceWrapper
 		String userName, java.util.Date createDateGT,
 		java.util.Date createDateLT, String eventType, String className,
 		String classPK, String clientHost, String clientIP, String serverName,
-		int serverPort, String sessionID, boolean andSearch) {
+		int serverPort, String sessionID, String context, boolean andSearch) {
 
 		return _auditEventLocalService.getAuditEventsCount(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch);
+			serverName, serverPort, sessionID, context, andSearch);
 	}
 
 	@Override
@@ -441,4 +441,4 @@ public class AuditEventLocalServiceWrapper
 	private AuditEventLocalService _auditEventLocalService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-433178713
+// LIFERAY-SERVICE-BUILDER-HASH:-1886527776

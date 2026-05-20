@@ -143,7 +143,8 @@ public class AuditEventServiceHttp {
 					java.util.Date createDateLT, String eventType,
 					String className, String classPK, String clientHost,
 					String clientIP, String serverName, int serverPort,
-					String sessionID, boolean andSearch, int start, int end)
+					String sessionID, String context, boolean andSearch,
+					int start, int end)
 			throws com.liferay.portal.kernel.exception.PortalException {
 
 		try {
@@ -155,7 +156,7 @@ public class AuditEventServiceHttp {
 				methodKey, companyId, accountEntryIds, groupId, userId,
 				userName, createDateGT, createDateLT, eventType, className,
 				classPK, clientHost, clientIP, serverName, serverPort,
-				sessionID, andSearch, start, end);
+				sessionID, context, andSearch, start, end);
 
 			Object returnObj = null;
 
@@ -196,7 +197,8 @@ public class AuditEventServiceHttp {
 					java.util.Date createDateLT, String eventType,
 					String className, String classPK, String clientHost,
 					String clientIP, String serverName, int serverPort,
-					String sessionID, boolean andSearch, int start, int end,
+					String sessionID, String context, boolean andSearch,
+					int start, int end,
 					com.liferay.portal.kernel.util.OrderByComparator
 						<com.liferay.portal.security.audit.storage.model.
 							AuditEvent> orderByComparator)
@@ -211,7 +213,7 @@ public class AuditEventServiceHttp {
 				methodKey, companyId, accountEntryIds, groupId, userId,
 				userName, createDateGT, createDateLT, eventType, className,
 				classPK, clientHost, clientIP, serverName, serverPort,
-				sessionID, andSearch, start, end, orderByComparator);
+				sessionID, context, andSearch, start, end, orderByComparator);
 
 			Object returnObj = null;
 
@@ -289,7 +291,7 @@ public class AuditEventServiceHttp {
 			java.util.Date createDateGT, java.util.Date createDateLT,
 			String eventType, String className, String classPK,
 			String clientHost, String clientIP, String serverName,
-			int serverPort, String sessionID, boolean andSearch)
+			int serverPort, String sessionID, String context, boolean andSearch)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		try {
@@ -301,7 +303,7 @@ public class AuditEventServiceHttp {
 				methodKey, companyId, accountEntryIds, groupId, userId,
 				userName, createDateGT, createDateLT, eventType, className,
 				classPK, clientHost, clientIP, serverName, serverPort,
-				sessionID, andSearch);
+				sessionID, context, andSearch);
 
 			Object returnObj = null;
 
@@ -346,16 +348,17 @@ public class AuditEventServiceHttp {
 			long.class, long[].class, long.class, long.class, String.class,
 			java.util.Date.class, java.util.Date.class, String.class,
 			String.class, String.class, String.class, String.class,
-			String.class, int.class, String.class, boolean.class, int.class,
-			int.class
+			String.class, int.class, String.class, String.class, boolean.class,
+			int.class, int.class
 		};
 	private static final Class<?>[] _getAuditEventsParameterTypes3 =
 		new Class[] {
 			long.class, long[].class, long.class, long.class, String.class,
 			java.util.Date.class, java.util.Date.class, String.class,
 			String.class, String.class, String.class, String.class,
-			String.class, int.class, String.class, boolean.class, int.class,
-			int.class, com.liferay.portal.kernel.util.OrderByComparator.class
+			String.class, int.class, String.class, String.class, boolean.class,
+			int.class, int.class,
+			com.liferay.portal.kernel.util.OrderByComparator.class
 		};
 	private static final Class<?>[] _getAuditEventsCountParameterTypes4 =
 		new Class[] {long.class};
@@ -364,8 +367,8 @@ public class AuditEventServiceHttp {
 			long.class, long[].class, long.class, long.class, String.class,
 			java.util.Date.class, java.util.Date.class, String.class,
 			String.class, String.class, String.class, String.class,
-			String.class, int.class, String.class, boolean.class
+			String.class, int.class, String.class, String.class, boolean.class
 		};
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:277103503
+// LIFERAY-SERVICE-BUILDER-HASH:-300334686
