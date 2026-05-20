@@ -65,6 +65,10 @@ public class AuditMessage implements Serializable {
 			_sessionID = jsonObject.getString(_SESSION_ID);
 		}
 
+		if (jsonObject.has(_CONTEXT)) {
+			_context = jsonObject.getString(_CONTEXT);
+		}
+
 		_timestamp = GetterUtil.getDate(
 			jsonObject.getString(_TIMESTAMP), _getDateFormat());
 		_userEmailAddress = jsonObject.getString(_USER_EMAIL_ADDRESS);
@@ -74,9 +78,9 @@ public class AuditMessage implements Serializable {
 	}
 
 	public AuditMessage(
-		String eventType, long companyId, long groupId, long userId,
-		String userName, String className, String classPK, String message,
-		Date timestamp, JSONObject additionalInfoJSONObject) {
+		String eventType, long companyId, long groupId, long accountEntryId,
+		long userId, String userName, String className, String classPK,
+		String message, Date timestamp, JSONObject additionalInfoJSONObject) {
 
 		_eventType = eventType;
 		_companyId = companyId;
@@ -91,10 +95,11 @@ public class AuditMessage implements Serializable {
 			(additionalInfoJSONObject != null) ? additionalInfoJSONObject :
 				JSONFactoryUtil.createJSONObject();
 
+		_accountEntryId = accountEntryId;
+
 		AuditRequestThreadLocal auditRequestThreadLocal =
 			AuditRequestThreadLocal.getAuditThreadLocal();
 
-		_accountEntryId = auditRequestThreadLocal.getAccountEntryId();
 		_clientHost = auditRequestThreadLocal.getClientHost();
 		_clientIP = auditRequestThreadLocal.getClientIP();
 		_serverName = auditRequestThreadLocal.getServerName();
@@ -141,8 +146,8 @@ public class AuditMessage implements Serializable {
 		String eventType, long companyId, long userId, String userName) {
 
 		this(
-			eventType, companyId, 0, userId, userName, null, null, null, null,
-			null);
+			eventType, companyId, 0, 0, userId, userName, null, null, null,
+			null, null);
 	}
 
 	public AuditMessage(
@@ -150,8 +155,8 @@ public class AuditMessage implements Serializable {
 		String className, String classPK) {
 
 		this(
-			eventType, companyId, 0, userId, userName, className, classPK, null,
-			null, null);
+			eventType, companyId, 0, 0, userId, userName, className, classPK,
+			null, null, null);
 	}
 
 	public AuditMessage(
@@ -159,7 +164,7 @@ public class AuditMessage implements Serializable {
 		String className, String classPK, String message) {
 
 		this(
-			eventType, companyId, 0, userId, userName, className, classPK,
+			eventType, companyId, 0, 0, userId, userName, className, classPK,
 			message, null, null);
 	}
 
@@ -169,7 +174,7 @@ public class AuditMessage implements Serializable {
 		JSONObject additionalInfoJSONObject) {
 
 		this(
-			eventType, companyId, 0, userId, userName, className, classPK,
+			eventType, companyId, 0, 0, userId, userName, className, classPK,
 			message, timestamp, additionalInfoJSONObject);
 	}
 
@@ -179,7 +184,7 @@ public class AuditMessage implements Serializable {
 		JSONObject additionalInfoJSONObject) {
 
 		this(
-			eventType, companyId, 0, userId, userName, className, classPK,
+			eventType, companyId, 0, 0, userId, userName, className, classPK,
 			message, null, additionalInfoJSONObject);
 	}
 
@@ -209,6 +214,10 @@ public class AuditMessage implements Serializable {
 
 	public long getCompanyId() {
 		return _companyId;
+	}
+
+	public String getContext() {
+		return _context;
 	}
 
 	public String getEventType() {
@@ -287,6 +296,10 @@ public class AuditMessage implements Serializable {
 		_companyId = companyId;
 	}
 
+	public void setContext(String context) {
+		_context = context;
+	}
+
 	public void setEventType(String eventType) {
 		_eventType = eventType;
 	}
@@ -357,6 +370,8 @@ public class AuditMessage implements Serializable {
 		).put(
 			_SESSION_ID, _sessionID
 		).put(
+			_CONTEXT, _context
+		).put(
 			_TIMESTAMP, _getDateFormat().format(new Date())
 		).put(
 			_USER_EMAIL_ADDRESS, _userEmailAddress
@@ -386,6 +401,8 @@ public class AuditMessage implements Serializable {
 	private static final String _CLIENT_IP = "clientIP";
 
 	private static final String _COMPANY_ID = "companyId";
+
+	private static final String _CONTEXT = "context";
 
 	private static final String _DATE_FORMAT = "yyyyMMddkkmmssSSS";
 
@@ -420,6 +437,7 @@ public class AuditMessage implements Serializable {
 	private String _clientHost;
 	private String _clientIP;
 	private long _companyId = -1;
+	private String _context;
 	private String _eventType;
 	private long _groupId = -1;
 	private String _message;
