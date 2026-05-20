@@ -48,8 +48,8 @@ public class AuditEventManagerUtil {
 		long companyId, long[] accountEntryIds, long groupId, long userId,
 		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
-		String serverName, int serverPort, String sessionID, boolean andSearch,
-		int start, int end,
+		String serverName, int serverPort, String sessionID, String context,
+		boolean andSearch, int start, int end,
 		OrderByComparator
 			<com.liferay.portal.security.audit.storage.model.AuditEvent>
 				orderByComparator) {
@@ -59,7 +59,7 @@ public class AuditEventManagerUtil {
 		return auditEventManager.getAuditEvents(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch, start, end,
+			serverName, serverPort, sessionID, context, andSearch, start, end,
 			orderByComparator);
 	}
 
@@ -73,7 +73,7 @@ public class AuditEventManagerUtil {
 		long companyId, long[] accountEntryIds, long groupId, long userId,
 		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
-		String serverName, int serverPort, String sessionID,
+		String serverName, int serverPort, String sessionID, String context,
 		boolean andSearch) {
 
 		AuditEventManager auditEventManager = _auditEventManagerSnapshot.get();
@@ -81,7 +81,7 @@ public class AuditEventManagerUtil {
 		return auditEventManager.getAuditEventsCount(
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
-			serverName, serverPort, sessionID, andSearch);
+			serverName, serverPort, sessionID, context, andSearch);
 	}
 
 	private static final Snapshot<AuditEventManager>

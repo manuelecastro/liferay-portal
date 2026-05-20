@@ -254,7 +254,7 @@ public class AuditDisplayContext {
 					getUserId(), getUserName(), startDate, endDate,
 					getEventType(), getClassName(), getClassPK(),
 					getClientHost(), getClientIP(), getServerName(),
-					getServerPort(), null, displayTerms.isAndOperator(),
+					getServerPort(), null, null, displayTerms.isAndOperator(),
 					range[0], range[1], new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
 					_themeDisplay.getCompanyId(),
@@ -262,7 +262,7 @@ public class AuditDisplayContext {
 					getUserId(), getUserName(), startDate, endDate,
 					getEventType(), getClassName(), getClassPK(),
 					getClientHost(), getClientIP(), getServerName(),
-					getServerPort(), null, displayTerms.isAndOperator()));
+					getServerPort(), null, null, displayTerms.isAndOperator()));
 		}
 		else {
 			String keywords = displayTerms.getKeywords();
@@ -276,14 +276,14 @@ public class AuditDisplayContext {
 					_toAccountEntryIds(getAccountEntryId()), getGroupId(),
 					Long.valueOf(number), keywords, null, null, keywords,
 					keywords, keywords, keywords, keywords, keywords,
-					Integer.valueOf(number), null, false, range[0], range[1],
-					new AuditEventCreateDateComparator()),
+					Integer.valueOf(number), null, null, false, range[0],
+					range[1], new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
 					_themeDisplay.getCompanyId(),
 					_toAccountEntryIds(getAccountEntryId()), getGroupId(),
 					Long.valueOf(number), keywords, null, null, keywords,
 					keywords, keywords, keywords, keywords, keywords,
-					Integer.valueOf(number), null, false));
+					Integer.valueOf(number), null, null, false));
 		}
 
 		return _searchContainer;
