@@ -913,7 +913,7 @@ public class ObjectEntryDTOConverter
 					_auditEventLocalService.getAuditEvents(
 						0, null, 0, 0, null, null, null, null, null,
 						String.valueOf(objectEntry.getObjectEntryId()), null,
-						null, null, 0, null, false, QueryUtil.ALL_POS,
+						null, null, 0, null, null, false, QueryUtil.ALL_POS,
 						QueryUtil.ALL_POS),
 					auditEvent -> {
 						AuditEvent newAuditEvent = new AuditEvent();

@@ -95,7 +95,7 @@ public class AuditEventServicePermissionTest {
 		_auditEventService.getAuditEvents(
 			_companyId, new long[] {_accountEntryB.getAccountEntryId()}, 0, 0,
 			null, null, null, _eventType, null, null, null, null, null, 0, null,
-			true, 0, Integer.MAX_VALUE);
+			null, true, 0, Integer.MAX_VALUE);
 	}
 
 	@Test
@@ -106,7 +106,7 @@ public class AuditEventServicePermissionTest {
 		List<AuditEvent> auditEvents = _auditEventService.getAuditEvents(
 			_companyId, new long[] {_accountEntryA.getAccountEntryId()}, 0, 0,
 			null, null, null, _eventType, null, null, null, null, null, 0, null,
-			true, 0, Integer.MAX_VALUE);
+			null, true, 0, Integer.MAX_VALUE);
 
 		for (AuditEvent auditEvent : auditEvents) {
 			Assert.assertEquals(
@@ -125,7 +125,7 @@ public class AuditEventServicePermissionTest {
 
 		List<AuditEvent> auditEvents = _auditEventService.getAuditEvents(
 			_companyId, null, 0, 0, null, null, null, _eventType, null, null,
-			null, null, null, 0, null, true, 0, Integer.MAX_VALUE);
+			null, null, null, 0, null, null, true, 0, Integer.MAX_VALUE);
 
 		Assert.assertEquals(auditEvents.toString(), 3, auditEvents.size());
 	}

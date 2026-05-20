@@ -63,7 +63,7 @@ public class AuditEventAccountScopeLocalServiceTest {
 		List<AuditEvent> auditEvents = _auditEventLocalService.getAuditEvents(
 			_companyId, new long[] {_accountEntryIdA, _accountEntryIdB}, 0, 0,
 			null, null, null, _eventType, null, null, null, null, null, 0, null,
-			true, 0, Integer.MAX_VALUE);
+			null, true, 0, Integer.MAX_VALUE);
 
 		Assert.assertEquals(auditEvents.toString(), 3, auditEvents.size());
 
@@ -81,7 +81,7 @@ public class AuditEventAccountScopeLocalServiceTest {
 	public void testFilterBySingleAccountEntryId() throws Exception {
 		List<AuditEvent> auditEvents = _auditEventLocalService.getAuditEvents(
 			_companyId, new long[] {_accountEntryIdA}, 0, 0, null, null, null,
-			_eventType, null, null, null, null, null, 0, null, true, 0,
+			_eventType, null, null, null, null, null, 0, null, null, true, 0,
 			Integer.MAX_VALUE);
 
 		Assert.assertEquals(auditEvents.toString(), 2, auditEvents.size());
@@ -96,7 +96,7 @@ public class AuditEventAccountScopeLocalServiceTest {
 	public void testNoFilterReturnsAllForEventType() throws Exception {
 		List<AuditEvent> auditEvents = _auditEventLocalService.getAuditEvents(
 			_companyId, null, 0, 0, null, null, null, _eventType, null, null,
-			null, null, null, 0, null, true, 0, Integer.MAX_VALUE);
+			null, null, null, 0, null, null, true, 0, Integer.MAX_VALUE);
 
 		Assert.assertEquals(auditEvents.toString(), 4, auditEvents.size());
 	}
