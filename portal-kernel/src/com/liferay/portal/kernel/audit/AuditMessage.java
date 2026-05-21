@@ -85,6 +85,7 @@ public class AuditMessage implements Serializable {
 		_eventType = eventType;
 		_companyId = companyId;
 		_groupId = groupId;
+		_accountEntryId = accountEntryId;
 		_userId = userId;
 		_userName = userName;
 		_className = className;
@@ -94,8 +95,6 @@ public class AuditMessage implements Serializable {
 		_additionalInfoJSONObject =
 			(additionalInfoJSONObject != null) ? additionalInfoJSONObject :
 				JSONFactoryUtil.createJSONObject();
-
-		_accountEntryId = accountEntryId;
 
 		AuditRequestThreadLocal auditRequestThreadLocal =
 			AuditRequestThreadLocal.getAuditThreadLocal();
@@ -360,6 +359,8 @@ public class AuditMessage implements Serializable {
 		).put(
 			_COMPANY_ID, _companyId
 		).put(
+			_CONTEXT, _context
+		).put(
 			_EVENT_TYPE, _eventType
 		).put(
 			_MESSAGE, _message
@@ -369,8 +370,6 @@ public class AuditMessage implements Serializable {
 			_SERVER_PORT, _serverPort
 		).put(
 			_SESSION_ID, _sessionID
-		).put(
-			_CONTEXT, _context
 		).put(
 			_TIMESTAMP, _getDateFormat().format(new Date())
 		).put(
