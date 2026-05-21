@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -78,21 +78,21 @@ public class AuditEventContextLocalServiceTest {
 	}
 
 	@Test
-	public void testNullContextReturnsAllForEventType() throws Exception {
-		List<AuditEvent> auditEvents = _auditEventLocalService.getAuditEvents(
-			_companyId, null, 0, 0, null, null, null, _eventType, null, null,
-			null, null, null, 0, null, null, true, 0, Integer.MAX_VALUE);
-
-		Assert.assertEquals(auditEvents.toString(), 3, auditEvents.size());
-	}
-
-	@Test
 	public void testGetAuditEventsCountFilterByContext() throws Exception {
 		int count = _auditEventLocalService.getAuditEventsCount(
 			_companyId, null, 0, 0, null, null, null, _eventType, null, null,
 			null, null, null, 0, null, "order-management", true);
 
 		Assert.assertEquals(1, count);
+	}
+
+	@Test
+	public void testNullContextReturnsAllForEventType() throws Exception {
+		List<AuditEvent> auditEvents = _auditEventLocalService.getAuditEvents(
+			_companyId, null, 0, 0, null, null, null, _eventType, null, null,
+			null, null, null, 0, null, null, true, 0, Integer.MAX_VALUE);
+
+		Assert.assertEquals(auditEvents.toString(), 3, auditEvents.size());
 	}
 
 	private void _addAuditEvent(String context) {

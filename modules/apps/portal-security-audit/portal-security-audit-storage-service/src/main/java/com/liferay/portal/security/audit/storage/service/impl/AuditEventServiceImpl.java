@@ -100,8 +100,7 @@ public class AuditEventServiceImpl extends AuditEventServiceBaseImpl {
 			String eventType, String className, String classPK,
 			String clientHost, String clientIP, String serverName,
 			int serverPort, String sessionID, String context, boolean andSearch,
-			int start, int end,
-			OrderByComparator<AuditEvent> orderByComparator)
+			int start, int end, OrderByComparator<AuditEvent> orderByComparator)
 		throws PortalException {
 
 		return auditEventLocalService.getAuditEvents(

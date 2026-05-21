@@ -106,8 +106,8 @@ public class AuditEventManagerImpl implements AuditEventManager {
 			_auditEventLocalService.getAuditEvents(
 				companyId, accountEntryIds, groupId, userId, userName,
 				createDateGT, createDateLT, eventType, className, classPK,
-				clientHost, clientIP, serverName, serverPort, sessionID, context,
-				andSearch, start, end, orderByComparator));
+				clientHost, clientIP, serverName, serverPort, sessionID,
+				context, andSearch, start, end, orderByComparator));
 	}
 
 	@Override
