@@ -118,6 +118,10 @@ public class AuditEventPersistenceTest {
 
 		newAuditEvent.setCompanyId(RandomTestUtil.nextLong());
 
+		newAuditEvent.setAccountEntryId(RandomTestUtil.nextLong());
+
+		newAuditEvent.setContextName(RandomTestUtil.randomString());
+
 		newAuditEvent.setUserId(RandomTestUtil.nextLong());
 
 		newAuditEvent.setUserName(RandomTestUtil.randomString());
@@ -157,6 +161,12 @@ public class AuditEventPersistenceTest {
 		Assert.assertEquals(
 			existingAuditEvent.getCompanyId(), newAuditEvent.getCompanyId());
 		Assert.assertEquals(
+			existingAuditEvent.getAccountEntryId(),
+			newAuditEvent.getAccountEntryId());
+		Assert.assertEquals(
+			existingAuditEvent.getContextName(),
+			newAuditEvent.getContextName());
+		Assert.assertEquals(
 			existingAuditEvent.getUserId(), newAuditEvent.getUserId());
 		Assert.assertEquals(
 			existingAuditEvent.getUserName(), newAuditEvent.getUserName());
@@ -194,6 +204,14 @@ public class AuditEventPersistenceTest {
 	}
 
 	@Test
+	public void testCountByC_A() throws Exception {
+		_persistence.countByC_A(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
+
+		_persistence.countByC_A(0L, 0L);
+	}
+
+	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		AuditEvent newAuditEvent = addAuditEvent();
 
@@ -219,10 +237,11 @@ public class AuditEventPersistenceTest {
 	protected OrderByComparator<AuditEvent> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
 			"Audit_AuditEvent", "auditEventId", true, "groupId", true,
-			"companyId", true, "userId", true, "userName", true, "createDate",
-			true, "eventType", true, "className", true, "classPK", true,
-			"message", true, "clientHost", true, "clientIP", true, "serverName",
-			true, "serverPort", true, "sessionID", true);
+			"companyId", true, "accountEntryId", true, "contextName", true,
+			"userId", true, "userName", true, "createDate", true, "eventType",
+			true, "className", true, "classPK", true, "message", true,
+			"clientHost", true, "clientIP", true, "serverName", true,
+			"serverPort", true, "sessionID", true);
 	}
 
 	@Test
@@ -443,6 +462,10 @@ public class AuditEventPersistenceTest {
 
 		auditEvent.setCompanyId(RandomTestUtil.nextLong());
 
+		auditEvent.setAccountEntryId(RandomTestUtil.nextLong());
+
+		auditEvent.setContextName(RandomTestUtil.randomString());
+
 		auditEvent.setUserId(RandomTestUtil.nextLong());
 
 		auditEvent.setUserName(RandomTestUtil.randomString());
@@ -479,4 +502,4 @@ public class AuditEventPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:100818432
+// LIFERAY-SERVICE-BUILDER-HASH:1252137036

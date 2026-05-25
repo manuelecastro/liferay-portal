@@ -262,30 +262,43 @@ public class AuditEventLocalServiceUtil {
 	}
 
 	public static List<AuditEvent> getAuditEvents(
-		long companyId, long groupId, long userId, String userName,
-		java.util.Date createDateGT, java.util.Date createDateLT,
-		String eventType, String className, String classPK, String clientHost,
-		String clientIP, String serverName, int serverPort, String sessionID,
-		boolean andSearch, int start, int end) {
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, java.util.Date createDateGT,
+		java.util.Date createDateLT, String eventType, String className,
+		String classPK, String clientHost, String clientIP, String serverName,
+		int serverPort, String sessionID, boolean andSearch, int start,
+		int end) {
 
 		return getService().getAuditEvents(
-			companyId, groupId, userId, userName, createDateGT, createDateLT,
-			eventType, className, classPK, clientHost, clientIP, serverName,
-			serverPort, sessionID, andSearch, start, end);
+			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
+			createDateLT, eventType, className, classPK, clientHost, clientIP,
+			serverName, serverPort, sessionID, andSearch, start, end);
 	}
 
 	public static List<AuditEvent> getAuditEvents(
-		long companyId, long groupId, long userId, String userName,
-		java.util.Date createDateGT, java.util.Date createDateLT,
-		String eventType, String className, String classPK, String clientHost,
-		String clientIP, String serverName, int serverPort, String sessionID,
-		boolean andSearch, int start, int end,
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, java.util.Date createDateGT,
+		java.util.Date createDateLT, String eventType, String className,
+		String classPK, String clientHost, String clientIP, String serverName,
+		int serverPort, String sessionID, boolean andSearch, int start, int end,
 		OrderByComparator<AuditEvent> orderByComparator) {
 
 		return getService().getAuditEvents(
-			companyId, groupId, userId, userName, createDateGT, createDateLT,
-			eventType, className, classPK, clientHost, clientIP, serverName,
-			serverPort, sessionID, andSearch, start, end, orderByComparator);
+			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
+			createDateLT, eventType, className, classPK, clientHost, clientIP,
+			serverName, serverPort, sessionID, andSearch, start, end,
+			orderByComparator);
+	}
+
+	public static List<AuditEvent> getAuditEvents(
+		long companyId, long[] accountEntryIds, String contextName,
+		String eventType, java.util.Date createDateGT,
+		java.util.Date createDateLT, int start, int end,
+		OrderByComparator<AuditEvent> orderByComparator) {
+
+		return getService().getAuditEvents(
+			companyId, accountEntryIds, contextName, eventType, createDateGT,
+			createDateLT, start, end, orderByComparator);
 	}
 
 	/**
@@ -302,16 +315,26 @@ public class AuditEventLocalServiceUtil {
 	}
 
 	public static int getAuditEventsCount(
-		long companyId, long groupId, long userId, String userName,
-		java.util.Date createDateGT, java.util.Date createDateLT,
-		String eventType, String className, String classPK, String clientHost,
-		String clientIP, String serverName, int serverPort, String sessionID,
-		boolean andSearch) {
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, java.util.Date createDateGT,
+		java.util.Date createDateLT, String eventType, String className,
+		String classPK, String clientHost, String clientIP, String serverName,
+		int serverPort, String sessionID, boolean andSearch) {
 
 		return getService().getAuditEventsCount(
-			companyId, groupId, userId, userName, createDateGT, createDateLT,
-			eventType, className, classPK, clientHost, clientIP, serverName,
-			serverPort, sessionID, andSearch);
+			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
+			createDateLT, eventType, className, classPK, clientHost, clientIP,
+			serverName, serverPort, sessionID, andSearch);
+	}
+
+	public static int getAuditEventsCount(
+		long companyId, long[] accountEntryIds, String contextName,
+		String eventType, java.util.Date createDateGT,
+		java.util.Date createDateLT) {
+
+		return getService().getAuditEventsCount(
+			companyId, accountEntryIds, contextName, eventType, createDateGT,
+			createDateLT);
 	}
 
 	public static
@@ -362,4 +385,4 @@ public class AuditEventLocalServiceUtil {
 			AuditEventLocalServiceUtil.class, AuditEventLocalService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-842539148
+// LIFERAY-SERVICE-BUILDER-HASH:925590904
