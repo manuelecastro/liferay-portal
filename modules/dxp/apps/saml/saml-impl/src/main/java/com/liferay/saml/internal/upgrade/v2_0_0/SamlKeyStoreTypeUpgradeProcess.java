@@ -102,7 +102,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 			}
 		}
 
-		if (PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
+		if (PropsValues.FIPS_ENABLED) {
 			_upgradeCertificates(pkcs12KeyStore, password);
 		}
 
@@ -379,7 +379,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 						}
 					}
 					else if (hasPKCS12Keystore &&
-							 PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
+							 PropsValues.FIPS_ENABLED) {
 
 						try (InputStream inputStream = _store.getFileAsStream(
 								companyId, CompanyConstants.SYSTEM,
@@ -460,7 +460,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 				}
 			}
 			else if (newFile.exists() &&
-					 PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
+					 PropsValues.FIPS_ENABLED) {
 
 				try (FileInputStream fileInputStream = new FileInputStream(
 						newFile)) {

@@ -157,7 +157,7 @@ public class CertificateToolImplTest {
 
 	private void _enableFIPSMode() {
 		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
-			PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
+			PropsValues.class, "FIPS_ENABLED", true);
 	}
 
 	private X509Certificate _generateTestCertificate() throws Exception {

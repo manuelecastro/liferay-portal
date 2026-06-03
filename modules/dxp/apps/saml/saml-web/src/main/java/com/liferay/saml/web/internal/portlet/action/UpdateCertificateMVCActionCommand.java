@@ -263,7 +263,7 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		X509Certificate x509Certificate =
 			(X509Certificate)privateKeyEntry.getCertificate();
 
-		if (PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED &&
+		if (PropsValues.FIPS_ENABLED &&
 			!_isFIPSCompliantCertificate(x509Certificate)) {
 
 			SessionErrors.add(actionRequest, "weakCertificateAlgorithm");

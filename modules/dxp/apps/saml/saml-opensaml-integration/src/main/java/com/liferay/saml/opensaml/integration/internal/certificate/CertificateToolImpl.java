@@ -108,7 +108,7 @@ public class CertificateToolImpl implements CertificateTool {
 	public KeyPair generateKeyPair(String algorithm, int keySize)
 		throws NoSuchAlgorithmException {
 
-		if (PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
+		if (PropsValues.FIPS_ENABLED) {
 			if (!_allowedKeyAlgorithms.contains(algorithm)) {
 				throw new InvalidParameterException(
 					StringBundler.concat(

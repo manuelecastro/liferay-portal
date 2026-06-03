@@ -67,7 +67,7 @@ public class UpdateCertificateMVCRenderCommandTest {
 			SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES);
 
 		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
-			PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
+			PropsValues.class, "FIPS_ENABLED", true);
 
 		_renderRequest = Mockito.mock(RenderRequest.class);
 

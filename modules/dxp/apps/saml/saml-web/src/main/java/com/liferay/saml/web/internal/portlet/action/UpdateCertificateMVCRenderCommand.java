@@ -38,7 +38,7 @@ public class UpdateCertificateMVCRenderCommand implements MVCRenderCommand {
 		renderRequest.setAttribute(
 			SamlWebKeys.SAML_CERTIFICATE_TOOL, _certificateTool);
 
-		if (PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
+		if (PropsValues.FIPS_ENABLED) {
 			renderRequest.setAttribute(
 				SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS,
 				_FIPS_KEY_ALGORITHMS);
