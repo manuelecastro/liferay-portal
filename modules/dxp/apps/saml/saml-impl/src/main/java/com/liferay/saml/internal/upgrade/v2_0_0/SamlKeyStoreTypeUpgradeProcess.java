@@ -9,40 +9,30 @@ import com.liferay.document.library.kernel.exception.NoSuchFileException;
 import com.liferay.document.library.kernel.store.Store;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
-import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.saml.runtime.certificate.CertificateEntityId;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.runtime.certificate.CertificateTool;
+import com.liferay.saml.runtime.configuration.SamlConfiguration;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
-import java.math.BigInteger;
-
-import java.security.KeyPair;
 import java.security.KeyStore;
-import java.security.PublicKey;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.DSAKey;
-import java.security.interfaces.RSAKey;
 
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Dictionary;
 import java.util.Enumeration;
-
-import javax.security.auth.x500.X500Principal;
 
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -65,11 +55,9 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		try (LoggingTimer loggingTimer = new LoggingTimer()) {
-			_upgradeConfiguration();
-			_upgradeDLKeystores();
-			_upgradeFileSystemKeystore();
-		}
+		_upgradeConfiguration();
+		_upgradeDLKeystores();
+		_upgradeFileSystemKeystore();
 	}
 
 	private KeyStore _convertJKSToPKCS12(
@@ -102,10 +90,6 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 			}
 		}
 
-		if (PropsValues.FIPS_ENABLED) {
-			_upgradeCertificates(pkcs12KeyStore, password);
-		}
-
 		return pkcs12KeyStore;
 	}
 
@@ -118,10 +102,11 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 				configuration.getProperties();
 
 			if (properties != null) {
-				Object password = properties.get("saml.keystore.password");
+				String password = GetterUtil.getString(
+					properties.get("saml.keystore.password"));
 
-				if (password != null) {
-					return password.toString();
+				if (Validator.isNotNull(password)) {
+					return password;
 				}
 			}
 		}
@@ -134,38 +119,6 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 		}
 
 		return "liferay";
-	}
-
-	private boolean _isFIPSCompliant(X509Certificate x509Certificate) {
-		PublicKey publicKey = x509Certificate.getPublicKey();
-
-		if (publicKey instanceof DSAKey) {
-			return false;
-		}
-
-		if (publicKey instanceof RSAKey) {
-			RSAKey rsaKey = (RSAKey)publicKey;
-
-			BigInteger modulus = rsaKey.getModulus();
-
-			if (modulus.bitLength() >= _MINIMUM_RSA_KEY_SIZE) {
-				return true;
-			}
-
-			return false;
-		}
-
-		return true;
-	}
-
-	private KeyStore _loadKeyStore(InputStream inputStream, char[] password)
-		throws Exception {
-
-		KeyStore keyStore = KeyStore.getInstance("PKCS12");
-
-		keyStore.load(inputStream, password);
-
-		return keyStore;
 	}
 
 	private void _saveDLKeyStore(
@@ -202,115 +155,20 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 		}
 	}
 
-	private CertificateEntityId _toCertificateEntityId(
-		X500Principal principal) {
-
-		String name = principal.getName(X500Principal.RFC2253);
-
-		String cn = _x500Attribute("CN", name);
-		String o = _x500Attribute("O", name);
-		String ou = _x500Attribute("OU", name);
-		String l = _x500Attribute("L", name);
-		String st = _x500Attribute("ST", name);
-		String c = _x500Attribute("C", name);
-
-		return new CertificateEntityId(cn, o, ou, l, st, c);
-	}
-
-	private boolean _upgradeCertificates(KeyStore keyStore, char[] password) {
-		boolean modified = false;
-
-		try {
-			Enumeration<String> aliasesEnumeration = keyStore.aliases();
-
-			while (aliasesEnumeration.hasMoreElements()) {
-				String alias = aliasesEnumeration.nextElement();
-
-				if (!keyStore.isKeyEntry(alias)) {
-					continue;
-				}
-
-				X509Certificate certificate =
-					(X509Certificate)keyStore.getCertificate(alias);
-
-				if ((certificate == null) || _isFIPSCompliant(certificate)) {
-					continue;
-				}
-
-				PublicKey certificatePublicKey = certificate.getPublicKey();
-
-				int keySize = -1;
-
-				if (certificatePublicKey instanceof RSAKey) {
-					RSAKey rsaKey = (RSAKey)certificatePublicKey;
-
-					BigInteger modulus = rsaKey.getModulus();
-
-					keySize = modulus.bitLength();
-				}
-
-				if (_log.isWarnEnabled()) {
-					String keySizeString =
-						(keySize > 0) ? " " + keySize + "-bit" : "";
-
-					_log.warn(
-						StringBundler.concat(
-							"SAML certificate for alias \"", alias,
-							"\" uses non-FIPS-compliant ",
-							certificatePublicKey.getAlgorithm(), keySizeString,
-							" key. Regenerating with RSA ",
-							_DEFAULT_RSA_KEY_SIZE, "-bit key"));
-				}
-
-				KeyPair keyPair = _certificateTool.generateKeyPair(
-					"RSA", _DEFAULT_RSA_KEY_SIZE);
-
-				CertificateEntityId subjectEntityId = _toCertificateEntityId(
-					certificate.getSubjectX500Principal());
-
-				Calendar startDate = Calendar.getInstance();
-
-				Calendar endDate = (Calendar)startDate.clone();
-
-				endDate.add(Calendar.DAY_OF_YEAR, _DEFAULT_VALIDITY_DAYS);
-
-				X509Certificate newCertificate =
-					_certificateTool.generateCertificate(
-						keyPair, subjectEntityId, subjectEntityId,
-						startDate.getTime(), endDate.getTime(),
-						"SHA256withRSA");
-
-				keyStore.setKeyEntry(
-					alias, keyPair.getPrivate(), password,
-					new X509Certificate[] {newCertificate});
-
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						StringBundler.concat(
-							"Regenerated SAML certificate for alias \"", alias,
-							"\" with RSA ", _DEFAULT_RSA_KEY_SIZE, "-bit key. ",
-							"SAML metadata must be re-exchanged with ",
-							"federation partners"));
-				}
-
-				modified = true;
-			}
-		}
-		catch (Exception exception) {
-			_log.error(
-				"Unable to upgrade non-compliant SAML certificates", exception);
-		}
-
-		return modified;
-	}
-
 	private void _upgradeConfiguration() throws Exception {
 		Configuration configuration = _configurationAdmin.getConfiguration(
 			_SAML_CONFIGURATION_PID, StringPool.QUESTION);
 
+		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
+
 		Dictionary<String, Object> properties = configuration.getProperties();
 
 		if (properties == null) {
+			_jksFileSystemKeystorePath = liferayHome + "/data/keystore.jks";
+			_pkcs12FileSystemKeystorePath = StringUtil.replace(
+				SamlConfiguration.KEYSTORE_PATH_DEFAULT, "${liferay.home}",
+				liferayHome);
+
 			return;
 		}
 
@@ -324,9 +182,16 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 				properties.get("saml.keystore.path"));
 
 			if (keyStorePath.endsWith(".jks")) {
+				_jksFileSystemKeystorePath = StringUtil.replace(
+					keyStorePath, "${liferay.home}", liferayHome);
+
 				properties.put(
 					"saml.keystore.path",
 					keyStorePath.replaceAll("\\.jks$", ".p12"));
+
+				_pkcs12FileSystemKeystorePath = StringUtil.replace(
+					GetterUtil.getString(properties.get("saml.keystore.path")),
+					"${liferay.home}", liferayHome);
 			}
 
 			configuration.update(properties);
@@ -378,24 +243,6 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 									"PKCS12 for company " + companyId);
 						}
 					}
-					else if (hasPKCS12Keystore &&
-							 PropsValues.FIPS_ENABLED) {
-
-						try (InputStream inputStream = _store.getFileAsStream(
-								companyId, CompanyConstants.SYSTEM,
-								_PKCS12_DL_KEYSTORE_PATH,
-								Store.VERSION_DEFAULT)) {
-
-							KeyStore keyStore = _loadKeyStore(
-								inputStream, passwordChars);
-
-							if (_upgradeCertificates(keyStore, passwordChars)) {
-								_saveDLKeyStore(
-									companyId, keyStore, passwordChars,
-									_PKCS12_DL_KEYSTORE_PATH);
-							}
-						}
-					}
 				}
 				catch (NoSuchFileException noSuchFileException) {
 					if (_log.isDebugEnabled()) {
@@ -419,13 +266,8 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 	}
 
 	private void _upgradeFileSystemKeystore() {
-		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
-
-		String oldPath = liferayHome + "/data/keystore.jks";
-		String newPath = liferayHome + "/data/keystore.p12";
-
-		File oldFile = new File(oldPath);
-		File newFile = new File(newPath);
+		File oldFile = new File(_jksFileSystemKeystorePath);
+		File newFile = new File(_pkcs12FileSystemKeystorePath);
 
 		String password = _getKeystorePassword();
 
@@ -455,25 +297,8 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 						_log.info(
 							StringBundler.concat(
 								"Migrated filesystem SAML keystore from ",
-								oldPath, " (JKS) to ", newPath, " (PKCS12)"));
-					}
-				}
-			}
-			else if (newFile.exists() &&
-					 PropsValues.FIPS_ENABLED) {
-
-				try (FileInputStream fileInputStream = new FileInputStream(
-						newFile)) {
-
-					KeyStore keyStore = _loadKeyStore(
-						fileInputStream, passwordChars);
-
-					if (_upgradeCertificates(keyStore, passwordChars)) {
-						try (FileOutputStream fileOutputStream =
-								new FileOutputStream(newFile)) {
-
-							keyStore.store(fileOutputStream, passwordChars);
-						}
+								_jksFileSystemKeystorePath, " (JKS) to ",
+								_pkcs12FileSystemKeystorePath, " (PKCS12)"));
 					}
 				}
 			}
@@ -486,27 +311,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 		}
 	}
 
-	private String _x500Attribute(String attribute, String dn) {
-		String prefix = attribute + "=";
-
-		for (String part : dn.split(",")) {
-			String trimmed = part.trim();
-
-			if (trimmed.startsWith(prefix)) {
-				return trimmed.substring(prefix.length());
-			}
-		}
-
-		return null;
-	}
-
-	private static final int _DEFAULT_RSA_KEY_SIZE = 2048;
-
-	private static final int _DEFAULT_VALIDITY_DAYS = 365;
-
 	private static final String _JKS_DL_KEYSTORE_PATH = "saml/keystore.jks";
-
-	private static final int _MINIMUM_RSA_KEY_SIZE = 2048;
 
 	private static final String _PKCS12_DL_KEYSTORE_PATH = "saml/keystore.p12";
 
@@ -515,6 +320,9 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		SamlKeyStoreTypeUpgradeProcess.class);
+
+	private static String _jksFileSystemKeystorePath;
+	private static String _pkcs12FileSystemKeystorePath;
 
 	private final CertificateTool _certificateTool;
 	private final CompanyLocalService _companyLocalService;
