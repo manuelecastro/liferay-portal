@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -42,6 +43,7 @@ import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -67,16 +69,13 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_upgradeProcess = UpgradeTestUtil.getUpgradeStep(
-			_upgradeStepRegistrator, _CLASS_NAME);
-
 		_companyId = TestPropsValues.getCompanyId();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		_deleteDLKeystore();
-		_deleteFileSystemKeystores();
+		_deleteDLKeyStore();
+		_deleteFileSystemKeyStores();
 
 		if (_configuration != null) {
 			ConfigurationTestUtil.deleteConfiguration(_configuration);
@@ -95,233 +94,78 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 		String credentialPassword = RandomTestUtil.randomString();
 		String encryptionCredentialPassword = RandomTestUtil.randomString();
-		String keystorePassword = RandomTestUtil.randomString();
+		String keyStorePassword = RandomTestUtil.randomString();
 
-		_store.addFile(
-			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
-			Store.VERSION_DEFAULT,
-			new ByteArrayInputStream(
-				_createJKSKeystoreBytes(
-					encryptionAlias, encryptionCredentialPassword, keystorePassword)));
-		_store.addFile(
-			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
-			Store.VERSION_DEFAULT,
-			new ByteArrayInputStream(
-				_createJKSKeystoreBytes(
-					entityId, credentialPassword, keystorePassword)));
-
-		_setSamlConfiguration("${liferay.home}/data/test/keystore.jks", "jks", keystorePassword);
-
-		_pid = ConfigurationTestUtil.createFactoryConfiguration(
-			SamlProviderConfiguration.class.getName(),
-			HashMapDictionaryBuilder.<String, Object>put(
-				"saml.entity.id", entityId
+		byte[] bytes = _createJKSKeyStoreBytes(
+			HashMapBuilder.put(
+				encryptionAlias, encryptionCredentialPassword
 			).put(
-				"saml.keystore.credential.password", credentialPassword
-			).put(
-				"saml.keystore.encryption.credential.password", encryptionCredentialPassword
-			).build());
-
-		_upgradeProcess.upgrade();
-
-		_assertSamlConfiguration(
-			"${liferay.home}/data/test/keystore.p12", "PKCS12", keystorePassword);
-
-		Assert.assertTrue(
-			_store.hasFile(
-				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
-				Store.VERSION_DEFAULT));
-
-		try (InputStream inputStream = _store.getFileAsStream(
-			_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
-			Store.VERSION_DEFAULT)) {
-
-			KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
-
-			pkcs12KeyStore.load(inputStream, keystorePassword.toCharArray());
-
-			Assert.assertTrue(pkcs12KeyStore.containsAlias(encryptionAlias));
-			Assert.assertTrue(pkcs12KeyStore.containsAlias(entityId));
-		}
-	}
-
-	@Test
-	public void testUpgradeConfigurationFromJKSToPKCS12() throws Exception {
-		_setSamlConfiguration(
-			"${liferay.home}/data/test/keystore.jks", "jks", null);
-
-		_upgradeProcess.upgrade();
-
-		_assertSamlConfiguration(
-			"${liferay.home}/data/test/keystore.p12", "PKCS12", null);
-	}
-
-	@Test
-	public void testUpgradeDLKeystoreEncryptionKey() throws Exception {
-		String entityId = RandomTestUtil.randomString();
-
-		String encryptionAlias = entityId + "-encryption";
-
-		String credentialPassword = RandomTestUtil.randomString();
-
-		String keystorePassword = RandomTestUtil.randomString();
+				entityId, credentialPassword
+			).build(),
+			keyStorePassword);
 
 		_store.addFile(
 			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
-			Store.VERSION_DEFAULT,
-			new ByteArrayInputStream(
-				_createJKSKeystoreBytes(
-					encryptionAlias, credentialPassword, keystorePassword)));
+			Store.VERSION_DEFAULT, new ByteArrayInputStream(bytes));
 
-		_setSamlConfiguration(null, "jks", keystorePassword);
-
-		_pid = ConfigurationTestUtil.createFactoryConfiguration(
-			SamlProviderConfiguration.class.getName(),
-			HashMapDictionaryBuilder.<String, Object>put(
-				"saml.entity.id", entityId
-			).put(
-				"saml.keystore.encryption.credential.password", credentialPassword
-			).build());
-
-		_upgradeProcess.upgrade();
-
-		Assert.assertTrue(
-			_store.hasFile(
-				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
-				Store.VERSION_DEFAULT));
-
-		try (InputStream inputStream = _store.getFileAsStream(
-				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
-				Store.VERSION_DEFAULT)) {
-
-			KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
-
-			pkcs12KeyStore.load(inputStream, keystorePassword.toCharArray());
-
-			Assert.assertTrue(pkcs12KeyStore.containsAlias(encryptionAlias));
-		}
-	}
-
-	@Test
-	public void testUpgradeDLKeystoreJKSToPKCS12() throws Exception {
-		String alias = RandomTestUtil.randomString();
-		String credentialPassword = RandomTestUtil.randomString();
-
-		String password = RandomTestUtil.randomString();
-
-		_store.addFile(
-			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
-			Store.VERSION_DEFAULT,
-			new ByteArrayInputStream(
-				_createJKSKeystoreBytes(alias, credentialPassword, password)));
-
-		_setSamlConfiguration(null, "jks", password);
-
-		_pid = ConfigurationTestUtil.createFactoryConfiguration(
-			SamlProviderConfiguration.class.getName(),
-			HashMapDictionaryBuilder.<String, Object>put(
-				"saml.entity.id", alias
-			).put(
-				"saml.keystore.credential.password", credentialPassword
-			).build());
-
-		_upgradeProcess.upgrade();
-
-		Assert.assertTrue(
-			_store.hasFile(
-				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
-				Store.VERSION_DEFAULT));
-
-		try (InputStream inputStream = _store.getFileAsStream(
-				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
-				Store.VERSION_DEFAULT)) {
-
-			KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
-
-			pkcs12KeyStore.load(inputStream, password.toCharArray());
-
-			Assert.assertTrue(pkcs12KeyStore.containsAlias(alias));
-		}
-	}
-
-	@Test
-	public void testUpgradeDLKeystoreNeitherExists() throws Exception {
-		_setSamlConfiguration(null, "PKCS12", null);
-
-		_upgradeProcess.upgrade();
-
-		Assert.assertFalse(
-			_store.hasFile(
-				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
-				Store.VERSION_DEFAULT));
-	}
-
-	@Test
-	public void testUpgradeDLKeystoreSkipsKeyWithNoProviderConfig()
-		throws Exception {
-
-		String alias = RandomTestUtil.randomString();
-		String password = RandomTestUtil.randomString();
-
-		_store.addFile(
-			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
-			Store.VERSION_DEFAULT,
-			new ByteArrayInputStream(
-				_createJKSKeystoreBytes(
-					alias, RandomTestUtil.randomString(), password)));
-
-		_setSamlConfiguration(null, "jks", password);
-
-		_upgradeProcess.upgrade();
-
-		Assert.assertFalse(
-			_store.hasFile(
-				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
-				Store.VERSION_DEFAULT));
-	}
-
-	@Test
-	public void testUpgradeFileSystemKeystoreJKSToPKCS12() throws Exception {
-		String alias = RandomTestUtil.randomString();
-		String credentialPassword = RandomTestUtil.randomString();
-		String password = RandomTestUtil.randomString();
-
-		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
-
-		File dataDir = new File(liferayHome, "data");
+		File dataDir = new File(PropsUtil.get(PropsKeys.LIFERAY_HOME), "data");
 
 		dataDir.mkdirs();
 
 		try (FileOutputStream fileOutputStream = new FileOutputStream(
 				new File(dataDir, "keystore.jks"))) {
 
-			fileOutputStream.write(
-				_createJKSKeystoreBytes(alias, credentialPassword, password));
+			fileOutputStream.write(bytes);
 		}
 
 		_pid = ConfigurationTestUtil.createFactoryConfiguration(
 			SamlProviderConfiguration.class.getName(),
 			HashMapDictionaryBuilder.<String, Object>put(
-				"saml.entity.id", alias
+				"saml.entity.id", entityId
 			).put(
 				"saml.keystore.credential.password", credentialPassword
+			).put(
+				"saml.keystore.encryption.credential.password",
+				encryptionCredentialPassword
 			).build());
 
-		_setSamlConfiguration(_JKS_FILE_SYSTEM_KEYSTORE_PATH, "jks", password);
+		_setSamlConfiguration(keyStorePassword);
 
-		_upgradeProcess.upgrade();
+		UpgradeProcess upgradeProcess = UpgradeTestUtil.getUpgradeStep(
+			_upgradeStepRegistrator, _CLASS_NAME);
+
+		upgradeProcess.upgrade();
+
+		_assertSamlConfiguration(
+			"${liferay.home}/data/keystore.p12", "PKCS12", keyStorePassword);
+
+		Assert.assertTrue(
+			_store.hasFile(
+				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
+				Store.VERSION_DEFAULT));
+
+		KeyStore keyStore = KeyStore.getInstance("PKCS12");
+
+		try (InputStream inputStream = _store.getFileAsStream(
+				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
+				Store.VERSION_DEFAULT)) {
+
+			keyStore.load(inputStream, keyStorePassword.toCharArray());
+
+			Assert.assertTrue(keyStore.containsAlias(encryptionAlias));
+			Assert.assertTrue(keyStore.containsAlias(entityId));
+		}
 
 		File p12File = new File(dataDir, "keystore.p12");
 
 		Assert.assertTrue(p12File.exists());
 
-		KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
-
 		try (FileInputStream fileInputStream = new FileInputStream(p12File)) {
-			pkcs12KeyStore.load(fileInputStream, password.toCharArray());
-		}
+			keyStore.load(fileInputStream, keyStorePassword.toCharArray());
 
-		Assert.assertTrue(pkcs12KeyStore.containsAlias(alias));
+			Assert.assertTrue(keyStore.containsAlias(encryptionAlias));
+			Assert.assertTrue(keyStore.containsAlias(entityId));
+		}
 	}
 
 	private void _assertSamlConfiguration(
@@ -349,47 +193,53 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		}
 	}
 
-	private byte[] _createJKSKeystoreBytes(
-			String alias, String keyPassword, String keystorePassword)
+	private byte[] _createJKSKeyStoreBytes(
+			Map<String, String> keyPasswords, String keyStorePassword)
 		throws Exception {
 
-		KeyStore jksKeyStore = KeyStore.getInstance("JKS");
+		KeyStore keyStore = KeyStore.getInstance("JKS");
 
-		jksKeyStore.load(null, null);
+		keyStore.load(null, null);
 
-		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		for (Map.Entry<String, String> entry : keyPasswords.entrySet()) {
+			String alias = entry.getKey();
+			String keyPassword = entry.getValue();
 
-		keyPairGenerator.initialize(2048);
+			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(
+				"RSA");
 
-		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+			keyPairGenerator.initialize(2048);
 
-		CertificateEntityId certificateEntityId = new CertificateEntityId(
-			"Test", null, null, null, null, null);
+			KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-		Calendar startDate = Calendar.getInstance();
+			CertificateEntityId certificateEntityId = new CertificateEntityId(
+				"Test", null, null, null, null, null);
 
-		Calendar endDate = (Calendar)startDate.clone();
+			Calendar startDate = Calendar.getInstance();
 
-		endDate.add(Calendar.DAY_OF_YEAR, 365);
+			Calendar endDate = (Calendar)startDate.clone();
 
-		X509Certificate x509Certificate = _certificateTool.generateCertificate(
-			keyPair, certificateEntityId, certificateEntityId,
-			startDate.getTime(), endDate.getTime(), "SHA256withRSA");
+			endDate.add(Calendar.DAY_OF_YEAR, 365);
 
-		jksKeyStore.setKeyEntry(
-			alias, keyPair.getPrivate(), keyPassword.toCharArray(),
-			new X509Certificate[] {x509Certificate});
+			X509Certificate x509Certificate =
+				_certificateTool.generateCertificate(
+					keyPair, certificateEntityId, certificateEntityId,
+					startDate.getTime(), endDate.getTime(), "SHA256withRSA");
+
+			keyStore.setKeyEntry(
+				alias, keyPair.getPrivate(), keyPassword.toCharArray(),
+				new X509Certificate[] {x509Certificate});
+		}
 
 		ByteArrayOutputStream byteArrayOutputStream =
 			new ByteArrayOutputStream();
 
-		jksKeyStore.store(
-			byteArrayOutputStream, keystorePassword.toCharArray());
+		keyStore.store(byteArrayOutputStream, keyStorePassword.toCharArray());
 
 		return byteArrayOutputStream.toByteArray();
 	}
 
-	private void _deleteDLKeystore() {
+	private void _deleteDLKeyStore() {
 		if (_store.hasFile(
 				_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT)) {
@@ -407,26 +257,23 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		}
 	}
 
-	private void _deleteFileSystemKeystores() {
+	private void _deleteFileSystemKeyStores() {
 		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
 
-		File dataDir = new File(liferayHome, "data");
-
-		File jksFile = new File(dataDir, "keystore.jks");
+		File jksFile = new File(liferayHome + "/data/keystore.jks");
 
 		if (jksFile.exists()) {
 			jksFile.delete();
 		}
 
-		File p12File = new File(dataDir, "keystore.p12");
+		File p12File = new File(liferayHome + "/data/keystore.p12");
 
 		if (p12File.exists()) {
 			p12File.delete();
 		}
 	}
 
-	private void _setSamlConfiguration(
-			String keyStorePath, String keyStoreType, String keyStorePassword)
+	private void _setSamlConfiguration(String keyStorePassword)
 		throws Exception {
 
 		_configuration = _configurationAdmin.getConfiguration(
@@ -434,15 +281,15 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 		Dictionary<String, Object> properties = new Hashtable<>();
 
-		if (Validator.isNotNull(keyStorePassword)) {
-			properties.put("saml.keystore.password", keyStorePassword);
-		}
+		properties.put("saml.keystore.password", keyStorePassword);
+
+		String keyStorePath = "${liferay.home}/data/keystore.jks";
+
+		properties.put("saml.keystore.path", keyStorePath);
+
+		String keyStoreType = "jks";
 
 		properties.put("saml.keystore.type", keyStoreType);
-
-		if (Validator.isNotNull(keyStorePath)) {
-			properties.put("saml.keystore.path", keyStorePath);
-		}
 
 		_configuration.update(properties);
 
@@ -454,9 +301,6 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			"SamlKeyStoreTypeUpgradeProcess";
 
 	private static final String _JKS_DL_KEYSTORE_PATH = "saml/keystore.jks";
-
-	private static final String _JKS_FILE_SYSTEM_KEYSTORE_PATH =
-		"${liferay.home}/data/keystore.jks";
 
 	private static final String _PKCS12_DL_KEYSTORE_PATH = "saml/keystore.p12";
 
@@ -475,8 +319,6 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		filter = "(&(objectClass=com.liferay.document.library.kernel.store.Store)(default=true))"
 	)
 	private Store _store;
-
-	private UpgradeProcess _upgradeProcess;
 
 	@Inject(
 		filter = "(&(component.name=com.liferay.saml.internal.upgrade.registry.SamlImplUpgradeStepRegistrator))"
