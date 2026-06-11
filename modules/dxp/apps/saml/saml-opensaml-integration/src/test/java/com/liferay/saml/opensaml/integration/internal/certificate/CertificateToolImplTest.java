@@ -7,6 +7,7 @@ package com.liferay.saml.opensaml.integration.internal.certificate;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.saml.runtime.certificate.CertificateEntityId;
@@ -19,7 +20,6 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 
-import java.util.Calendar;
 import java.util.Date;
 
 import javax.security.auth.x500.X500Principal;
@@ -51,8 +51,27 @@ public class CertificateToolImplTest {
 
 	@Test
 	public void testGenerateCertificate() throws Exception {
-		X509Certificate x509Certificate1 = _generateTestCertificate();
-		X509Certificate x509Certificate2 = _generateTestCertificate();
+		String c = RandomTestUtil.randomString();
+		String cN = RandomTestUtil.randomString();
+		String l = RandomTestUtil.randomString();
+		String o = RandomTestUtil.randomString();
+		String oU = RandomTestUtil.randomString();
+		String sT = RandomTestUtil.randomString();
+
+		X509Certificate x509Certificate1 = _generateCertificate(
+			c, cN, l, o, oU, sT);
+
+		X500Principal subjectX500Principal =
+			x509Certificate1.getSubjectX500Principal();
+
+		String subjectDN = subjectX500Principal.getName();
+
+		Assert.assertTrue(subjectDN.contains("C=" + c));
+		Assert.assertTrue(subjectDN.contains("CN=" + cN));
+		Assert.assertTrue(subjectDN.contains("L=" + l));
+		Assert.assertTrue(subjectDN.contains("O=" + o));
+		Assert.assertTrue(subjectDN.contains("OU=" + oU));
+		Assert.assertTrue(subjectDN.contains("ST=" + sT));
 
 		Assert.assertEquals(3, x509Certificate1.getVersion());
 		Assert.assertEquals(-1, x509Certificate1.getBasicConstraints());
@@ -63,44 +82,18 @@ public class CertificateToolImplTest {
 		Assert.assertTrue(keyUsage[0]);
 		Assert.assertTrue(keyUsage[2]);
 
+		X509Certificate x509Certificate2 = _generateCertificate(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+
 		Assert.assertNotEquals(
 			x509Certificate1.getSerialNumber(),
 			x509Certificate2.getSerialNumber());
 	}
 
 	@Test
-	public void testGenerateCertificatePreservesSubjectDN() throws Exception {
-		CertificateEntityId certificateEntityId = new CertificateEntityId(
-			"Test CN", "Test Org", "Test OU", "Test City", "Test State", "US");
-
-		KeyPair keyPair = _certificateToolImpl.generateKeyPair("RSA", 2048);
-
-		Calendar startDate = Calendar.getInstance();
-
-		Calendar endDate = (Calendar)startDate.clone();
-
-		endDate.add(Calendar.DAY_OF_YEAR, 365);
-
-		X509Certificate x509Certificate =
-			_certificateToolImpl.generateCertificate(
-				keyPair, certificateEntityId, certificateEntityId,
-				startDate.getTime(), endDate.getTime(), "SHA256withRSA");
-
-		X500Principal subjectX500Principal =
-			x509Certificate.getSubjectX500Principal();
-
-		String subjectDN = subjectX500Principal.getName();
-
-		Assert.assertTrue(subjectDN.contains("CN=Test CN"));
-		Assert.assertTrue(subjectDN.contains("O=Test Org"));
-		Assert.assertTrue(subjectDN.contains("OU=Test OU"));
-		Assert.assertTrue(subjectDN.contains("L=Test City"));
-		Assert.assertTrue(subjectDN.contains("ST=Test State"));
-		Assert.assertTrue(subjectDN.contains("C=US"));
-	}
-
-	@Test
-	public void testGenerateKeyPairDefaultMode() throws Exception {
+	public void testGenerateKeyPair() throws Exception {
 		_assertKeyPair(512, _certificateToolImpl.generateKeyPair("RSA", 512));
 		_assertKeyPair(2048, _certificateToolImpl.generateKeyPair("RSA", 2048));
 
@@ -111,19 +104,32 @@ public class CertificateToolImplTest {
 		PublicKey dsaPublicKey = dsaKeyPair.getPublic();
 
 		Assert.assertEquals("DSA", dsaPublicKey.getAlgorithm());
-	}
 
-	@Test
-	public void testGenerateKeyPairFIPSMode() throws Exception {
-		_enableFIPSMode();
+		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
+			PropsValues.class, "FIPS_ENABLED", true);
 
-		_assertRejected("DSA", 2048);
-		_assertRejected("RSA", 512);
-		_assertRejected("RSA", 1024);
+		_assertFail("DSA", 2048);
+		_assertFail("RSA", 512);
+		_assertFail("RSA", 1024);
 
 		_assertKeyPair(2048, _certificateToolImpl.generateKeyPair("RSA", 2048));
 		_assertKeyPair(3072, _certificateToolImpl.generateKeyPair("RSA", 3072));
 		_assertKeyPair(4096, _certificateToolImpl.generateKeyPair("RSA", 4096));
+	}
+
+	private void _assertFail(String algorithm, int keySize) {
+		try {
+			_certificateToolImpl.generateKeyPair(algorithm, keySize);
+
+			Assert.fail(
+				StringBundler.concat(
+					"Expected InvalidParameterException for ", algorithm, " ",
+					keySize));
+		}
+		catch (Exception exception) {
+			Assert.assertEquals(
+				InvalidParameterException.class, exception.getClass());
+		}
 	}
 
 	private void _assertKeyPair(int expectedBitLength, KeyPair keyPair) {
@@ -140,31 +146,14 @@ public class CertificateToolImplTest {
 		Assert.assertEquals(expectedBitLength, modulus.bitLength());
 	}
 
-	private void _assertRejected(String algorithm, int keySize) {
-		try {
-			_certificateToolImpl.generateKeyPair(algorithm, keySize);
+	private X509Certificate _generateCertificate(
+			String c, String cN, String l, String o, String oU, String sT)
+		throws Exception {
 
-			Assert.fail(
-				StringBundler.concat(
-					"Expected InvalidParameterException for ", algorithm, " ",
-					keySize));
-		}
-		catch (Exception exception) {
-			Assert.assertEquals(
-				InvalidParameterException.class, exception.getClass());
-		}
-	}
-
-	private void _enableFIPSMode() {
-		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
-			PropsValues.class, "FIPS_ENABLED", true);
-	}
-
-	private X509Certificate _generateTestCertificate() throws Exception {
 		KeyPair keyPair = _certificateToolImpl.generateKeyPair("RSA", 2048);
 
 		CertificateEntityId certificateEntityId = new CertificateEntityId(
-			"Test", null, null, null, null, null);
+			cN, o, oU, l, sT, c);
 
 		Date startDate = new Date();
 
