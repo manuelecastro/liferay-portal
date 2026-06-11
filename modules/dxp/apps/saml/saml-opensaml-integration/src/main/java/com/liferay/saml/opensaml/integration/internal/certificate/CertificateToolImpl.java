@@ -63,30 +63,21 @@ public class CertificateToolImpl implements CertificateTool {
 
 		PublicKey publicKey = keyPair.getPublic();
 
-		try (ByteArrayInputStream byteArrayInputStream =
-				new ByteArrayInputStream(publicKey.getEncoded());
-
-			ASN1InputStream asn1InputStream = new ASN1InputStream(
-				byteArrayInputStream)) {
-
-			X500Name issuerX500Name = _createX500Name(
-				issuerCertificateEntityId);
-			X500Name subjectX500Name = _createX500Name(
-				subjectCertificateEntityId);
-
-			BigInteger serialNumber = new BigInteger(
-				_SERIAL_NUMBER_BIT_LENGTH, new SecureRandom());
+		try (ASN1InputStream asn1InputStream = new ASN1InputStream(
+				new ByteArrayInputStream(publicKey.getEncoded()))) {
 
 			X509v3CertificateBuilder x509v3CertificateBuilder =
 				new X509v3CertificateBuilder(
-					issuerX500Name, serialNumber, startDate, endDate,
-					subjectX500Name,
+					_createX500Name(issuerCertificateEntityId),
+					new BigInteger(
+						_SERIAL_NUMBER_BIT_LENGTH, new SecureRandom()),
+					startDate, endDate,
+					_createX500Name(subjectCertificateEntityId),
 					new SubjectPublicKeyInfo(
 						(ASN1Sequence)asn1InputStream.readObject()));
 
 			x509v3CertificateBuilder.addExtension(
 				Extension.basicConstraints, true, new BasicConstraints(false));
-
 			x509v3CertificateBuilder.addExtension(
 				Extension.keyUsage, true,
 				new KeyUsage(
@@ -148,9 +139,7 @@ public class CertificateToolImpl implements CertificateTool {
 		StringBundler sb = new StringBundler((digest.length * 2) - 1);
 
 		for (int i = 0; i < digest.length; i++) {
-			String hex = String.format("%02X", digest[i]);
-
-			sb.append(hex);
+			sb.append(String.format("%02X", digest[i]));
 
 			if ((i + 1) < digest.length) {
 				sb.append(CharPool.COLON);

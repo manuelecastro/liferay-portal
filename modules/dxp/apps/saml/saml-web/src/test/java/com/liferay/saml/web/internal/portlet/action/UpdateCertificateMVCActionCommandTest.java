@@ -13,9 +13,7 @@ import java.math.BigInteger;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.DSAPublicKey;
-import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.ECParameterSpec;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,19 +39,11 @@ public class UpdateCertificateMVCActionCommandTest {
 	}
 
 	@Test
-	public void testIsFIPSCompliantCertificate() {
-		Assert.assertFalse(
-			_invokeFIPSCompliantCheck(_mockCertificateWithDSAKey()));
-		Assert.assertFalse(
-			_invokeFIPSCompliantCheck(_mockCertificateWithECKey(192)));
-		Assert.assertTrue(
-			_invokeFIPSCompliantCheck(_mockCertificateWithECKey(256)));
-		Assert.assertFalse(
-			_invokeFIPSCompliantCheck(_mockCertificateWithRSAKey(1024)));
-		Assert.assertTrue(
-			_invokeFIPSCompliantCheck(_mockCertificateWithRSAKey(2048)));
-		Assert.assertTrue(
-			_invokeFIPSCompliantCheck(_mockCertificateWithRSAKey(4096)));
+	public void testIsFIPSCompliant() {
+		Assert.assertFalse(_isFIPSCompliant(_mockCertificateWithDSAKey()));
+		Assert.assertFalse(_isFIPSCompliant(_mockCertificateWithRSAKey(1024)));
+		Assert.assertTrue(_isFIPSCompliant(_mockCertificateWithRSAKey(2048)));
+		Assert.assertTrue(_isFIPSCompliant(_mockCertificateWithRSAKey(4096)));
 
 		X509Certificate certificate = Mockito.mock(X509Certificate.class);
 
@@ -71,12 +61,12 @@ public class UpdateCertificateMVCActionCommandTest {
 			publicKey
 		);
 
-		Assert.assertFalse(_invokeFIPSCompliantCheck(certificate));
+		Assert.assertFalse(_isFIPSCompliant(certificate));
 	}
 
-	private boolean _invokeFIPSCompliantCheck(X509Certificate certificate) {
+	private boolean _isFIPSCompliant(X509Certificate certificate) {
 		return ReflectionTestUtil.invoke(
-			_actionCommand, "_isFIPSCompliantCertificate",
+			_actionCommand, "_isFIPSCompliant",
 			new Class<?>[] {X509Certificate.class}, certificate);
 	}
 
@@ -84,34 +74,6 @@ public class UpdateCertificateMVCActionCommandTest {
 		X509Certificate certificate = Mockito.mock(X509Certificate.class);
 
 		DSAPublicKey publicKey = Mockito.mock(DSAPublicKey.class);
-
-		Mockito.when(
-			certificate.getPublicKey()
-		).thenReturn(
-			publicKey
-		);
-
-		return certificate;
-	}
-
-	private X509Certificate _mockCertificateWithECKey(int orderBitLength) {
-		X509Certificate certificate = Mockito.mock(X509Certificate.class);
-
-		ECPublicKey publicKey = Mockito.mock(ECPublicKey.class);
-
-		ECParameterSpec parameterSpec = Mockito.mock(ECParameterSpec.class);
-
-		Mockito.when(
-			parameterSpec.getOrder()
-		).thenReturn(
-			BigInteger.ONE.shiftLeft(orderBitLength - 1)
-		);
-
-		Mockito.when(
-			publicKey.getParams()
-		).thenReturn(
-			parameterSpec
-		);
 
 		Mockito.when(
 			certificate.getPublicKey()

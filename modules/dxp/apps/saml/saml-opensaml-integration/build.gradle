@@ -1,12 +1,4 @@
 dependencies {
-	// FIPS MODE: When portal.security.fips.mode.enabled=true, the operator
-	// Required BC-FIPS artifacts:
-	// deployment configuration change, not a build-time dependency swap.
-	// in the JVM"s ext/lib or the app server"s classpath. This is a
-	// must replace the standard Bouncy Castle JARs below with BC-FIPS JARs
-	// org.bouncycastle: bc-fips: 2.0.1
-	// org.bouncycastle: bcpkix-fips: 2.0.8
-	// org.bouncycastle: bcutil-fips-2.0.5
 	compileInclude group: "com.liferay", name: "net.shibboleth.utilities.java.support", version: "7.3.0.JAKARTA-LIFERAY-PATCHED-1"
 	compileInclude group: "com.liferay", name: "org.apache.velocity", version: "1.6.4.LIFERAY-PATCHED-3"
 	compileInclude group: "commons-lang", name: "commons-lang", version: "2.6"

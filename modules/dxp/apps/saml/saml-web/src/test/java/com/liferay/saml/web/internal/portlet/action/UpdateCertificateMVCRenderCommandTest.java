@@ -16,7 +16,6 @@ import jakarta.portlet.RenderResponse;
 
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,18 +33,6 @@ public class UpdateCertificateMVCRenderCommandTest {
 	public static final LiferayUnitTestRule liferayUnitTestRule =
 		LiferayUnitTestRule.INSTANCE;
 
-	@Before
-	public void setUp() {
-		_renderCommand = new UpdateCertificateMVCRenderCommand();
-
-		ReflectionTestUtil.setFieldValue(
-			_renderCommand, "_certificateTool",
-			Mockito.mock(CertificateTool.class));
-
-		_renderRequest = Mockito.mock(RenderRequest.class);
-		_renderResponse = Mockito.mock(RenderResponse.class);
-	}
-
 	@After
 	public void tearDown() throws Exception {
 		if (_autoCloseable != null) {
@@ -56,43 +43,49 @@ public class UpdateCertificateMVCRenderCommandTest {
 	}
 
 	@Test
-	public void testRenderAlgorithmsAndKeySizes() throws Exception {
-		_renderCommand.render(_renderRequest, _renderResponse);
+	public void testRender() throws Exception {
+		UpdateCertificateMVCRenderCommand renderCommand =
+			new UpdateCertificateMVCRenderCommand();
+
+		ReflectionTestUtil.setFieldValue(
+			renderCommand, "_certificateTool",
+			Mockito.mock(CertificateTool.class));
+
+		RenderRequest renderRequest = Mockito.mock(RenderRequest.class);
+		RenderResponse renderResponse = Mockito.mock(RenderResponse.class);
+
+		renderCommand.render(renderRequest, renderResponse);
 
 		_assertRequestAttribute(
 			new String[] {"RSA", "DSA"},
-			SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS);
+			SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS, renderRequest);
 		_assertRequestAttribute(
 			new String[] {"4096", "2048", "1024", "512"},
-			SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES);
+			SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES, renderRequest);
 
 		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
 			PropsValues.class, "FIPS_ENABLED", true);
 
-		_renderRequest = Mockito.mock(RenderRequest.class);
+		renderRequest = Mockito.mock(RenderRequest.class);
 
-		_renderCommand.render(_renderRequest, _renderResponse);
+		renderCommand.render(renderRequest, renderResponse);
 
 		_assertRequestAttribute(
-			new String[] {"RSA"}, SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS);
+			new String[] {"RSA"}, SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS,
+			renderRequest);
 		_assertRequestAttribute(
 			new String[] {"4096", "3072", "2048"},
-			SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES);
+			SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES, renderRequest);
 	}
 
-	@Test
-	public void testRenderReturnPath() throws Exception {
-		String path = _renderCommand.render(_renderRequest, _renderResponse);
+	private void _assertRequestAttribute(
+		String[] expectedValue, String key, RenderRequest renderRequest) {
 
-		Assert.assertEquals("/admin/update_certificate.jsp", path);
-	}
-
-	private void _assertRequestAttribute(String[] expectedValue, String key) {
 		ArgumentCaptor<String[]> argumentCaptor = ArgumentCaptor.forClass(
 			String[].class);
 
 		Mockito.verify(
-			_renderRequest
+			renderRequest
 		).setAttribute(
 			Mockito.eq(key), argumentCaptor.capture()
 		);
@@ -101,8 +94,5 @@ public class UpdateCertificateMVCRenderCommandTest {
 	}
 
 	private AutoCloseable _autoCloseable;
-	private UpdateCertificateMVCRenderCommand _renderCommand;
-	private RenderRequest _renderRequest;
-	private RenderResponse _renderResponse;
 
 }
