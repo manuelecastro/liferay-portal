@@ -40,9 +40,9 @@ import org.osgi.service.cm.ConfigurationAdmin;
 /**
  * @author Rafael Praxedes
  */
-public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
+public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 
-	public SamlKeyStoreTypeUpgradeProcess(
+	public SamlConfigurationUpgradeProcess(
 		CompanyLocalService companyLocalService,
 		ConfigurationAdmin configurationAdmin, Store store) {
 
@@ -370,7 +370,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 	private static final String _PKCS12_DL_KEYSTORE_PATH = "saml/keystore.p12";
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		SamlKeyStoreTypeUpgradeProcess.class);
+		SamlConfigurationUpgradeProcess.class);
 
 	private final CompanyLocalService _companyLocalService;
 	private final ConfigurationAdmin _configurationAdmin;

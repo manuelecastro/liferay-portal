@@ -47,7 +47,6 @@ import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,11 +65,6 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
-
-	@Before
-	public void setUp() throws Exception {
-		_companyId = TestPropsValues.getCompanyId();
-	}
 
 	@After
 	public void tearDown() throws Exception {
@@ -104,8 +98,10 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			).build(),
 			keyStorePassword);
 
+		long companyId = TestPropsValues.getCompanyId();
+
 		_store.addFile(
-			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
+			companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 			Store.VERSION_DEFAULT, new ByteArrayInputStream(bytes));
 
 		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
@@ -139,13 +135,13 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 		Assert.assertTrue(
 			_store.hasFile(
-				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
+				companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT));
 
 		KeyStore keyStore = KeyStore.getInstance("PKCS12");
 
 		try (InputStream inputStream = _store.getFileAsStream(
-				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
+				companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT)) {
 
 			keyStore.load(inputStream, keyStorePassword.toCharArray());
@@ -237,21 +233,23 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		return byteArrayOutputStream.toByteArray();
 	}
 
-	private void _deleteDLKeyStores() {
+	private void _deleteDLKeyStores() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
 		if (_store.hasFile(
-				_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
+				companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT)) {
 
 			_store.deleteDirectory(
-				_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH);
+				companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH);
 		}
 
 		if (_store.hasFile(
-				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
+				companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT)) {
 
 			_store.deleteDirectory(
-				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH);
+				companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH);
 		}
 	}
 
@@ -305,7 +303,6 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 	@Inject
 	private CertificateTool _certificateTool;
 
-	private long _companyId;
 	private Configuration _configuration;
 
 	@Inject
