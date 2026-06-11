@@ -5,11 +5,11 @@
 
 package com.liferay.saml.internal.upgrade.v2_0_0;
 
+import com.liferay.configuration.admin.util.ConfigurationFilterStringUtil;
 import com.liferay.document.library.kernel.exception.NoSuchFileException;
 import com.liferay.document.library.kernel.store.Store;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
@@ -20,8 +20,8 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.saml.runtime.certificate.CertificateTool;
 import com.liferay.saml.runtime.configuration.SamlConfiguration;
+import com.liferay.saml.runtime.configuration.SamlProviderConfiguration;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,11 +43,9 @@ import org.osgi.service.cm.ConfigurationAdmin;
 public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 
 	public SamlKeyStoreTypeUpgradeProcess(
-		CertificateTool certificateTool,
 		CompanyLocalService companyLocalService,
 		ConfigurationAdmin configurationAdmin, Store store) {
 
-		_certificateTool = certificateTool;
 		_companyLocalService = companyLocalService;
 		_configurationAdmin = configurationAdmin;
 		_store = store;
@@ -61,12 +59,12 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 	}
 
 	private KeyStore _convertJKSToPKCS12(
-			InputStream inputStream, char[] password)
+			InputStream inputStream, char[] keystorePassword)
 		throws Exception {
 
 		KeyStore jksKeyStore = KeyStore.getInstance("JKS");
 
-		jksKeyStore.load(inputStream, password);
+		jksKeyStore.load(inputStream, keystorePassword);
 
 		KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
 
@@ -78,11 +76,25 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 			String alias = aliasesEnumeration.nextElement();
 
 			if (jksKeyStore.isKeyEntry(alias)) {
-				KeyStore.Entry entry = jksKeyStore.getEntry(
-					alias, new KeyStore.PasswordProtection(password));
+				char[] keyPassword = _getKeyPassword(alias);
 
-				pkcs12KeyStore.setEntry(
-					alias, entry, new KeyStore.PasswordProtection(password));
+				try {
+					KeyStore.Entry entry = jksKeyStore.getEntry(
+						alias, new KeyStore.PasswordProtection(keyPassword));
+
+					pkcs12KeyStore.setEntry(
+						alias, entry,
+						new KeyStore.PasswordProtection(keyPassword));
+				}
+				catch (Exception exception) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(
+							"Skipping inactive key: " + alias, exception);
+					}
+				}
+				finally {
+					Arrays.fill(keyPassword, '\0');
+				}
 			}
 			else if (jksKeyStore.isCertificateEntry(alias)) {
 				pkcs12KeyStore.setCertificateEntry(
@@ -93,10 +105,54 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 		return pkcs12KeyStore;
 	}
 
-	private String _getKeystorePassword() {
+	private char[] _getKeyPassword(String entityId) throws Exception {
+		String passwordProperty = "saml.keystore.credential.password";
+
+		if (entityId.endsWith("-encryption")) {
+			entityId = entityId.substring(
+				0, entityId.lastIndexOf("-encryption"));
+
+			passwordProperty = "saml.keystore.encryption.credential.password";
+		}
+
+		Configuration[] configurations = _configurationAdmin.listConfigurations(
+			ConfigurationFilterStringUtil.getSystemScopedFilterString(
+				SamlProviderConfiguration.class.getName()));
+
+		if (configurations == null) {
+			throw new Exception(
+				"There is no SAML configuration associated with key: " +
+					entityId);
+		}
+
+		for (Configuration configuration : configurations) {
+			Dictionary<String, Object> properties =
+				configuration.getProperties();
+
+			if (!StringUtil.equalsIgnoreCase(
+					entityId,
+					GetterUtil.getString(properties.get("saml.entity.id")))) {
+
+				continue;
+			}
+
+			String password = GetterUtil.getString(
+				properties.get(passwordProperty));
+
+			if (Validator.isNull(password)) {
+				break;
+			}
+
+			return password.toCharArray();
+		}
+
+		throw new Exception("No password match was found for key: " + entityId);
+	}
+
+	private char[] _getKeystorePassword() {
 		try {
 			Configuration configuration = _configurationAdmin.getConfiguration(
-				_SAML_CONFIGURATION_PID, StringPool.QUESTION);
+				SamlConfiguration.class.getName(), StringPool.QUESTION);
 
 			Dictionary<String, Object> properties =
 				configuration.getProperties();
@@ -106,7 +162,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 					properties.get("saml.keystore.password"));
 
 				if (Validator.isNotNull(password)) {
-					return password;
+					return password.toCharArray();
 				}
 			}
 		}
@@ -118,7 +174,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 			}
 		}
 
-		return "liferay";
+		return "liferay".toCharArray();
 	}
 
 	private void _saveDLKeyStore(
@@ -157,7 +213,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 
 	private void _upgradeConfiguration() throws Exception {
 		Configuration configuration = _configurationAdmin.getConfiguration(
-			_SAML_CONFIGURATION_PID, StringPool.QUESTION);
+			SamlConfiguration.class.getName(), StringPool.QUESTION);
 
 		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
 
@@ -205,11 +261,9 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 	}
 
 	private void _upgradeDLKeystores() {
-		String password = _getKeystorePassword();
-
 		_companyLocalService.forEachCompanyId(
 			companyId -> {
-				char[] passwordChars = password.toCharArray();
+				char[] passwordChars = _getKeystorePassword();
 
 				try {
 					boolean hasJKSKeystore = _store.hasFile(
@@ -232,10 +286,6 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 								companyId, pkcs12KeyStore, passwordChars,
 								_PKCS12_DL_KEYSTORE_PATH);
 						}
-
-						_store.deleteDirectory(
-							companyId, CompanyConstants.SYSTEM,
-							_JKS_DL_KEYSTORE_PATH);
 
 						if (_log.isInfoEnabled()) {
 							_log.info(
@@ -266,12 +316,16 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 	}
 
 	private void _upgradeFileSystemKeystore() {
+		if ((_jksFileSystemKeystorePath == null) ||
+			(_pkcs12FileSystemKeystorePath == null)) {
+
+			return;
+		}
+
 		File oldFile = new File(_jksFileSystemKeystorePath);
 		File newFile = new File(_pkcs12FileSystemKeystorePath);
 
-		String password = _getKeystorePassword();
-
-		char[] passwordChars = password.toCharArray();
+		char[] passwordChars = _getKeystorePassword();
 
 		try {
 			if (oldFile.exists() && !newFile.exists()) {
@@ -315,18 +369,13 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 
 	private static final String _PKCS12_DL_KEYSTORE_PATH = "saml/keystore.p12";
 
-	private static final String _SAML_CONFIGURATION_PID =
-		"com.liferay.saml.runtime.configuration.SamlConfiguration";
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		SamlKeyStoreTypeUpgradeProcess.class);
 
-	private static String _jksFileSystemKeystorePath;
-	private static String _pkcs12FileSystemKeystorePath;
-
-	private final CertificateTool _certificateTool;
 	private final CompanyLocalService _companyLocalService;
 	private final ConfigurationAdmin _configurationAdmin;
+	private String _jksFileSystemKeystorePath;
+	private String _pkcs12FileSystemKeystorePath;
 	private final Store _store;
 
 }
