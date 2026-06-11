@@ -101,7 +101,8 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 				catch (Exception exception) {
 					if (_log.isDebugEnabled()) {
 						_log.debug(
-							"Skipping inactive key: " + alias, exception);
+							"Skipping inactive key: \"" + alias + "\"",
+							exception);
 					}
 				}
 				finally {
@@ -133,8 +134,8 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 
 		if (configurations == null) {
 			throw new IllegalStateException(
-				"There is no SAML configuration associated with key: " +
-					entityId);
+				"There is no SAML configuration associated with key: \"" +
+					entityId + "\"");
 		}
 
 		String password = null;
@@ -157,7 +158,7 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 
 		if (Validator.isNull(password)) {
 			throw new IllegalStateException(
-				"No password match was found for key: " + entityId);
+				"No password match was found for key: \"" + entityId + "\"");
 		}
 
 		return password.toCharArray();
