@@ -74,7 +74,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 	@After
 	public void tearDown() throws Exception {
-		_deleteDLKeyStore();
+		_deleteDLKeyStores();
 		_deleteFileSystemKeyStores();
 
 		if (_configuration != null) {
@@ -108,13 +108,11 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 			Store.VERSION_DEFAULT, new ByteArrayInputStream(bytes));
 
-		File dataDir = new File(PropsUtil.get(PropsKeys.LIFERAY_HOME), "data");
+		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
 
-		dataDir.mkdirs();
+		File file = new File(liferayHome + "/data/keystore.jks");
 
-		try (FileOutputStream fileOutputStream = new FileOutputStream(
-				new File(dataDir, "keystore.jks"))) {
-
+		try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
 			fileOutputStream.write(bytes);
 		}
 
@@ -129,7 +127,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 				encryptionCredentialPassword
 			).build());
 
-		_setSamlConfiguration(keyStorePassword);
+		_updateSamlConfiguration(keyStorePassword);
 
 		UpgradeProcess upgradeProcess = UpgradeTestUtil.getUpgradeStep(
 			_upgradeStepRegistrator, _CLASS_NAME);
@@ -156,11 +154,11 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			Assert.assertTrue(keyStore.containsAlias(entityId));
 		}
 
-		File p12File = new File(dataDir, "keystore.p12");
+		file = new File(liferayHome + "/data/keystore.p12");
 
-		Assert.assertTrue(p12File.exists());
+		Assert.assertTrue(file.exists());
 
-		try (FileInputStream fileInputStream = new FileInputStream(p12File)) {
+		try (FileInputStream fileInputStream = new FileInputStream(file)) {
 			keyStore.load(fileInputStream, keyStorePassword.toCharArray());
 
 			Assert.assertTrue(keyStore.containsAlias(encryptionAlias));
@@ -213,7 +211,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
 			CertificateEntityId certificateEntityId = new CertificateEntityId(
-				"Test", null, null, null, null, null);
+				RandomTestUtil.randomString(), null, null, null, null, null);
 
 			Calendar startDate = Calendar.getInstance();
 
@@ -239,7 +237,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		return byteArrayOutputStream.toByteArray();
 	}
 
-	private void _deleteDLKeyStore() {
+	private void _deleteDLKeyStores() {
 		if (_store.hasFile(
 				_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT)) {
@@ -273,7 +271,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		}
 	}
 
-	private void _setSamlConfiguration(String keyStorePassword)
+	private void _updateSamlConfiguration(String keyStorePassword)
 		throws Exception {
 
 		_configuration = _configurationAdmin.getConfiguration(
@@ -298,7 +296,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 	private static final String _CLASS_NAME =
 		"com.liferay.saml.internal.upgrade.v2_0_0." +
-			"SamlKeyStoreTypeUpgradeProcess";
+			"SamlConfigurationUpgradeProcess";
 
 	private static final String _JKS_DL_KEYSTORE_PATH = "saml/keystore.jks";
 
