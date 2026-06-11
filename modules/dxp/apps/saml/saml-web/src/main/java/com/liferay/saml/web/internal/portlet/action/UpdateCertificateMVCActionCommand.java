@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
@@ -257,6 +258,19 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 
 			return;
 		}
+		catch (Error | RuntimeException exception) {
+			if (!_isFIPSThrowable(exception)) {
+				throw exception;
+			}
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
+			SessionErrors.add(actionRequest, "certificateAlgorithmNotAllowed");
+
+			return;
+		}
 
 		X509Certificate x509Certificate =
 			(X509Certificate)privateKeyEntry.getCertificate();
@@ -327,6 +341,26 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 			_log.warn(
 				"Unrecognized key algorithm " + publicKey.getAlgorithm() +
 					" cannot be validated for FIPS 140-3 compliance");
+		}
+
+		return false;
+	}
+
+	private boolean _isFIPSThrowable(Throwable throwable) {
+		if (!PropsValues.FIPS_ENABLED) {
+			return false;
+		}
+
+		while (throwable != null) {
+			Class<?> throwableClass = throwable.getClass();
+
+			if (ArrayUtil.contains(
+					_FIPS_THROWABLE_CLASS_NAMES, throwableClass.getName())) {
+
+				return true;
+			}
+
+			throwable = throwable.getCause();
 		}
 
 		return false;
@@ -405,6 +439,11 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 			SamlWebKeys.SAML_X509_CERTIFICATE, x509Certificate);
 		actionResponse.setWindowState(LiferayWindowState.EXCLUSIVE);
 	}
+
+	private static final String[] _FIPS_THROWABLE_CLASS_NAMES = {
+		"com.amazon.corretto.crypto.provider.RuntimeCryptoException",
+		"org.bouncycastle.crypto.fips.FipsUnapprovedOperationError"
+	};
 
 	private static final int _MINIMUM_RSA_KEY_SIZE = 2048;
 
