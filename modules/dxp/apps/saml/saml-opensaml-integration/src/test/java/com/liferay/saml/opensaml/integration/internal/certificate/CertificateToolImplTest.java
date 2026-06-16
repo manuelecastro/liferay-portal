@@ -31,6 +31,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 /**
+ * @author Manuele Castro
  * @author Rafael Praxedes
  */
 public class CertificateToolImplTest {

@@ -24,6 +24,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 /**
+ * @author Manuele Castro
  * @author Rafael Praxedes
  */
 public class UpdateCertificateMVCRenderCommandTest {

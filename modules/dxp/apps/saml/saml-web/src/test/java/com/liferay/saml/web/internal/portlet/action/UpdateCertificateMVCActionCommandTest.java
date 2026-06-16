@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 /**
+ * @author Manuele Castro
  * @author Rafael Praxedes
  */
 public class UpdateCertificateMVCActionCommandTest {
