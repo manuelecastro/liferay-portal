@@ -5,7 +5,6 @@
 
 package com.liferay.saml.web.internal.portlet.action;
 
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -275,7 +274,7 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		X509Certificate x509Certificate =
 			(X509Certificate)privateKeyEntry.getCertificate();
 
-		if (PropsValues.FIPS_ENABLED && !_isFIPSCompliant(x509Certificate)) {
+		if (!_isValidX509Certificate(x509Certificate)) {
 			SessionErrors.add(actionRequest, "certificateAlgorithmNotAllowed");
 
 			return;
@@ -301,51 +300,6 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 			SamlWebKeys.SAML_X509_CERTIFICATE, x509Certificate);
 	}
 
-	private boolean _isFIPSCompliant(X509Certificate x509Certificate) {
-		PublicKey publicKey = x509Certificate.getPublicKey();
-
-		if (publicKey instanceof DSAKey) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"DSA certificates are not FIPS compliant for SAML " +
-						"and cannot be imported");
-			}
-
-			return false;
-		}
-
-		if (publicKey instanceof RSAKey) {
-			RSAKey rsaKey = (RSAKey)publicKey;
-
-			BigInteger modulus = rsaKey.getModulus();
-
-			int bitLength = modulus.bitLength();
-
-			if (bitLength < _MINIMUM_RSA_KEY_SIZE) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						StringBundler.concat(
-							"RSA key size ", bitLength,
-							" bits is below the minimum ",
-							_MINIMUM_RSA_KEY_SIZE,
-							" bits required for FIPS compliance"));
-				}
-
-				return false;
-			}
-
-			return true;
-		}
-
-		if (_log.isWarnEnabled()) {
-			_log.warn(
-				"Unrecognized key algorithm " + publicKey.getAlgorithm() +
-					" cannot be validated for FIPS compliance");
-		}
-
-		return false;
-	}
-
 	private boolean _isFIPSThrowable(Throwable throwable) {
 		if (!PropsValues.FIPS_ENABLED) {
 			return false;
@@ -361,6 +315,34 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 			}
 
 			throwable = throwable.getCause();
+		}
+
+		return false;
+	}
+
+	private boolean _isValidX509Certificate(X509Certificate x509Certificate) {
+		if (!PropsValues.FIPS_ENABLED) {
+			return true;
+		}
+
+		PublicKey publicKey = x509Certificate.getPublicKey();
+
+		if (publicKey instanceof DSAKey) {
+			return false;
+		}
+
+		if (publicKey instanceof RSAKey) {
+			RSAKey rsaKey = (RSAKey)publicKey;
+
+			BigInteger modulus = rsaKey.getModulus();
+
+			int bitLength = modulus.bitLength();
+
+			if (bitLength >= _MINIMUM_RSA_KEY_SIZE) {
+				return true;
+			}
+
+			return false;
 		}
 
 		return false;
