@@ -16,6 +16,8 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
+import com.liferay.portal.security.crypto.policy.ServiceType;
 
 import java.security.Key;
 import java.security.SecureRandom;
@@ -27,7 +29,9 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -147,6 +151,14 @@ public class EncryptorImpl implements Encryptor {
 		}
 	}
 
+	@Activate
+	public void activate() {
+		_cryptoPolicyManager.checkAlgorithm(
+			KEY_ALGORITHM, KEY_SIZE, ServiceType.CIPHER);
+		_cryptoPolicyManager.checkAlgorithm(
+			KEY_ALGORITHM, KEY_SIZE, ServiceType.KEY_GENERATOR);
+	}
+
 	@Override
 	public Key generateKey() throws EncryptorException {
 		return _generateKey(KEY_ALGORITHM);
@@ -185,6 +197,9 @@ public class EncryptorImpl implements Encryptor {
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(EncryptorImpl.class);
+
+	@Reference
+	private CryptoPolicyManager _cryptoPolicyManager;
 
 	private final Map<String, Cipher> _decryptCipherMap =
 		new ConcurrentHashMap<>(1, 1F, 1);
