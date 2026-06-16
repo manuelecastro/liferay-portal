@@ -113,7 +113,7 @@ public class CertificateToolImpl implements CertificateTool {
 					StringBundler.concat(
 						"Key size ", keySize,
 						" is not allowed in FIPS mode. Minimum 2048 bits ",
-						"required for FIPS 140-3 compliance"));
+						"required for FIPS compliance"));
 			}
 		}
 

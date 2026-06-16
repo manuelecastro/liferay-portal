@@ -307,7 +307,7 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		if (publicKey instanceof DSAKey) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"DSA certificates are not FIPS 140-3 compliant for SAML " +
+					"DSA certificates are not FIPS compliant for SAML " +
 						"and cannot be imported");
 			}
 
@@ -328,7 +328,7 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 							"RSA key size ", bitLength,
 							" bits is below the minimum ",
 							_MINIMUM_RSA_KEY_SIZE,
-							" bits required for FIPS 140-3 compliance"));
+							" bits required for FIPS compliance"));
 				}
 
 				return false;
@@ -340,7 +340,7 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		if (_log.isWarnEnabled()) {
 			_log.warn(
 				"Unrecognized key algorithm " + publicKey.getAlgorithm() +
-					" cannot be validated for FIPS 140-3 compliance");
+					" cannot be validated for FIPS compliance");
 		}
 
 		return false;
