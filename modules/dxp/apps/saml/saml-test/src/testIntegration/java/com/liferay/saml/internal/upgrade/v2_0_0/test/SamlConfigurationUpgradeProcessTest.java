@@ -56,6 +56,7 @@ import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 
 /**
+ * @author Manuele Castro
  * @author Rafael Praxedes
  */
 @RunWith(Arquillian.class)
