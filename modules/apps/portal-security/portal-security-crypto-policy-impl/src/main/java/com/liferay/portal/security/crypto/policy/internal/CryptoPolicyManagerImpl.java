@@ -21,6 +21,7 @@ import java.security.Security;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -124,68 +125,90 @@ public class CryptoPolicyManagerImpl implements CryptoPolicyManager {
 	}
 
 	protected void buildKeySizeMap(Provider[] providers) {
-		Map<String, Set<Integer>> keySizesMap = new HashMap<>();
+
+		// Collect one entry per distinct algorithm to avoid probing the same
+		// algorithm multiple times when it is registered in more than one
+		// provider. KeyFactory and SecretKeyFactory have no configurable key
+		// size and are intentionally omitted.
+
+		Map<String, String> algorithmTypeMap = new LinkedHashMap<>();
 
 		for (Provider provider : providers) {
 			for (Provider.Service service : provider.getServices()) {
-				String algorithm = service.getAlgorithm();
 				String type = service.getType();
 
-				if (type.equals("KeyGenerator")) {
-					Set<Integer> validSizes = new TreeSet<>();
+				if (type.equals("KeyGenerator") ||
+					type.equals("KeyPairGenerator")) {
 
-					for (int size : _SYMMETRIC_PROBE_SIZES) {
-						try {
-							KeyGenerator keyGenerator =
-								KeyGenerator.getInstance(algorithm);
+					algorithmTypeMap.putIfAbsent(
+						service.getAlgorithm(), type);
+				}
+			}
+		}
 
-							keyGenerator.init(size);
+		Map<String, Set<Integer>> keySizesMap = new HashMap<>();
 
-							validSizes.add(size);
-						}
-						catch (InvalidParameterException |
-							   NoSuchAlgorithmException exception) {
+		for (Map.Entry<String, String> entry : algorithmTypeMap.entrySet()) {
+			String algorithm = entry.getKey();
+			String type = entry.getValue();
 
-							if (_log.isDebugEnabled()) {
-								_log.debug(exception);
-							}
-						}
+			if (type.equals("KeyGenerator")) {
+				Set<Integer> validSizes = new TreeSet<>();
+
+				for (int size : _SYMMETRIC_PROBE_SIZES) {
+					try {
+						KeyGenerator keyGenerator =
+							KeyGenerator.getInstance(algorithm);
+
+						keyGenerator.init(size);
+
+						validSizes.add(size);
 					}
+					catch (InvalidParameterException |
+						   NoSuchAlgorithmException exception) {
 
-					if (!validSizes.isEmpty()) {
-						keySizesMap.put(algorithm, validSizes);
+						if (_log.isDebugEnabled()) {
+							_log.debug(exception);
+						}
 					}
 				}
-				else if (type.equals("KeyPairGenerator")) {
-					Set<Integer> validSizes = new TreeSet<>();
 
-					for (int size : _ASYMMETRIC_PROBE_SIZES) {
-						try {
-							KeyPairGenerator keyPairGenerator =
-								KeyPairGenerator.getInstance(algorithm);
+				if (!validSizes.isEmpty()) {
+					keySizesMap.put(algorithm, validSizes);
+				}
+			}
+			else if (type.equals("KeyPairGenerator")) {
+				Set<Integer> validSizes = new TreeSet<>();
 
-							keyPairGenerator.initialize(size);
+				for (int size : _ASYMMETRIC_PROBE_SIZES) {
+					try {
+						KeyPairGenerator keyPairGenerator =
+							KeyPairGenerator.getInstance(algorithm);
 
-							validSizes.add(size);
-						}
-						catch (InvalidParameterException |
-							   NoSuchAlgorithmException exception) {
+						keyPairGenerator.initialize(size);
 
-							if (_log.isDebugEnabled()) {
-								_log.debug(exception);
-							}
+						validSizes.add(size);
+					}
+					catch (InvalidParameterException |
+						   NoSuchAlgorithmException exception) {
+
+						if (_log.isDebugEnabled()) {
+							_log.debug(exception);
 						}
 					}
+				}
 
-					if (!validSizes.isEmpty()) {
-						keySizesMap.put(algorithm, validSizes);
-					}
+				if (!validSizes.isEmpty()) {
+					keySizesMap.put(algorithm, validSizes);
 				}
 			}
 		}
 
 		_allowedKeySizesMap = keySizesMap;
 	}
+
+	// Protected so test subclasses can override the FIPS gate without
+	// modifying PropsValues.
 
 	protected boolean isFIPSEnabled() {
 		return PropsValues.FIPS_ENABLED;
@@ -214,9 +237,9 @@ public class CryptoPolicyManagerImpl implements CryptoPolicyManager {
 		_serviceTypeMap = Collections.unmodifiableMap(map);
 	}
 
-	private Map<ServiceType, Set<String>> _algorithmMap =
+	private volatile Map<ServiceType, Set<String>> _algorithmMap =
 		Collections.emptyMap();
-	private Map<String, Set<Integer>> _allowedKeySizesMap =
+	private volatile Map<String, Set<Integer>> _allowedKeySizesMap =
 		Collections.emptyMap();
 
 }
