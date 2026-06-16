@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -19,6 +19,23 @@ import java.util.Set;
 public interface CryptoPolicyManager {
 
 	/**
+	 * In non-FIPS mode: returns the algorithm unchanged.
+	 * In FIPS mode: returns the algorithm if both the algorithm and key size
+	 * are approved, throws CryptoPolicyException otherwise.
+	 */
+	public String checkAlgorithm(
+			String algorithm, int keySize, ServiceType serviceType)
+		throws CryptoPolicyException;
+
+	/**
+	 * In non-FIPS mode: returns the algorithm unchanged.
+	 * In FIPS mode: returns the algorithm if it is approved for the given
+	 * service type, throws CryptoPolicyException otherwise.
+	 */
+	public String checkAlgorithm(String algorithm, ServiceType serviceType)
+		throws CryptoPolicyException;
+
+	/**
 	 * Returns all algorithms the current runtime permits for the given service
 	 * type. In a FIPS JVM the installed providers expose only FIPS-approved
 	 * algorithms, so this set is naturally FIPS-constrained.
@@ -32,23 +49,6 @@ public interface CryptoPolicyManager {
 	 * MessageDigest).
 	 */
 	public Set<Integer> getAllowedKeySizes(String algorithm);
-
-	/**
-	 * In non-FIPS mode: returns the algorithm unchanged.
-	 * In FIPS mode: returns the algorithm if it is approved for the given
-	 * service type, throws CryptoPolicyException otherwise.
-	 */
-	public String checkAlgorithm(String algorithm, ServiceType serviceType)
-		throws CryptoPolicyException;
-
-	/**
-	 * In non-FIPS mode: returns the algorithm unchanged.
-	 * In FIPS mode: returns the algorithm if both the algorithm and key size
-	 * are approved, throws CryptoPolicyException otherwise.
-	 */
-	public String checkAlgorithm(
-			String algorithm, int keySize, ServiceType serviceType)
-		throws CryptoPolicyException;
 
 	public boolean isFIPSMode();
 
