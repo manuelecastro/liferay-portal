@@ -20,6 +20,8 @@ import com.liferay.multi.factor.authentication.timebased.otp.web.internal.consta
 import com.liferay.multi.factor.authentication.timebased.otp.web.internal.constants.MFATimeBasedOTPWebKeys;
 import com.liferay.multi.factor.authentication.timebased.otp.web.internal.display.context.MFATimeBasedOTPCheckerDisplayContext;
 import com.liferay.multi.factor.authentication.timebased.otp.web.internal.util.MFATimeBasedOTPUtil;
+import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
+import com.liferay.portal.security.crypto.policy.ServiceType;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
@@ -324,6 +326,8 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 			return;
 		}
 
+		_cryptoPolicyManager.checkAlgorithm("HmacSHA1", ServiceType.MAC);
+
 		if (PropsValues.SESSION_ENABLE_PHISHING_PROTECTION) {
 			List<String> sessionPhishingProtectedAttributes = new ArrayList<>(
 				Arrays.asList(
@@ -519,6 +523,9 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private CryptoPolicyManager _cryptoPolicyManager;
 
 	@Reference
 	private MailService _mailService;
