@@ -6,10 +6,9 @@
 package com.liferay.saml.internal.upgrade.v2_0_0;
 
 import com.liferay.configuration.admin.util.ConfigurationFilterStringUtil;
-import com.liferay.document.library.kernel.exception.NoSuchFileException;
 import com.liferay.document.library.kernel.store.Store;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
@@ -40,23 +39,28 @@ import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 
 /**
+ * @author Manuele Castro
  * @author Rafael Praxedes
  */
 public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 
 	public SamlConfigurationUpgradeProcess(
 		CompanyLocalService companyLocalService,
-		ConfigurationAdmin configurationAdmin, Store store) {
+		ConfigurationAdmin configurationAdmin,
+		ConfigurationProvider configurationProvider, Store store) {
 
 		_companyLocalService = companyLocalService;
 		_configurationAdmin = configurationAdmin;
+		_configurationProvider = configurationProvider;
 		_store = store;
 	}
 
 	@Override
 	protected void doUpgrade() throws Exception {
 		_upgradeConfiguration();
-		_upgradeDLKeyStores();
+
+		_companyLocalService.forEachCompanyId(this::_upgradeDLKeyStore);
+
 		_upgradeFileSystemKeyStore();
 	}
 
@@ -77,7 +81,11 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 		while (aliasesEnumeration.hasMoreElements()) {
 			String alias = aliasesEnumeration.nextElement();
 
-			if (jksKeyStore.isKeyEntry(alias)) {
+			if (jksKeyStore.isCertificateEntry(alias)) {
+				pkcs12KeyStore.setCertificateEntry(
+					alias, jksKeyStore.getCertificate(alias));
+			}
+			else if (jksKeyStore.isKeyEntry(alias)) {
 				char[] keyEntryPassword = _getKeyEntryPassword(alias);
 
 				try {
@@ -98,10 +106,6 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 				finally {
 					Arrays.fill(keyEntryPassword, '\0');
 				}
-			}
-			else if (jksKeyStore.isCertificateEntry(alias)) {
-				pkcs12KeyStore.setCertificateEntry(
-					alias, jksKeyStore.getCertificate(alias));
 			}
 		}
 
@@ -152,32 +156,14 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 		throw new Exception("No password match was found for key: " + entityId);
 	}
 
-	private char[] _getKeyStorePassword() {
-		try {
-			Configuration configuration = _configurationAdmin.getConfiguration(
-				SamlConfiguration.class.getName(), StringPool.QUESTION);
+	private char[] _getKeyStorePassword() throws Exception {
+		SamlConfiguration samlConfiguration =
+			_configurationProvider.getSystemConfiguration(
+				SamlConfiguration.class);
 
-			Dictionary<String, Object> properties =
-				configuration.getProperties();
+		String password = samlConfiguration.keyStorePassword();
 
-			if (properties != null) {
-				String password = GetterUtil.getString(
-					properties.get("saml.keystore.password"));
-
-				if (Validator.isNotNull(password)) {
-					return password.toCharArray();
-				}
-			}
-		}
-		catch (Exception exception) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(
-					"Unable to read keystore password from configuration",
-					exception);
-			}
-		}
-
-		return "liferay".toCharArray();
+		return password.toCharArray();
 	}
 
 	private void _saveDLKeyStore(
@@ -241,70 +227,47 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 			}
 
 			configuration.update(properties);
-
-			if (_log.isInfoEnabled()) {
-				_log.info(
-					"Updated SAML configuration: keystore type changed from " +
-						"JKS to PKCS12");
-			}
 		}
 	}
 
-	private void _upgradeDLKeyStores() {
-		_companyLocalService.forEachCompanyId(
-			companyId -> {
-				char[] password = _getKeyStorePassword();
+	private void _upgradeDLKeyStore(long companyId) throws Exception {
+		char[] keyStorePassword = _getKeyStorePassword();
 
-				try {
-					boolean hasJKSKeyStore = _store.hasFile(
+		try {
+			boolean hasJKSKeyStore = _store.hasFile(
+				companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
+				Store.VERSION_DEFAULT);
+
+			boolean hasPKCS12KeyStore = _store.hasFile(
+				companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
+				Store.VERSION_DEFAULT);
+
+			if (hasJKSKeyStore && !hasPKCS12KeyStore) {
+				try (InputStream inputStream = _store.getFileAsStream(
 						companyId, CompanyConstants.SYSTEM,
-						_JKS_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT);
+						_JKS_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT)) {
 
-					boolean hasPKCS12KeyStore = _store.hasFile(
-						companyId, CompanyConstants.SYSTEM,
-						_PKCS12_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT);
-
-					if (hasJKSKeyStore && !hasPKCS12KeyStore) {
-						try (InputStream inputStream = _store.getFileAsStream(
-								companyId, CompanyConstants.SYSTEM,
-								_JKS_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT)) {
-
-							KeyStore pkcs12KeyStore = _convertJKSToPKCS12(
-								inputStream, password);
-
-							_saveDLKeyStore(
-								companyId, pkcs12KeyStore, password,
-								_PKCS12_DL_KEYSTORE_PATH);
-						}
-
-						if (_log.isInfoEnabled()) {
-							_log.info(
-								"Migrated DL SAML keystore from JKS to " +
-									"PKCS12 for company " + companyId);
-						}
-					}
+					_saveDLKeyStore(
+						companyId,
+						_convertJKSToPKCS12(inputStream, keyStorePassword),
+						keyStorePassword, _PKCS12_DL_KEYSTORE_PATH);
 				}
-				catch (NoSuchFileException noSuchFileException) {
-					if (_log.isDebugEnabled()) {
-						_log.debug(
-							"No JKS keystore found in Document Library for " +
-								"company " + companyId,
-							noSuchFileException);
-					}
-				}
-				catch (Exception exception) {
-					_log.error(
-						"Unable to migrate DL SAML keystore for company " +
-							companyId,
-						exception);
-				}
-				finally {
-					Arrays.fill(password, '\0');
-				}
-			});
+			}
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Unable to migrate DL SAML keystore for company " +
+						companyId,
+					exception);
+			}
+		}
+		finally {
+			Arrays.fill(keyStorePassword, '\0');
+		}
 	}
 
-	private void _upgradeFileSystemKeyStore() {
+	private void _upgradeFileSystemKeyStore() throws Exception {
 		if ((_jksFileSystemKeyStorePath == null) ||
 			(_pkcs12FileSystemKeyStorePath == null)) {
 
@@ -314,15 +277,12 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 		File oldFile = new File(_jksFileSystemKeyStorePath);
 		File newFile = new File(_pkcs12FileSystemKeyStorePath);
 
-		char[] password = _getKeyStorePassword();
+		char[] keyStorePassword = _getKeyStorePassword();
 
 		try {
 			if (oldFile.exists() && !newFile.exists()) {
 				try (FileInputStream fileInputStream = new FileInputStream(
 						oldFile)) {
-
-					KeyStore pkcs12KeyStore = _convertJKSToPKCS12(
-						fileInputStream, password);
 
 					File parentDir = newFile.getParentFile();
 
@@ -330,27 +290,26 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 						parentDir.mkdirs();
 					}
 
+					KeyStore pkcs12KeyStore = _convertJKSToPKCS12(
+						fileInputStream, keyStorePassword);
+
 					try (FileOutputStream fileOutputStream =
 							new FileOutputStream(newFile)) {
 
-						pkcs12KeyStore.store(fileOutputStream, password);
-					}
-
-					if (_log.isInfoEnabled()) {
-						_log.info(
-							StringBundler.concat(
-								"Migrated filesystem SAML keystore from ",
-								_jksFileSystemKeyStorePath, " (JKS) to ",
-								_pkcs12FileSystemKeyStorePath, " (PKCS12)"));
+						pkcs12KeyStore.store(
+							fileOutputStream, keyStorePassword);
 					}
 				}
 			}
 		}
 		catch (Exception exception) {
-			_log.error("Unable to migrate filesystem SAML keystore", exception);
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Unable to migrate filesystem SAML keystore", exception);
+			}
 		}
 		finally {
-			Arrays.fill(password, '\0');
+			Arrays.fill(keyStorePassword, '\0');
 		}
 	}
 
@@ -363,6 +322,7 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 
 	private final CompanyLocalService _companyLocalService;
 	private final ConfigurationAdmin _configurationAdmin;
+	private final ConfigurationProvider _configurationProvider;
 	private String _jksFileSystemKeyStorePath;
 	private String _pkcs12FileSystemKeyStorePath;
 	private final Store _store;

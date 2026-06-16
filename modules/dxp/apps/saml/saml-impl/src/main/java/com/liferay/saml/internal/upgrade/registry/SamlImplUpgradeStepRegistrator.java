@@ -6,6 +6,7 @@
 package com.liferay.saml.internal.upgrade.registry;
 
 import com.liferay.document.library.kernel.store.Store;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.PrefsProps;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -54,7 +55,8 @@ public class SamlImplUpgradeStepRegistrator implements UpgradeStepRegistrator {
 		registry.register(
 			"1.0.0", "2.0.0",
 			new SamlConfigurationUpgradeProcess(
-				_companyLocalService, _configurationAdmin, _store));
+				_companyLocalService, _configurationAdmin,
+				_configurationProvider, _store));
 	}
 
 	@Reference
@@ -62,6 +64,9 @@ public class SamlImplUpgradeStepRegistrator implements UpgradeStepRegistrator {
 
 	@Reference
 	private ConfigurationAdmin _configurationAdmin;
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
 
 	@Reference
 	private PrefsProps _prefsProps;
