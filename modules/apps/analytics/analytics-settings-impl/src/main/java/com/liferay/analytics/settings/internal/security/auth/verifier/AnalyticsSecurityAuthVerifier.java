@@ -57,12 +57,6 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 
-	@Activate
-	protected void activate() {
-		_cryptoPolicyManager.checkAlgorithm("DSA", ServiceType.KEY_FACTORY);
-		_cryptoPolicyManager.checkAlgorithm("DSA", ServiceType.SIGNATURE);
-	}
-
 	@Override
 	public String getAuthType() {
 		Class<?> clazz = getClass();
@@ -161,6 +155,12 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 		catch (Exception exception) {
 			throw new AuthException(exception);
 		}
+	}
+
+	@Activate
+	protected void activate() {
+		_cryptoPolicyManager.checkAlgorithm("DSA", ServiceType.KEY_FACTORY);
+		_cryptoPolicyManager.checkAlgorithm("DSA", ServiceType.SIGNATURE);
 	}
 
 	private long _getAnalyticsAdminUserId(long companyId) {

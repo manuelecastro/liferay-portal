@@ -8,8 +8,6 @@ package com.liferay.digital.signature.internal.http;
 import com.liferay.digital.signature.configuration.DigitalSignatureConfiguration;
 import com.liferay.digital.signature.configuration.DigitalSignatureConfigurationUtil;
 import com.liferay.digital.signature.internal.web.cache.DSAccessTokenWebCacheItem;
-import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
-import com.liferay.portal.security.crypto.policy.ServiceType;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -20,6 +18,8 @@ import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
+import com.liferay.portal.security.crypto.policy.ServiceType;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -30,14 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(service = DSHttp.class)
 public class DSHttp {
-
-	@Activate
-	protected void activate() {
-		_cryptoPolicyManager.checkAlgorithm(
-			"RSA", ServiceType.KEY_FACTORY);
-		_cryptoPolicyManager.checkAlgorithm(
-			"SHA256withRSA", ServiceType.SIGNATURE);
-	}
 
 	public JSONObject get(long companyId, long groupId, String location) {
 		try {
@@ -82,6 +74,13 @@ public class DSHttp {
 		catch (Exception exception) {
 			return ReflectionUtil.throwException(exception);
 		}
+	}
+
+	@Activate
+	protected void activate() {
+		_cryptoPolicyManager.checkAlgorithm("RSA", ServiceType.KEY_FACTORY);
+		_cryptoPolicyManager.checkAlgorithm(
+			"SHA256withRSA", ServiceType.SIGNATURE);
 	}
 
 	private String _getDocuSignAccessToken(

@@ -140,8 +140,7 @@ public class CryptoPolicyManagerImpl implements CryptoPolicyManager {
 				if (type.equals("KeyGenerator") ||
 					type.equals("KeyPairGenerator")) {
 
-					algorithmTypeMap.putIfAbsent(
-						service.getAlgorithm(), type);
+					algorithmTypeMap.putIfAbsent(service.getAlgorithm(), type);
 				}
 			}
 		}
@@ -157,15 +156,15 @@ public class CryptoPolicyManagerImpl implements CryptoPolicyManager {
 
 				for (int size : _SYMMETRIC_PROBE_SIZES) {
 					try {
-						KeyGenerator keyGenerator =
-							KeyGenerator.getInstance(algorithm);
+						KeyGenerator keyGenerator = KeyGenerator.getInstance(
+							algorithm);
 
 						keyGenerator.init(size);
 
 						validSizes.add(size);
 					}
-					catch (InvalidParameterException |
-						   NoSuchAlgorithmException exception) {
+					catch (InvalidParameterException | NoSuchAlgorithmException
+								exception) {
 
 						if (_log.isDebugEnabled()) {
 							_log.debug(exception);
@@ -189,8 +188,8 @@ public class CryptoPolicyManagerImpl implements CryptoPolicyManager {
 
 						validSizes.add(size);
 					}
-					catch (InvalidParameterException |
-						   NoSuchAlgorithmException exception) {
+					catch (InvalidParameterException | NoSuchAlgorithmException
+								exception) {
 
 						if (_log.isDebugEnabled()) {
 							_log.debug(exception);

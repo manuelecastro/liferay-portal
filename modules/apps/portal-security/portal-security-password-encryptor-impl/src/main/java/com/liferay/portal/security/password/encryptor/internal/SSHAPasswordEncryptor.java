@@ -7,14 +7,14 @@ package com.liferay.portal.security.password.encryptor.internal;
 
 import com.liferay.petra.io.BigEndianCodec;
 import com.liferay.portal.kernel.exception.PwdEncryptorException;
-import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
-import com.liferay.portal.security.crypto.policy.ServiceType;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
+import com.liferay.portal.security.crypto.policy.ServiceType;
 
 import java.io.UnsupportedEncodingException;
 
@@ -34,12 +34,6 @@ import org.osgi.service.component.annotations.Reference;
 	service = PasswordEncryptor.class
 )
 public class SSHAPasswordEncryptor implements PasswordEncryptor {
-
-	@Activate
-	protected void activate() {
-		_cryptoPolicyManager.checkAlgorithm(
-			"SHA-1", ServiceType.MESSAGE_DIGEST);
-	}
 
 	@Override
 	public String encrypt(
@@ -75,6 +69,12 @@ public class SSHAPasswordEncryptor implements PasswordEncryptor {
 				unsupportedEncodingException.getMessage(),
 				unsupportedEncodingException);
 		}
+	}
+
+	@Activate
+	protected void activate() {
+		_cryptoPolicyManager.checkAlgorithm(
+			"SHA-1", ServiceType.MESSAGE_DIGEST);
 	}
 
 	protected byte[] getSaltBytes(String encryptedPassword)

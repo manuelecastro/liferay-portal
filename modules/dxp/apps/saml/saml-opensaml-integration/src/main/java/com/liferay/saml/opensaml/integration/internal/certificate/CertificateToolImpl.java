@@ -161,9 +161,6 @@ public class CertificateToolImpl implements CertificateTool {
 		return null;
 	}
 
-	@Reference
-	private CryptoPolicyManager _cryptoPolicyManager;
-
 	private X500Name _createX500Name(CertificateEntityId certificateEntityId) {
 		X500NameBuilder x500NameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
 
@@ -197,5 +194,8 @@ public class CertificateToolImpl implements CertificateTool {
 
 		return x500NameBuilder.build();
 	}
+
+	@Reference
+	private CryptoPolicyManager _cryptoPolicyManager;
 
 }

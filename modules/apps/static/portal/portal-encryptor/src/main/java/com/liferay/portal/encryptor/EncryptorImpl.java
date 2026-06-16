@@ -151,14 +151,6 @@ public class EncryptorImpl implements Encryptor {
 		}
 	}
 
-	@Activate
-	public void activate() {
-		_cryptoPolicyManager.checkAlgorithm(
-			KEY_ALGORITHM, KEY_SIZE, ServiceType.CIPHER);
-		_cryptoPolicyManager.checkAlgorithm(
-			KEY_ALGORITHM, KEY_SIZE, ServiceType.KEY_GENERATOR);
-	}
-
 	@Override
 	public Key generateKey() throws EncryptorException {
 		return _generateKey(KEY_ALGORITHM);
@@ -167,6 +159,14 @@ public class EncryptorImpl implements Encryptor {
 	@Override
 	public String serializeKey(Key key) {
 		return Base64.encode(key.getEncoded());
+	}
+
+	@Activate
+	protected void activate() {
+		_cryptoPolicyManager.checkAlgorithm(
+			KEY_ALGORITHM, KEY_SIZE, ServiceType.CIPHER);
+		_cryptoPolicyManager.checkAlgorithm(
+			KEY_ALGORITHM, KEY_SIZE, ServiceType.KEY_GENERATOR);
 	}
 
 	private String _decryptUnencodedAsString(Key key, byte[] encryptedBytes)
