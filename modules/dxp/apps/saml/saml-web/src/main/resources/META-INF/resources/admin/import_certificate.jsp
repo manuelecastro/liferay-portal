@@ -131,9 +131,10 @@ if (Validator.isNotNull(tempFileName)) {
 		</liferay-util:buffer>
 
 		<div class="container-fluid lfr-form-content">
+			<liferay-ui:error key="certificateAlgorithmNotAllowed" message="the-certificate-does-not-meet-fips-requirements-only-rsa-keys-with-2048-bits-or-more-are-allowed" />
+			<liferay-ui:error key="certificateException" message="there-was-a-problem-reading-one-or-more-certificates-in-the-keystore" />
 			<liferay-ui:error key="incorrectKeyPassword" message="incorrect-key-password" />
 			<liferay-ui:error key="keyEncryptionAlgorithmNotSupported" message="the-private-key-associated-with-the-alias-is-encrypted-with-an-unsupported-algorithm" />
-			<liferay-ui:error key="certificateAlgorithmNotAllowed" message="the-certificate-does-not-meet-fips-requirements-only-rsa-keys-with-2048-bits-or-more-are-allowed" />
 
 			<div class="row">
 				<div class="col-lg-12">

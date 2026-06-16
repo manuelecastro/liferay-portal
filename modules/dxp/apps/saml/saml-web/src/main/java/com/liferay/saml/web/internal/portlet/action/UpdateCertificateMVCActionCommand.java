@@ -17,7 +17,6 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
@@ -213,15 +212,6 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 			privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(
 				selectKeyStoreAlias, new KeyStore.PasswordProtection(password));
 		}
-		catch (CertificateException certificateException) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(certificateException);
-			}
-
-			SessionErrors.add(actionRequest, "certificateException");
-
-			return;
-		}
 		catch (IOException ioException) {
 			if (ioException.getCause() instanceof UnrecoverableKeyException) {
 				SessionErrors.add(actionRequest, "incorrectKeyStorePassword");
@@ -257,16 +247,12 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 
 			return;
 		}
-		catch (Error | RuntimeException exception) {
-			if (!_isFIPSThrowable(exception)) {
-				throw exception;
-			}
-
+		catch (CertificateException | Error | RuntimeException exception) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(exception);
 			}
 
-			SessionErrors.add(actionRequest, "certificateAlgorithmNotAllowed");
+			SessionErrors.add(actionRequest, "certificateException");
 
 			return;
 		}
@@ -298,26 +284,6 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 
 		actionRequest.setAttribute(
 			SamlWebKeys.SAML_X509_CERTIFICATE, x509Certificate);
-	}
-
-	private boolean _isFIPSThrowable(Throwable throwable) {
-		if (!PropsValues.FIPS_ENABLED) {
-			return false;
-		}
-
-		while (throwable != null) {
-			Class<?> throwableClass = throwable.getClass();
-
-			if (ArrayUtil.contains(
-					_FIPS_THROWABLE_CLASS_NAMES, throwableClass.getName())) {
-
-				return true;
-			}
-
-			throwable = throwable.getCause();
-		}
-
-		return false;
 	}
 
 	private boolean _isValidX509Certificate(X509Certificate x509Certificate) {
@@ -421,11 +387,6 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 			SamlWebKeys.SAML_X509_CERTIFICATE, x509Certificate);
 		actionResponse.setWindowState(LiferayWindowState.EXCLUSIVE);
 	}
-
-	private static final String[] _FIPS_THROWABLE_CLASS_NAMES = {
-		"com.amazon.corretto.crypto.provider.RuntimeCryptoException",
-		"org.bouncycastle.crypto.fips.FipsUnapprovedOperationError"
-	};
 
 	private static final int _MINIMUM_RSA_KEY_SIZE = 2048;
 
