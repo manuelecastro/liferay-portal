@@ -207,7 +207,8 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 		String keyStoreType = GetterUtil.getString(
 			properties.get("saml.keystore.type"));
 
-		if (StringUtil.equalsIgnoreCase(keyStoreType, "jks")) {
+		if (Validator.isNull(keyStoreType) ||
+			StringUtil.equalsIgnoreCase(keyStoreType, "jks")) {
 			properties.put("saml.keystore.type", "PKCS12");
 
 			String keyStorePath = GetterUtil.getString(
