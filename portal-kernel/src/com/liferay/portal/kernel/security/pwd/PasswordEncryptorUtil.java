@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.exception.PwdEncryptorException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.security.fips.FIPSApprovedAlgorithms;
 import com.liferay.portal.kernel.util.ClassUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -98,6 +99,27 @@ public class PasswordEncryptorUtil {
 			encryptedPassword);
 	}
 
+	public static void validateFIPSAlgorithm(String algorithm)
+		throws PwdEncryptorException {
+
+		if (Validator.isNull(algorithm) ||
+			algorithm.equals(PasswordEncryptor.TYPE_NONE)) {
+
+			return;
+		}
+
+		String algorithmName = _getAlgorithmName(algorithm);
+
+		if (!FIPSApprovedAlgorithms.isApproved(
+				_toFIPSCanonicalName(algorithmName))) {
+
+			throw new PwdEncryptorException.FIPSAlgorithmNotApproved(
+				StringBundler.concat(
+					"The password encryption algorithm \"", algorithmName,
+					"\" is not FIPS approved"));
+		}
+	}
+
 	private static String _encrypt(
 			String algorithm, String plainTextPassword,
 			String encryptedPassword, boolean upgradeHashSecurity)
@@ -142,6 +164,10 @@ public class PasswordEncryptorUtil {
 			if (Validator.isNull(algorithm)) {
 				algorithm = _PASSWORDS_ENCRYPTION_ALGORITHM;
 			}
+		}
+
+		if (encryptedPassword == null) {
+			validateFIPSAlgorithm(algorithm);
 		}
 
 		PasswordEncryptor passwordEncryptor = _getPasswordEncryptor(algorithm);
@@ -281,6 +307,16 @@ public class PasswordEncryptorUtil {
 		}
 
 		return passwordEncryptor;
+	}
+
+	private static String _toFIPSCanonicalName(String algorithmName) {
+		if (algorithmName.equals(PasswordEncryptor.TYPE_SHA) ||
+			algorithmName.equals(PasswordEncryptor.TYPE_SSHA)) {
+
+			return "SHA-1";
+		}
+
+		return algorithmName;
 	}
 
 	private static final String _PASSWORDS_ENCRYPTION_ALGORITHM =

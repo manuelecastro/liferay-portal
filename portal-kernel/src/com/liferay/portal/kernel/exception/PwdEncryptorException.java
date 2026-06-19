@@ -12,6 +12,14 @@ import com.liferay.portal.kernel.util.PropsKeys;
  */
 public class PwdEncryptorException extends PortalException {
 
+	public static class FIPSAlgorithmNotApproved extends PwdEncryptorException {
+
+		public FIPSAlgorithmNotApproved(String msg) {
+			super(msg);
+		}
+
+	}
+
 	public static class InvalidAlgorithm extends PwdEncryptorException {
 
 		public InvalidAlgorithm(String msg, Throwable throwable) {
