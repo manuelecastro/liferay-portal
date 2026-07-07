@@ -41,6 +41,8 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
+import com.liferay.portal.security.crypto.policy.ServiceType;
 
 import jakarta.mail.internet.InternetAddress;
 
@@ -324,6 +326,8 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 			return;
 		}
 
+		_cryptoPolicyManager.checkAlgorithm("HmacSHA1", ServiceType.MAC);
+
 		if (PropsValues.SESSION_ENABLE_PHISHING_PROTECTION) {
 			List<String> sessionPhishingProtectedAttributes = new ArrayList<>(
 				Arrays.asList(
@@ -519,6 +523,9 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private CryptoPolicyManager _cryptoPolicyManager;
 
 	@Reference
 	private MailService _mailService;

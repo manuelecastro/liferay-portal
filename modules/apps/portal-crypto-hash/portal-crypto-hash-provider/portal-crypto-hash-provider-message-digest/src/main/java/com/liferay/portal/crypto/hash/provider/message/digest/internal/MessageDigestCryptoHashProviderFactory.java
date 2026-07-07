@@ -12,6 +12,8 @@ import com.liferay.portal.crypto.hash.spi.CryptoHashProviderResponse;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
+import com.liferay.portal.security.crypto.policy.ServiceType;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -20,6 +22,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Arthur Chan
@@ -38,9 +41,18 @@ public class MessageDigestCryptoHashProviderFactory
 
 		try {
 			if (cryptoHashProviderProperties == null) {
+				_cryptoPolicyManager.checkAlgorithm(
+					"SHA-256", ServiceType.MESSAGE_DIGEST);
+
 				return new MessageDigestCryptoHashProvider(
 					Collections.emptyMap());
 			}
+
+			_cryptoPolicyManager.checkAlgorithm(
+				MapUtil.getString(
+					cryptoHashProviderProperties, "message.digest.algorithm",
+					"SHA-256"),
+				ServiceType.MESSAGE_DIGEST);
 
 			return new MessageDigestCryptoHashProvider(
 				cryptoHashProviderProperties);
@@ -57,6 +69,9 @@ public class MessageDigestCryptoHashProviderFactory
 
 	private static final String _CRYPTO_HASH_PROVIDER_FACTORY_NAME =
 		"MessageDigest";
+
+	@Reference
+	private CryptoPolicyManager _cryptoPolicyManager;
 
 	private static class MessageDigestCryptoHashProvider
 		implements CryptoHashProvider {

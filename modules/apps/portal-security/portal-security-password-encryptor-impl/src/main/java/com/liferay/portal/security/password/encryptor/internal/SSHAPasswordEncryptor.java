@@ -13,13 +13,17 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
+import com.liferay.portal.security.crypto.policy.ServiceType;
 
 import java.io.UnsupportedEncodingException;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Michael C. Han
@@ -67,6 +71,12 @@ public class SSHAPasswordEncryptor implements PasswordEncryptor {
 		}
 	}
 
+	@Activate
+	protected void activate() {
+		_cryptoPolicyManager.checkAlgorithm(
+			"SHA-1", ServiceType.MESSAGE_DIGEST);
+	}
+
 	protected byte[] getSaltBytes(String encryptedPassword)
 		throws PwdEncryptorException {
 
@@ -94,5 +104,8 @@ public class SSHAPasswordEncryptor implements PasswordEncryptor {
 
 		return saltBytes;
 	}
+
+	@Reference
+	private CryptoPolicyManager _cryptoPolicyManager;
 
 }

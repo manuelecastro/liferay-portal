@@ -8,6 +8,8 @@ package com.liferay.saml.opensaml.integration.internal.certificate;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
+import com.liferay.portal.security.crypto.policy.ServiceType;
 import com.liferay.saml.runtime.certificate.CertificateEntityId;
 import com.liferay.saml.runtime.certificate.CertificateTool;
 
@@ -37,6 +39,7 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Michael C. Han
@@ -90,6 +93,9 @@ public class CertificateToolImpl implements CertificateTool {
 	@Override
 	public KeyPair generateKeyPair(String algorithm, int keySize)
 		throws NoSuchAlgorithmException {
+
+		_cryptoPolicyManager.checkAlgorithm(
+			algorithm, keySize, ServiceType.KEY_PAIR_GENERATOR);
 
 		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(
 			algorithm);
@@ -188,5 +194,8 @@ public class CertificateToolImpl implements CertificateTool {
 
 		return x500NameBuilder.build();
 	}
+
+	@Reference
+	private CryptoPolicyManager _cryptoPolicyManager;
 
 }

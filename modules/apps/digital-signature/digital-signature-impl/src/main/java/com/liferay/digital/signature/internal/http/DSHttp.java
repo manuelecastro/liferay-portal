@@ -18,7 +18,10 @@ import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
+import com.liferay.portal.security.crypto.policy.ServiceType;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -71,6 +74,13 @@ public class DSHttp {
 		catch (Exception exception) {
 			return ReflectionUtil.throwException(exception);
 		}
+	}
+
+	@Activate
+	protected void activate() {
+		_cryptoPolicyManager.checkAlgorithm("RSA", ServiceType.KEY_FACTORY);
+		_cryptoPolicyManager.checkAlgorithm(
+			"SHA256withRSA", ServiceType.SIGNATURE);
 	}
 
 	private String _getDocuSignAccessToken(
@@ -140,6 +150,9 @@ public class DSHttp {
 
 		return _http.URLtoByteArray(options);
 	}
+
+	@Reference
+	private CryptoPolicyManager _cryptoPolicyManager;
 
 	@Reference
 	private Http _http;

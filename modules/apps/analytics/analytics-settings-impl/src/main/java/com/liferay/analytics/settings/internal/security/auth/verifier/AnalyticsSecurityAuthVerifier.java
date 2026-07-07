@@ -23,6 +23,8 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.security.crypto.policy.CryptoPolicyManager;
+import com.liferay.portal.security.crypto.policy.ServiceType;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -39,6 +41,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
@@ -154,6 +157,12 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 		}
 	}
 
+	@Activate
+	protected void activate() {
+		_cryptoPolicyManager.checkAlgorithm("DSA", ServiceType.KEY_FACTORY);
+		_cryptoPolicyManager.checkAlgorithm("DSA", ServiceType.SIGNATURE);
+	}
+
 	private long _getAnalyticsAdminUserId(long companyId) {
 		User user = _userLocalService.fetchUserByScreenName(
 			companyId, AnalyticsSecurityConstants.SCREEN_NAME_ANALYTICS_ADMIN);
@@ -210,6 +219,9 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private CryptoPolicyManager _cryptoPolicyManager;
 
 	@Reference
 	private JSONFactory _jsonFactory;
