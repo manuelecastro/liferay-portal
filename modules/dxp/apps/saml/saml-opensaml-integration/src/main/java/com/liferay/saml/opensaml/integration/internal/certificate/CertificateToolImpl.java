@@ -31,7 +31,6 @@ import java.util.Date;
 import java.util.Set;
 
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -58,23 +57,21 @@ public class CertificateToolImpl implements CertificateTool {
 			Date endDate, String signatureAlgorithm)
 		throws CertificateException {
 
-		JcaX509CertificateConverter jcaX509CertificateConverter =
-			new JcaX509CertificateConverter();
-
 		PublicKey publicKey = keyPair.getPublic();
 
 		try (ASN1InputStream asn1InputStream = new ASN1InputStream(
 				new ByteArrayInputStream(publicKey.getEncoded()))) {
 
+			JcaX509CertificateConverter jcaX509CertificateConverter =
+				new JcaX509CertificateConverter();
+
 			X509v3CertificateBuilder x509v3CertificateBuilder =
 				new X509v3CertificateBuilder(
 					_createX500Name(issuerCertificateEntityId),
-					new BigInteger(
-						_SERIAL_NUMBER_BIT_LENGTH, new SecureRandom()),
-					startDate, endDate,
+					new BigInteger(160, new SecureRandom()), startDate, endDate,
 					_createX500Name(subjectCertificateEntityId),
-					new SubjectPublicKeyInfo(
-						(ASN1Sequence)asn1InputStream.readObject()));
+					SubjectPublicKeyInfo.getInstance(
+						asn1InputStream.readObject()));
 
 			x509v3CertificateBuilder.addExtension(
 				Extension.basicConstraints, true, new BasicConstraints(false));
@@ -100,20 +97,18 @@ public class CertificateToolImpl implements CertificateTool {
 		throws NoSuchAlgorithmException {
 
 		if (PropsValues.FIPS_ENABLED) {
-			if (!_allowedKeyAlgorithms.contains(algorithm)) {
+			if (!algorithm.equals("RSA")) {
 				throw new InvalidParameterException(
 					StringBundler.concat(
-						"Algorithm ", algorithm,
-						" is not allowed in FIPS mode. Only RSA is supported ",
-						"for SAML certificates"));
+						"The algorithm ", algorithm,
+						" is not allowed in FIPS mode"));
 			}
 
 			if (!_allowedRsaKeySizes.contains(keySize)) {
 				throw new InvalidParameterException(
 					StringBundler.concat(
-						"Key size ", keySize,
-						" is not allowed in FIPS mode. Minimum 2048 bits ",
-						"required for FIPS compliance"));
+						"The key size ", keySize,
+						" is not allowed in FIPS mode for ", algorithm));
 			}
 		}
 
@@ -213,9 +208,6 @@ public class CertificateToolImpl implements CertificateTool {
 		return x500NameBuilder.build();
 	}
 
-	private static final int _SERIAL_NUMBER_BIT_LENGTH = 160;
-
-	private static final Set<String> _allowedKeyAlgorithms = Set.of("RSA");
 	private static final Set<Integer> _allowedRsaKeySizes = Set.of(
 		2048, 3072, 4096);
 

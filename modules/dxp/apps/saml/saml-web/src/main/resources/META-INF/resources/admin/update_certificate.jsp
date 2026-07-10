@@ -75,15 +75,15 @@ X509Certificate x509Certificate = (X509Certificate)request.getAttribute(SamlWebK
 
 			<%
 			String certificateKeyAlgorithm = ParamUtil.getString(request, "certificateKeyAlgorithm", "RSA");
-			String certificateKeyLength = ParamUtil.getString(request, "certificateKeyLength", "2048");
+			String certificateKeySize = ParamUtil.getString(request, "certificateKeySize", "2048");
 			%>
 
 			<div class="lfr-form-content" id="<portlet:namespace />certificateForm">
 				<div class="inline-alert-container lfr-alert-container"></div>
 
-				<liferay-ui:error exception="<%= CertificateException.class %>" message="please-enter-a-valid-key-length-and-algorithm" />
+				<liferay-ui:error exception="<%= CertificateException.class %>" message="please-enter-a-valid-algorithm-and-key-size" />
 				<liferay-ui:error exception="<%= CertificateKeyPasswordException.class %>" message="please-enter-a-valid-key-password" />
-				<liferay-ui:error exception="<%= InvalidParameterException.class %>" message="please-enter-a-valid-key-length-and-algorithm" />
+				<liferay-ui:error exception="<%= InvalidParameterException.class %>" message="please-enter-a-valid-algorithm-and-key-size" />
 				<liferay-ui:error key="certificateValidityDays" message="please-enter-a-valid-certificate-validity" />
 
 				<c:choose>
@@ -102,16 +102,13 @@ X509Certificate x509Certificate = (X509Certificate)request.getAttribute(SamlWebK
 
 						<aui:input label="validity-days" name="certificateValidityDays" value='<%= ParamUtil.getString(request, "certificateValidityDays", "356") %>' />
 
-						<%
-						String[] keyAlgorithms = (String[])request.getAttribute(SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS);
-						String[] keySizes = (String[])request.getAttribute(SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES);
-						%>
-
 						<c:choose>
-							<c:when test="<%= (keyAlgorithms.length > 1) && (certificateUsage == LocalEntityManager.CertificateUsage.SIGNING) %>">
+							<c:when test="<%= certificateUsage == LocalEntityManager.CertificateUsage.SIGNING %>">
 								<aui:select label="key-algorithm" name="certificateKeyAlgorithm" required="<%= true %>">
 
 									<%
+									String[] keyAlgorithms = PropsValues.FIPS_ENABLED ? new String[] {"RSA"} : new String[] {"RSA", "DSA"};
+
 									for (String algorithm : keyAlgorithms) {
 									%>
 
@@ -129,13 +126,15 @@ X509Certificate x509Certificate = (X509Certificate)request.getAttribute(SamlWebK
 							</c:otherwise>
 						</c:choose>
 
-						<aui:select label="key-length-bits" name="certificateKeyLength" required="<%= true %>">
+						<aui:select label="key-size-bits" name="certificateKeySize" required="<%= true %>">
 
 							<%
+							String[] keySizes = PropsValues.FIPS_ENABLED ? new String[] {"4096", "3072", "2048"} : new String[] {"4096", "2048", "1024", "512"};
+
 							for (String keySize : keySizes) {
 							%>
 
-								<aui:option label="<%= keySize %>" selected="<%= certificateKeyLength.equals(keySize) %>" value="<%= keySize %>" />
+								<aui:option label="<%= keySize %>" selected="<%= certificateKeySize.equals(keySize) %>" value="<%= keySize %>" />
 
 							<%
 							}
