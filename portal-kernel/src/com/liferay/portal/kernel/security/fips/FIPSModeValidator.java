@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -34,6 +35,48 @@ import java.util.regex.Pattern;
  */
 public class FIPSModeValidator {
 
+	public static String[] getValidTLSCipherSuites(
+		String[] supportedCipherSuites) {
+
+		if (!PropsValues.FIPS_ENABLED) {
+			return supportedCipherSuites;
+		}
+
+		Set<String> validCipherSuites = SetUtil.intersect(
+			_allowedTLSCipherSuites, SetUtil.fromArray(supportedCipherSuites));
+
+		return validCipherSuites.toArray(new String[0]);
+	}
+
+	public static String[] getValidTLSProtocols(String[] supportedProtocols) {
+		if (!PropsValues.FIPS_ENABLED) {
+			return supportedProtocols;
+		}
+
+		Set<String> validProtocols = SetUtil.intersect(
+			_allowedTLSProtocols, SetUtil.fromArray(supportedProtocols));
+
+		return validProtocols.toArray(new String[0]);
+	}
+
+	public static boolean isNotAllowedAlgorithm(String algorithm) {
+		if (!PropsValues.FIPS_ENABLED) {
+			return false;
+		}
+
+		if (Validator.isNull(algorithm)) {
+			return true;
+		}
+
+		for (String allowedAlgorithm : _allowedAlgorithms) {
+			if (algorithm.startsWith(allowedAlgorithm)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	public static void validate() {
 		Provider[] providers = Security.getProviders();
 
@@ -44,20 +87,10 @@ public class FIPSModeValidator {
 	}
 
 	public static void validateAlgorithm(String algorithm) {
-		if (!PropsValues.FIPS_ENABLED) {
-			return;
+		if (isNotAllowedAlgorithm(algorithm)) {
+			throw new SecurityException(
+				"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
 		}
-
-		if (Validator.isNotNull(algorithm)) {
-			for (String allowedAlgorithm : _allowedAlgorithms) {
-				if (StringUtil.startsWith(algorithm, allowedAlgorithm)) {
-					return;
-				}
-			}
-		}
-
-		throw new SecurityException(
-			"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
 	}
 
 	public static void validateKey(String algorithm, int keySize) {
@@ -71,6 +104,18 @@ public class FIPSModeValidator {
 			throw new SecurityException(
 				"AES key must be 128, 192, or 256 bits");
 		}
+	}
+
+	public static void validateURLProtocolScheme(String url) {
+		if (!PropsValues.FIPS_ENABLED ||
+			(Validator.isNotNull(url) &&
+			 StringUtil.startsWith(url, "ldaps://"))) {
+
+			return;
+		}
+
+		throw new SecurityException(
+			"URL protocol scheme is not allowed in FIPS mode");
 	}
 
 	private static void _validateFIPSProvider(Provider[] providers) {
@@ -270,6 +315,14 @@ public class FIPSModeValidator {
 			List.of(
 				"BCJSSE", "JdkLDAP", "JdkSASL", "SUN", "SunJCE", "SunJGSS",
 				"SunSASL", "XMLDSig"));
+	private static final Set<String> _allowedTLSCipherSuites = Set.of(
+		"TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384",
+		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384");
+	private static final Set<String> _allowedTLSProtocols = Set.of(
+		"TLSv1.2", "TLSv1.3");
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
 		"^[^/]*(?:/([0-9]+))?/([0-9]+)$");
 
