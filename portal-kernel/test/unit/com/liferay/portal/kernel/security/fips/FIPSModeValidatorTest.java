@@ -25,6 +25,53 @@ import org.junit.function.ThrowingRunnable;
 public class FIPSModeValidatorTest {
 
 	@Test
+	public void testGetValidTLSCipherSuites() {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", false)) {
+
+			Assert.assertArrayEquals(
+				new String[] {"TLS_RSA_WITH_AES_128_CBC_SHA"},
+				FIPSModeValidator.getValidTLSCipherSuites(
+					new String[] {"TLS_RSA_WITH_AES_128_CBC_SHA"}));
+		}
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertArrayEquals(
+				new String[] {"TLS_AES_128_GCM_SHA256"},
+				FIPSModeValidator.getValidTLSCipherSuites(
+					new String[] {
+						"TLS_AES_128_GCM_SHA256", "TLS_RSA_WITH_AES_128_CBC_SHA"
+					}));
+		}
+	}
+
+	@Test
+	public void testGetValidTLSProtocols() {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", false)) {
+
+			Assert.assertArrayEquals(
+				new String[] {"TLSv1"},
+				FIPSModeValidator.getValidTLSProtocols(new String[] {"TLSv1"}));
+		}
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertArrayEquals(
+				new String[] {"TLSv1.3"},
+				FIPSModeValidator.getValidTLSProtocols(
+					new String[] {"TLSv1.3", "TLSv1"}));
+		}
+	}
+
+	@Test
 	public void testValidateAlgorithm() {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
@@ -154,6 +201,36 @@ public class FIPSModeValidatorTest {
 						_createProvider(allowedProviderName),
 						_createProvider(RandomTestUtil.randomString())
 					}));
+		}
+	}
+
+	@Test
+	public void testValidateURLProtocolScheme() {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", false)) {
+
+			for (String url :
+					new String[] {
+						"ldap://localhost:389", "ldaps://localhost:636", null
+					}) {
+
+				FIPSModeValidator.validateURLProtocolScheme(url);
+			}
+		}
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			FIPSModeValidator.validateURLProtocolScheme(
+				"ldaps://localhost:636");
+
+			for (String url : new String[] {"ldap://localhost:389", "", null}) {
+				_assertSecurityException(
+					"protocol scheme",
+					() -> FIPSModeValidator.validateURLProtocolScheme(url));
+			}
 		}
 	}
 
