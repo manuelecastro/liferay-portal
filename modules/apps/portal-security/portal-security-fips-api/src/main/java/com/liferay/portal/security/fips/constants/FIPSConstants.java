@@ -13,6 +13,10 @@ public class FIPSConstants {
 	public static final String PASSWORD_POLICY_NAME_CRYPTO_OFFICER =
 		"Crypto Officer Password Policy";
 
+	public static final String FIPS_ADMIN_PORTLET_ID =
+		"com_liferay_portal_security_fips_web_internal_portlet_" +
+			"FIPSAdminPortlet";
+
 	public static final String SESSION_ABSOLUTE_DEADLINE =
 		"FIPS_SESSION_ABSOLUTE_DEADLINE";
 
