@@ -28,6 +28,15 @@ public class FIPSSessionSettingsServiceWrapper
 		_fipsSessionSettingsService = fipsSessionSettingsService;
 	}
 
+	@Override
+	public com.liferay.portal.security.fips.model.FIPSSessionSettings
+			getCompanyFIPSSessionSettings(long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fipsSessionSettingsService.getCompanyFIPSSessionSettings(
+			companyId);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -36,6 +45,17 @@ public class FIPSSessionSettingsServiceWrapper
 	@Override
 	public String getOSGiServiceIdentifier() {
 		return _fipsSessionSettingsService.getOSGiServiceIdentifier();
+	}
+
+	@Override
+	public com.liferay.portal.security.fips.model.FIPSSessionSettings
+			updateCompanyFIPSSessionSettings(
+				long companyId, int idleTimeoutMinutes,
+				int absoluteLifetimeMinutes)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fipsSessionSettingsService.updateCompanyFIPSSessionSettings(
+			companyId, idleTimeoutMinutes, absoluteLifetimeMinutes);
 	}
 
 	@Override
@@ -53,4 +73,4 @@ public class FIPSSessionSettingsServiceWrapper
 	private FIPSSessionSettingsService _fipsSessionSettingsService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1286036433
+// LIFERAY-SERVICE-BUILDER-HASH:-603180577

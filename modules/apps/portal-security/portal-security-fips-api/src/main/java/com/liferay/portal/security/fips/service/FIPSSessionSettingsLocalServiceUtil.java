@@ -217,6 +217,17 @@ public class FIPSSessionSettingsLocalServiceUtil {
 	}
 
 	/**
+	 * Returns the settings of the company, or a transient instance carrying the
+	 * deployment defaults when the company has never saved any. Callers are
+	 * therefore free of null checks.
+	 */
+	public static FIPSSessionSettings getCompanyFIPSSessionSettings(
+		long companyId) {
+
+		return getService().getCompanyFIPSSessionSettings(companyId);
+	}
+
+	/**
 	 * Returns the fips session settings with the primary key.
 	 *
 	 * @param fipsSessionSettingsId the primary key of the fips session settings
@@ -281,6 +292,15 @@ public class FIPSSessionSettingsLocalServiceUtil {
 		return getService().getPersistedModel(primaryKeyObj);
 	}
 
+	public static FIPSSessionSettings updateCompanyFIPSSessionSettings(
+			long userId, long companyId, int idleTimeoutMinutes,
+			int absoluteLifetimeMinutes)
+		throws PortalException {
+
+		return getService().updateCompanyFIPSSessionSettings(
+			userId, companyId, idleTimeoutMinutes, absoluteLifetimeMinutes);
+	}
+
 	/**
 	 * Updates the fips session settings in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
@@ -307,4 +327,4 @@ public class FIPSSessionSettingsLocalServiceUtil {
 			FIPSSessionSettingsLocalService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1367700195
+// LIFERAY-SERVICE-BUILDER-HASH:744777592
