@@ -1,0 +1,1 @@
+create unique index IX_4CF1218F on FIPSSessionSettings (companyId);
