@@ -11,7 +11,9 @@ import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
 import com.liferay.portal.kernel.security.access.control.AccessControlled;
 import com.liferay.portal.kernel.service.BaseService;
 import com.liferay.portal.kernel.transaction.Isolation;
+import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.security.fips.model.FIPSSessionSettings;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -38,6 +40,9 @@ public interface FIPSSessionSettingsService extends BaseService {
 	 *
 	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portal.security.fips.service.impl.FIPSSessionSettingsServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the fips session settings remote service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link FIPSSessionSettingsServiceUtil} if injection and service tracking are not available.
 	 */
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public FIPSSessionSettings getCompanyFIPSSessionSettings(long companyId)
+		throws PortalException;
 
 	/**
 	 * Returns the OSGi service identifier.
@@ -46,5 +51,9 @@ public interface FIPSSessionSettingsService extends BaseService {
 	 */
 	public String getOSGiServiceIdentifier();
 
+	public FIPSSessionSettings updateCompanyFIPSSessionSettings(
+			long companyId, int idleTimeoutMinutes, int absoluteLifetimeMinutes)
+		throws PortalException;
+
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-256023277
+// LIFERAY-SERVICE-BUILDER-HASH:-1809667595

@@ -200,6 +200,14 @@ public interface FIPSSessionSettingsLocalService
 	public ActionableDynamicQuery getActionableDynamicQuery();
 
 	/**
+	 * Returns the settings of the company, or a transient instance carrying the
+	 * deployment defaults when the company has never saved any. Callers are
+	 * therefore free of null checks.
+	 */
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public FIPSSessionSettings getCompanyFIPSSessionSettings(long companyId);
+
+	/**
 	 * Returns the fips session settings with the primary key.
 	 *
 	 * @param fipsSessionSettingsId the primary key of the fips session settings
@@ -252,6 +260,11 @@ public interface FIPSSessionSettingsLocalService
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
 
+	public FIPSSessionSettings updateCompanyFIPSSessionSettings(
+			long userId, long companyId, int idleTimeoutMinutes,
+			int absoluteLifetimeMinutes)
+		throws PortalException;
+
 	/**
 	 * Updates the fips session settings in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
@@ -267,4 +280,4 @@ public interface FIPSSessionSettingsLocalService
 		FIPSSessionSettings fipsSessionSettings);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1394656373
+// LIFERAY-SERVICE-BUILDER-HASH:-2023083459

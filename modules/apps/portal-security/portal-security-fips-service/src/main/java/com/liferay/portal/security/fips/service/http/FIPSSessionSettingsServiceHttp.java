@@ -5,13 +5,21 @@
 
 package com.liferay.portal.security.fips.service.http;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.auth.HttpPrincipal;
+import com.liferay.portal.kernel.service.http.TunnelUtil;
+import com.liferay.portal.kernel.util.MethodHandler;
+import com.liferay.portal.kernel.util.MethodKey;
+import com.liferay.portal.security.fips.service.FIPSSessionSettingsServiceUtil;
+
 /**
  * Provides the HTTP utility for the
- * <code>com.liferay.portal.security.fips.service.FIPSSessionSettingsServiceUtil</code> service
+ * <code>FIPSSessionSettingsServiceUtil</code> service
  * utility. The
  * static methods of this class calls the same methods of the service utility.
  * However, the signatures are different because it requires an additional
- * <code>com.liferay.portal.kernel.security.auth.HttpPrincipal</code> parameter.
+ * <code>HttpPrincipal</code> parameter.
  *
  * <p>
  * The benefits of using the HTTP utility is that it is fast and allows for
@@ -32,5 +40,106 @@ package com.liferay.portal.security.fips.service.http;
  * @generated
  */
 public class FIPSSessionSettingsServiceHttp {
+
+	public static com.liferay.portal.security.fips.model.FIPSSessionSettings
+			getCompanyFIPSSessionSettings(
+				HttpPrincipal httpPrincipal, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				FIPSSessionSettingsServiceUtil.class,
+				"getCompanyFIPSSessionSettings",
+				_getCompanyFIPSSessionSettingsParameterTypes0);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, companyId);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				if (exception instanceof
+						com.liferay.portal.kernel.exception.PortalException) {
+
+					throw (com.liferay.portal.kernel.exception.PortalException)
+						exception;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return (com.liferay.portal.security.fips.model.FIPSSessionSettings)
+				returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static com.liferay.portal.security.fips.model.FIPSSessionSettings
+			updateCompanyFIPSSessionSettings(
+				HttpPrincipal httpPrincipal, long companyId,
+				int idleTimeoutMinutes, int absoluteLifetimeMinutes)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				FIPSSessionSettingsServiceUtil.class,
+				"updateCompanyFIPSSessionSettings",
+				_updateCompanyFIPSSessionSettingsParameterTypes1);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, companyId, idleTimeoutMinutes,
+				absoluteLifetimeMinutes);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				if (exception instanceof
+						com.liferay.portal.kernel.exception.PortalException) {
+
+					throw (com.liferay.portal.kernel.exception.PortalException)
+						exception;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return (com.liferay.portal.security.fips.model.FIPSSessionSettings)
+				returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	private static Log _log = LogFactoryUtil.getLog(
+		FIPSSessionSettingsServiceHttp.class);
+
+	private static final Class<?>[]
+		_getCompanyFIPSSessionSettingsParameterTypes0 = new Class[] {
+			long.class
+		};
+	private static final Class<?>[]
+		_updateCompanyFIPSSessionSettingsParameterTypes1 = new Class[] {
+			long.class, int.class, int.class
+		};
+
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1461880160
+// LIFERAY-SERVICE-BUILDER-HASH:1686386402

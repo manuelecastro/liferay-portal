@@ -5,7 +5,9 @@
 
 package com.liferay.portal.security.fips.service;
 
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.security.fips.model.FIPSSessionSettings;
 
 /**
  * Provides the remote service utility for FIPSSessionSettings. This utility wraps
@@ -26,6 +28,12 @@ public class FIPSSessionSettingsServiceUtil {
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.security.fips.service.impl.FIPSSessionSettingsServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
+	public static FIPSSessionSettings getCompanyFIPSSessionSettings(
+			long companyId)
+		throws PortalException {
+
+		return getService().getCompanyFIPSSessionSettings(companyId);
+	}
 
 	/**
 	 * Returns the OSGi service identifier.
@@ -34,6 +42,14 @@ public class FIPSSessionSettingsServiceUtil {
 	 */
 	public static String getOSGiServiceIdentifier() {
 		return getService().getOSGiServiceIdentifier();
+	}
+
+	public static FIPSSessionSettings updateCompanyFIPSSessionSettings(
+			long companyId, int idleTimeoutMinutes, int absoluteLifetimeMinutes)
+		throws PortalException {
+
+		return getService().updateCompanyFIPSSessionSettings(
+			companyId, idleTimeoutMinutes, absoluteLifetimeMinutes);
 	}
 
 	public static FIPSSessionSettingsService getService() {
@@ -46,4 +62,4 @@ public class FIPSSessionSettingsServiceUtil {
 			FIPSSessionSettingsService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:943729396
+// LIFERAY-SERVICE-BUILDER-HASH:350567198
