@@ -1,0 +1,74 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.portal.security.fips.web.internal.portlet;
+
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
+import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.fips.configuration.FIPSSessionConfiguration;
+import com.liferay.portal.security.fips.web.internal.constants.FIPSPortletKeys;
+
+import jakarta.portlet.Portlet;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import java.io.IOException;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
+/**
+ * @author Manuele Castro
+ */
+@Component(
+	property = {
+		"com.liferay.portlet.css-class-wrapper=portal-security-fips-portlet",
+		"com.liferay.portlet.display-category=category.hidden",
+		"com.liferay.portlet.instanceable=false",
+		"jakarta.portlet.display-name=FIPS Admin",
+		"jakarta.portlet.expiration-cache=0",
+		"jakarta.portlet.info.keywords=FIPS Admin",
+		"jakarta.portlet.info.short-title=FIPS Admin",
+		"jakarta.portlet.info.title=FIPS Admin",
+		"jakarta.portlet.init-param.clear-request-parameters=true",
+		"jakarta.portlet.init-param.copy-request-parameters=true",
+		"jakarta.portlet.init-param.view-template=/view.jsp",
+		"jakarta.portlet.name=" + FIPSPortletKeys.FIPS_ADMIN,
+		"jakarta.portlet.resource-bundle=content.Language",
+		"jakarta.portlet.version=4.0"
+	},
+	service = Portlet.class
+)
+public class FIPSAdminPortlet extends MVCPortlet {
+
+	@Override
+	public void render(
+			RenderRequest renderRequest, RenderResponse renderResponse)
+		throws IOException, PortletException {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)renderRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		try {
+			renderRequest.setAttribute(
+				FIPSSessionConfiguration.class.getName(),
+				_configurationProvider.getCompanyConfiguration(
+					FIPSSessionConfiguration.class,
+					themeDisplay.getCompanyId()));
+		}
+		catch (Exception exception) {
+			throw new PortletException(exception);
+		}
+
+		super.render(renderRequest, renderResponse);
+	}
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
+
+}
