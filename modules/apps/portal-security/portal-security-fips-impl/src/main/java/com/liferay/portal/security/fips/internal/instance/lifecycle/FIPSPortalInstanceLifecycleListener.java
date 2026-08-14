@@ -9,15 +9,22 @@ import com.liferay.portal.instance.lifecycle.BasePortalInstanceLifecycleListener
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.PasswordPolicy;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.PasswordPolicyLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.security.fips.constants.FIPSConstants;
+
+import java.util.Arrays;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -41,6 +48,8 @@ public class FIPSPortalInstanceLifecycleListener
 
 		_addCryptoOfficerPasswordPolicy(companyId, user);
 		_addCryptoOfficerRole(companyId, user);
+
+		_addCryptoOfficerPortletPermissions(companyId);
 	}
 
 	private void _addCryptoOfficerPasswordPolicy(long companyId, User user)
@@ -81,6 +90,58 @@ public class FIPSPortalInstanceLifecycleListener
 			defaultPasswordPolicy.getResetTicketMaxAge(), new ServiceContext());
 	}
 
+	/**
+	 * Grants the Crypto Officer the control panel access that the FIPS Admin
+	 * page needs. The grant runs here rather than in a listener of its own so
+	 * that it always follows the role creation above; listeners registered by
+	 * separate bundles carry no guaranteed order.
+	 *
+	 * <p>
+	 * The resource actions are checked first because they are registered by
+	 * the bundle that owns the portlet, which may activate after this one.
+	 * Without this, {@code addResourcePermission} would throw
+	 * <code>NoSuchResourceActionException</code>, and the lifecycle manager
+	 * both swallows that exception and records the listener as having run, so
+	 * the grant would be lost for good rather than retried on the next
+	 * startup.
+	 * </p>
+	 */
+	private void _addCryptoOfficerPortletPermissions(long companyId)
+		throws Exception {
+
+		Role role = _roleLocalService.fetchRole(
+			companyId, RoleConstants.CRYPTO_OFFICER);
+
+		if (role == null) {
+			return;
+		}
+
+		_resourceActionLocalService.checkResourceActions(
+			FIPSConstants.PORTLET_ID_FIPS_ADMIN,
+			Arrays.asList(ActionKeys.ACCESS_IN_CONTROL_PANEL, ActionKeys.VIEW));
+
+		for (String actionId :
+				new String[] {
+					ActionKeys.ACCESS_IN_CONTROL_PANEL, ActionKeys.VIEW
+				}) {
+
+			ResourcePermission resourcePermission =
+				_resourcePermissionLocalService.fetchResourcePermission(
+					companyId, FIPSConstants.PORTLET_ID_FIPS_ADMIN,
+					ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
+					role.getRoleId());
+
+			if ((resourcePermission == null) ||
+				!resourcePermission.hasActionId(actionId)) {
+
+				_resourcePermissionLocalService.addResourcePermission(
+					companyId, FIPSConstants.PORTLET_ID_FIPS_ADMIN,
+					ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
+					role.getRoleId(), actionId);
+			}
+		}
+	}
+
 	private void _addCryptoOfficerRole(long companyId, User user)
 		throws Exception {
 
@@ -98,6 +159,12 @@ public class FIPSPortalInstanceLifecycleListener
 
 	@Reference
 	private PasswordPolicyLocalService _passwordPolicyLocalService;
+
+	@Reference
+	private ResourceActionLocalService _resourceActionLocalService;
+
+	@Reference
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
 
 	@Reference
 	private RoleLocalService _roleLocalService;
