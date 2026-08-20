@@ -13,6 +13,13 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
  * Scoped per company so that each portal instance carries its own timeouts.
  *
  * <p>
+ * Each timeout is stored as an amount plus the unit it was entered in, rather
+ * than normalized to minutes, so the page can show the Crypto Officer the same
+ * figure they typed. Everything that enforces a timeout converts through
+ * {@link com.liferay.portal.security.fips.util.FIPSTimeUnitUtil} first.
+ * </p>
+ *
+ * <p>
  * Declares no category and sets <code>generateUI</code> to false, which keeps
  * the configuration out of the System Settings listing and out of its search.
  * That is presentation only: the configuration admin edit, save, delete, and
@@ -33,12 +40,24 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 )
 public interface FIPSSessionConfiguration {
 
+	@Meta.AD(deflt = "30", name = "session-absolute-lifetime", required = false)
+	public int absoluteLifetime();
+
 	@Meta.AD(
-		deflt = "43200", name = "session-absolute-lifetime", required = false
+		deflt = "days", name = "time-unit",
+		optionLabels = {"minutes", "hours", "days"},
+		optionValues = {"minutes", "hours", "days"}, required = false
 	)
-	public int absoluteLifetimeMinutes();
+	public String absoluteLifetimeTimeUnit();
 
 	@Meta.AD(deflt = "15", name = "session-idle-timeout", required = false)
-	public int idleTimeoutMinutes();
+	public int idleTimeout();
+
+	@Meta.AD(
+		deflt = "minutes", name = "time-unit",
+		optionLabels = {"minutes", "hours"},
+		optionValues = {"minutes", "hours"}, required = false
+	)
+	public String idleTimeoutTimeUnit();
 
 }

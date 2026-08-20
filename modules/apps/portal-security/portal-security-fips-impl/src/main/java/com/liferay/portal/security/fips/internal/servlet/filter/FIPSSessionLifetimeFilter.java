@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.security.fips.configuration.FIPSSessionConfiguration;
 import com.liferay.portal.security.fips.constants.FIPSConstants;
+import com.liferay.portal.security.fips.util.FIPSTimeUnitUtil;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
 
 import jakarta.servlet.Filter;
@@ -95,8 +96,12 @@ public class FIPSSessionLifetimeFilter extends BasePortalFilter {
 				httpSession.invalidate();
 			}
 			else {
+				long idleTimeoutMinutes = FIPSTimeUnitUtil.toMinutes(
+					fipsSessionConfiguration.idleTimeout(),
+					fipsSessionConfiguration.idleTimeoutTimeUnit());
+
 				httpSession.setMaxInactiveInterval(
-					fipsSessionConfiguration.idleTimeoutMinutes() * 60);
+					(int)idleTimeoutMinutes * 60);
 			}
 		}
 
@@ -112,9 +117,11 @@ public class FIPSSessionLifetimeFilter extends BasePortalFilter {
 			httpSession.getAttribute(FIPSConstants.SESSION_ABSOLUTE_DEADLINE));
 
 		if (deadline <= 0) {
-			long absoluteLifetime =
-				fipsSessionConfiguration.absoluteLifetimeMinutes() *
-					Time.MINUTE;
+			long absoluteLifetimeMinutes = FIPSTimeUnitUtil.toMinutes(
+				fipsSessionConfiguration.absoluteLifetime(),
+				fipsSessionConfiguration.absoluteLifetimeTimeUnit());
+
+			long absoluteLifetime = absoluteLifetimeMinutes * Time.MINUTE;
 
 			deadline = httpSession.getCreationTime() + absoluteLifetime;
 		}

@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.security.fips.configuration.FIPSSessionConfiguration;
+import com.liferay.portal.security.fips.constants.FIPSConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -81,7 +82,7 @@ public class FIPSSessionConfigurationModelListenerTest {
 
 			UserTestUtil.setUser(TestPropsValues.getUser());
 
-			_assertRefused(_toProperties(1440, 30));
+			_assertRefused(_validProperties());
 		}
 	}
 
@@ -95,7 +96,7 @@ public class FIPSSessionConfigurationModelListenerTest {
 
 			_configurationProvider.saveCompanyConfiguration(
 				FIPSSessionConfiguration.class, TestPropsValues.getCompanyId(),
-				_toProperties(1440, 30));
+				_validProperties());
 
 			FIPSSessionConfiguration fipsSessionConfiguration =
 				_configurationProvider.getCompanyConfiguration(
@@ -103,9 +104,14 @@ public class FIPSSessionConfigurationModelListenerTest {
 					TestPropsValues.getCompanyId());
 
 			Assert.assertEquals(
-				1440, fipsSessionConfiguration.absoluteLifetimeMinutes());
+				24, fipsSessionConfiguration.absoluteLifetime());
 			Assert.assertEquals(
-				30, fipsSessionConfiguration.idleTimeoutMinutes());
+				FIPSConstants.TIME_UNIT_HOURS,
+				fipsSessionConfiguration.absoluteLifetimeTimeUnit());
+			Assert.assertEquals(30, fipsSessionConfiguration.idleTimeout());
+			Assert.assertEquals(
+				FIPSConstants.TIME_UNIT_MINUTES,
+				fipsSessionConfiguration.idleTimeoutTimeUnit());
 		}
 	}
 
@@ -117,12 +123,20 @@ public class FIPSSessionConfigurationModelListenerTest {
 
 			_setUpCryptoOfficer();
 
-			_assertRefused(_toProperties(43201, 15));
-			_assertRefused(_toProperties(0, 15));
-			_assertRefused(_toProperties(-1, 15));
-			_assertRefused(_toProperties(43200, 721));
-			_assertRefused(_toProperties(43200, 0));
-			_assertRefused(_toProperties(43200, -1));
+			String days = FIPSConstants.TIME_UNIT_DAYS;
+			String hours = FIPSConstants.TIME_UNIT_HOURS;
+			String minutes = FIPSConstants.TIME_UNIT_MINUTES;
+
+			_assertRefused(_toProperties(43201, minutes, 15, minutes));
+			_assertRefused(_toProperties(0, minutes, 15, minutes));
+			_assertRefused(_toProperties(-1, minutes, 15, minutes));
+			_assertRefused(_toProperties(43200, minutes, 721, minutes));
+			_assertRefused(_toProperties(43200, minutes, 0, minutes));
+			_assertRefused(_toProperties(43200, minutes, -1, minutes));
+			_assertRefused(_toProperties(31, days, 15, minutes));
+			_assertRefused(_toProperties(721, hours, 15, minutes));
+
+			_assertRefused(_toProperties(30, days, 13, hours));
 		}
 	}
 
@@ -142,7 +156,7 @@ public class FIPSSessionConfigurationModelListenerTest {
 			PermissionThreadLocal.setPermissionChecker(null);
 			PrincipalThreadLocal.setName((String)null);
 
-			_assertRefused(_toProperties(1440, 30));
+			_assertRefused(_validProperties());
 		}
 	}
 
@@ -196,13 +210,24 @@ public class FIPSSessionConfigurationModelListenerTest {
 	}
 
 	private Dictionary<String, Object> _toProperties(
-		int absoluteLifetimeMinutes, int idleTimeoutMinutes) {
+		int absoluteLifetime, String absoluteLifetimeTimeUnit, int idleTimeout,
+		String idleTimeoutTimeUnit) {
 
 		return HashMapDictionaryBuilder.<String, Object>put(
-			"absoluteLifetimeMinutes", absoluteLifetimeMinutes
+			"absoluteLifetime", absoluteLifetime
 		).put(
-			"idleTimeoutMinutes", idleTimeoutMinutes
+			"absoluteLifetimeTimeUnit", absoluteLifetimeTimeUnit
+		).put(
+			"idleTimeout", idleTimeout
+		).put(
+			"idleTimeoutTimeUnit", idleTimeoutTimeUnit
 		).build();
+	}
+
+	private Dictionary<String, Object> _validProperties() {
+		return _toProperties(
+			24, FIPSConstants.TIME_UNIT_HOURS, 30,
+			FIPSConstants.TIME_UNIT_MINUTES);
 	}
 
 	@Inject

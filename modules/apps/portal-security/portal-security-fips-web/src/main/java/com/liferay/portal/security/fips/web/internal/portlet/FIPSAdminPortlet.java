@@ -10,7 +10,9 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.fips.configuration.FIPSSessionConfiguration;
-import com.liferay.portal.security.fips.web.internal.constants.FIPSPortletKeys;
+import com.liferay.portal.security.fips.constants.FIPSPortletKeys;
+import com.liferay.portal.security.fips.web.internal.constants.FIPSAdminWebKeys;
+import com.liferay.portal.security.fips.web.internal.display.context.FIPSAdminDisplayContext;
 
 import jakarta.portlet.Portlet;
 import jakarta.portlet.PortletException;
@@ -56,10 +58,12 @@ public class FIPSAdminPortlet extends MVCPortlet {
 
 		try {
 			renderRequest.setAttribute(
-				FIPSSessionConfiguration.class.getName(),
-				_configurationProvider.getCompanyConfiguration(
-					FIPSSessionConfiguration.class,
-					themeDisplay.getCompanyId()));
+				FIPSAdminWebKeys.FIPS_ADMIN_DISPLAY_CONTEXT,
+				new FIPSAdminDisplayContext(
+					_configurationProvider.getCompanyConfiguration(
+						FIPSSessionConfiguration.class,
+						themeDisplay.getCompanyId()),
+					renderRequest, renderResponse));
 		}
 		catch (Exception exception) {
 			throw new PortletException(exception);

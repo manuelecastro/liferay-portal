@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.security.fips.configuration.FIPSSessionConfiguration;
 import com.liferay.portal.security.fips.constants.FIPSConstants;
+import com.liferay.portal.security.fips.util.FIPSTimeUnitUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -57,16 +58,21 @@ public class FIPSSessionLoginPostAction extends Action {
 
 			HttpSession httpSession = httpServletRequest.getSession();
 
-			long absoluteLifetime =
-				fipsSessionConfiguration.absoluteLifetimeMinutes() *
-					Time.MINUTE;
+			long absoluteLifetimeMinutes = FIPSTimeUnitUtil.toMinutes(
+				fipsSessionConfiguration.absoluteLifetime(),
+				fipsSessionConfiguration.absoluteLifetimeTimeUnit());
+
+			long absoluteLifetime = absoluteLifetimeMinutes * Time.MINUTE;
 
 			httpSession.setAttribute(
 				FIPSConstants.SESSION_ABSOLUTE_DEADLINE,
 				System.currentTimeMillis() + absoluteLifetime);
 
-			httpSession.setMaxInactiveInterval(
-				fipsSessionConfiguration.idleTimeoutMinutes() * 60);
+			long idleTimeoutMinutes = FIPSTimeUnitUtil.toMinutes(
+				fipsSessionConfiguration.idleTimeout(),
+				fipsSessionConfiguration.idleTimeoutTimeUnit());
+
+			httpSession.setMaxInactiveInterval((int)idleTimeoutMinutes * 60);
 		}
 		catch (Exception exception) {
 			throw new ActionException(exception);

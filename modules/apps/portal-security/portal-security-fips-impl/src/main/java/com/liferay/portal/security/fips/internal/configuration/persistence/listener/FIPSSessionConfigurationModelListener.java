@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.security.fips.configuration.FIPSSessionConfiguration;
 import com.liferay.portal.security.fips.constants.FIPSConstants;
+import com.liferay.portal.security.fips.util.FIPSTimeUnitUtil;
 import com.liferay.portal.security.fips.util.FIPSUtil;
 
 import java.util.Dictionary;
@@ -47,6 +48,11 @@ import org.osgi.service.component.annotations.Reference;
  * <code>@Meta.AD</code> declarations rather than from a written record.
  * </p>
  *
+ * <p>
+ * The ceilings are compared in minutes, so that entering the same duration in
+ * a coarser unit cannot slip past them.
+ * </p>
+ *
  * @author Manuele Castro
  */
 @Component(
@@ -70,9 +76,19 @@ public class FIPSSessionConfigurationModelListener
 		_checkCryptoOfficerRole(properties);
 
 		_validate(
-			GetterUtil.getInteger(properties.get("absoluteLifetimeMinutes")),
-			GetterUtil.getInteger(properties.get("idleTimeoutMinutes")),
-			properties);
+			"absolute-session-lifetime",
+			FIPSTimeUnitUtil.toMinutes(
+				GetterUtil.getInteger(properties.get("absoluteLifetime")),
+				GetterUtil.getString(
+					properties.get("absoluteLifetimeTimeUnit"))),
+			FIPSConstants.SESSION_ABSOLUTE_LIFETIME_MAX_MINUTES, properties);
+
+		_validate(
+			"session-idle-timeout",
+			FIPSTimeUnitUtil.toMinutes(
+				GetterUtil.getInteger(properties.get("idleTimeout")),
+				GetterUtil.getString(properties.get("idleTimeoutTimeUnit"))),
+			FIPSConstants.SESSION_IDLE_TIMEOUT_MAX_MINUTES, properties);
 	}
 
 	private void _checkCryptoOfficerRole(Dictionary<String, Object> properties)
@@ -93,33 +109,19 @@ public class FIPSSessionConfigurationModelListener
 	}
 
 	private void _validate(
-			int absoluteLifetimeMinutes, int idleTimeoutMinutes,
+			String name, long minutes, int maximumMinutes,
 			Dictionary<String, Object> properties)
 		throws ConfigurationModelListenerException {
 
-		if ((absoluteLifetimeMinutes <= 0) ||
-			(absoluteLifetimeMinutes >
-				FIPSConstants.SESSION_ABSOLUTE_LIFETIME_MAX_MINUTES)) {
-
-			throw new ConfigurationModelListenerException(
-				StringBundler.concat(
-					"The absolute session lifetime must be between 1 and ",
-					FIPSConstants.SESSION_ABSOLUTE_LIFETIME_MAX_MINUTES,
-					" minutes, but was ", absoluteLifetimeMinutes),
-				FIPSSessionConfiguration.class, getClass(), properties);
+		if ((minutes > 0) && (minutes <= maximumMinutes)) {
+			return;
 		}
 
-		if ((idleTimeoutMinutes <= 0) ||
-			(idleTimeoutMinutes >
-				FIPSConstants.SESSION_IDLE_TIMEOUT_MAX_MINUTES)) {
-
-			throw new ConfigurationModelListenerException(
-				StringBundler.concat(
-					"The session idle timeout must be between 1 and ",
-					FIPSConstants.SESSION_IDLE_TIMEOUT_MAX_MINUTES,
-					" minutes, but was ", idleTimeoutMinutes),
-				FIPSSessionConfiguration.class, getClass(), properties);
-		}
+		throw new ConfigurationModelListenerException(
+			StringBundler.concat(
+				"The ", name, " must be between 1 and ", maximumMinutes,
+				" minutes, but was ", minutes),
+			FIPSSessionConfiguration.class, getClass(), properties);
 	}
 
 	@Reference

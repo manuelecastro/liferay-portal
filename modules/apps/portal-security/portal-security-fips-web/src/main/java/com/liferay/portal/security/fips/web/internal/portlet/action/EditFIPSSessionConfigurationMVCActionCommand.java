@@ -15,7 +15,7 @@ import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.fips.configuration.FIPSSessionConfiguration;
-import com.liferay.portal.security.fips.web.internal.constants.FIPSPortletKeys;
+import com.liferay.portal.security.fips.constants.FIPSPortletKeys;
 
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
@@ -54,12 +54,18 @@ public class EditFIPSSessionConfigurationMVCActionCommand
 			_configurationProvider.saveCompanyConfiguration(
 				FIPSSessionConfiguration.class, themeDisplay.getCompanyId(),
 				HashMapDictionaryBuilder.<String, Object>put(
-					"absoluteLifetimeMinutes",
-					ParamUtil.getInteger(
-						actionRequest, "absoluteLifetimeMinutes")
+					"absoluteLifetime",
+					ParamUtil.getInteger(actionRequest, "absoluteLifetime")
 				).put(
-					"idleTimeoutMinutes",
-					ParamUtil.getInteger(actionRequest, "idleTimeoutMinutes")
+					"absoluteLifetimeTimeUnit",
+					ParamUtil.getString(
+						actionRequest, "absoluteLifetimeTimeUnit")
+				).put(
+					"idleTimeout",
+					ParamUtil.getInteger(actionRequest, "idleTimeout")
+				).put(
+					"idleTimeoutTimeUnit",
+					ParamUtil.getString(actionRequest, "idleTimeoutTimeUnit")
 				).build());
 		}
 		catch (Exception exception) {

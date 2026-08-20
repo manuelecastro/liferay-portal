@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.security.fips.constants.FIPSConstants;
+import com.liferay.portal.security.fips.constants.FIPSPortletKeys;
 
 import java.util.Arrays;
 
@@ -117,7 +118,7 @@ public class FIPSPortalInstanceLifecycleListener
 		}
 
 		_resourceActionLocalService.checkResourceActions(
-			FIPSConstants.PORTLET_ID_FIPS_ADMIN,
+			FIPSPortletKeys.FIPS_ADMIN,
 			Arrays.asList(ActionKeys.ACCESS_IN_CONTROL_PANEL, ActionKeys.VIEW));
 
 		for (String actionId :
@@ -127,7 +128,7 @@ public class FIPSPortalInstanceLifecycleListener
 
 			ResourcePermission resourcePermission =
 				_resourcePermissionLocalService.fetchResourcePermission(
-					companyId, FIPSConstants.PORTLET_ID_FIPS_ADMIN,
+					companyId, FIPSPortletKeys.FIPS_ADMIN,
 					ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
 					role.getRoleId());
 
@@ -135,7 +136,7 @@ public class FIPSPortalInstanceLifecycleListener
 				!resourcePermission.hasActionId(actionId)) {
 
 				_resourcePermissionLocalService.addResourcePermission(
-					companyId, FIPSConstants.PORTLET_ID_FIPS_ADMIN,
+					companyId, FIPSPortletKeys.FIPS_ADMIN,
 					ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
 					role.getRoleId(), actionId);
 			}
