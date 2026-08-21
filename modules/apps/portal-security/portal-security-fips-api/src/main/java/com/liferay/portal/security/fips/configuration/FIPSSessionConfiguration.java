@@ -40,7 +40,9 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 )
 public interface FIPSSessionConfiguration {
 
-	@Meta.AD(deflt = "30", name = "session-absolute-lifetime", required = false)
+	@Meta.AD(
+		deflt = "30", name = "fips-session-absolute-lifetime", required = false
+	)
 	public int absoluteLifetime();
 
 	@Meta.AD(
@@ -50,7 +52,7 @@ public interface FIPSSessionConfiguration {
 	)
 	public String absoluteLifetimeTimeUnit();
 
-	@Meta.AD(deflt = "15", name = "session-idle-timeout", required = false)
+	@Meta.AD(deflt = "15", name = "fips-session-idle-timeout", required = false)
 	public int idleTimeout();
 
 	@Meta.AD(

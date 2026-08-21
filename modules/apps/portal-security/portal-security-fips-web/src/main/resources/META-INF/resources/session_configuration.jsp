@@ -21,11 +21,11 @@ String idleTimeoutTimeUnit = fipsSessionConfiguration.idleTimeoutTimeUnit();
 <aui:form action="<%= editFIPSSessionConfigurationURL %>" method="post" name="fm">
 	<div class="sheet">
 		<div class="panel-group panel-group-flush">
-			<aui:fieldset label="session-timeouts">
+			<aui:fieldset>
 				<div class="row">
 					<div class="col-sm-12 form-group">
 						<label class="c-mb-1 c-mt-2 font-weight-semi-bold" for="<portlet:namespace />idleTimeout" id="<portlet:namespace />idleTimeoutLabel">
-							<liferay-ui:message key="session-idle-timeout" />
+							<liferay-ui:message key="fips-session-idle-timeout" />
 						</label>
 
 						<div class="form-group-autofit">
@@ -53,7 +53,7 @@ String idleTimeoutTimeUnit = fipsSessionConfiguration.idleTimeoutTimeUnit();
 
 						<div class="c-mb-1 form-feedback-group" id="<portlet:namespace />idleTimeoutHelp">
 							<div class="form-text text-weight-normal">
-								<liferay-ui:message arguments='<%= new Object[] {FIPSConstants.SESSION_IDLE_TIMEOUT_MAX_HOURS, LanguageUtil.get(request, "hours")} %>' key="the-maximum-is-x-x" translateArguments="<%= false %>" />
+								<liferay-ui:message key="fips-session-idle-timeout-help" />
 							</div>
 						</div>
 					</div>
@@ -62,7 +62,7 @@ String idleTimeoutTimeUnit = fipsSessionConfiguration.idleTimeoutTimeUnit();
 				<div class="row">
 					<div class="col-sm-12 form-group">
 						<label class="c-mb-1 c-mt-2 font-weight-semi-bold" for="<portlet:namespace />absoluteLifetime" id="<portlet:namespace />absoluteLifetimeLabel">
-							<liferay-ui:message key="session-absolute-lifetime" />
+							<liferay-ui:message key="fips-session-absolute-lifetime" />
 						</label>
 
 						<div class="form-group-autofit">
@@ -91,16 +91,16 @@ String idleTimeoutTimeUnit = fipsSessionConfiguration.idleTimeoutTimeUnit();
 
 						<div class="c-mb-1 form-feedback-group" id="<portlet:namespace />absoluteLifetimeHelp">
 							<div class="form-text text-weight-normal">
-								<liferay-ui:message arguments='<%= new Object[] {FIPSConstants.SESSION_ABSOLUTE_LIFETIME_MAX_DAYS, LanguageUtil.get(request, "days")} %>' key="the-maximum-is-x-x" translateArguments="<%= false %>" />
+								<liferay-ui:message key="fips-session-absolute-lifetime-help" />
 							</div>
 						</div>
 					</div>
 				</div>
-			</aui:fieldset>
 
-			<aui:button-row>
-				<aui:button type="submit" />
-			</aui:button-row>
+				<aui:button-row>
+					<aui:button type="submit" />
+				</aui:button-row>
+			</aui:fieldset>
 		</div>
 	</div>
 </aui:form>

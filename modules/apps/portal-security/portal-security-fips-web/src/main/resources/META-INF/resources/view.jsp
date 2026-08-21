@@ -12,5 +12,5 @@
 />
 
 <div class="container-fluid container-fluid-max-xl mt-3">
-	<liferay-util:include page="/session.jsp" servletContext="<%= application %>" />
+	<liferay-util:include page="/session_configuration.jsp" servletContext="<%= application %>" />
 </div>

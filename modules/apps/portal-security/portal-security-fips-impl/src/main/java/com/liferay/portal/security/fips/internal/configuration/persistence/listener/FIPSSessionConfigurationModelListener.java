@@ -76,7 +76,7 @@ public class FIPSSessionConfigurationModelListener
 		_checkCryptoOfficerRole(properties);
 
 		_validate(
-			"absolute-session-lifetime",
+			"fips-absolute-session-lifetime",
 			FIPSTimeUnitUtil.toMinutes(
 				GetterUtil.getInteger(properties.get("absoluteLifetime")),
 				GetterUtil.getString(
@@ -84,7 +84,7 @@ public class FIPSSessionConfigurationModelListener
 			FIPSConstants.SESSION_ABSOLUTE_LIFETIME_MAX_MINUTES, properties);
 
 		_validate(
-			"session-idle-timeout",
+			"fips-session-idle-timeout",
 			FIPSTimeUnitUtil.toMinutes(
 				GetterUtil.getInteger(properties.get("idleTimeout")),
 				GetterUtil.getString(properties.get("idleTimeoutTimeUnit"))),

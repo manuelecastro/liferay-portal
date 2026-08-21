@@ -70,7 +70,9 @@ public class FIPSAdminDisplayContext {
 		return ParamUtil.getString(_renderRequest, "tabs1", _TABS1_NAMES[0]);
 	}
 
-	private static final String[] _TABS1_NAMES = {"session"};
+	private static final String[] _TABS1_NAMES = {
+		"fips-session-configuration-name"
+	};
 
 	private final FIPSSessionConfiguration _fipsSessionConfiguration;
 	private final RenderRequest _renderRequest;

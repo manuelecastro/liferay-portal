@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.fips.configuration.FIPSSessionConfiguration;
 import com.liferay.portal.security.fips.constants.FIPSConstants;
 import com.liferay.portal.security.fips.util.FIPSTimeUnitUtil;
@@ -34,6 +35,15 @@ import org.osgi.service.component.annotations.Reference;
  * The idle timeout is reapplied on every request rather than only at login, so
  * that a value saved by the Crypto Officer takes effect on sessions that are
  * already open instead of waiting for the next sign in.
+ * </p>
+ *
+ * <p>
+ * The resolved idle timeout is also published on the request, because the
+ * container default that <code>web.xml</code> declares is what the theme hands
+ * to the browser as its countdown. Without it, <code>Liferay.Session</code>
+ * would call <code>/c/portal/expire_session</code> at the shorter
+ * <code>web.xml</code> mark and invalidate a session the server was still
+ * willing to keep.
  * </p>
  *
  * <p>
@@ -100,8 +110,12 @@ public class FIPSSessionLifetimeFilter extends BasePortalFilter {
 					fipsSessionConfiguration.idleTimeout(),
 					fipsSessionConfiguration.idleTimeoutTimeUnit());
 
-				httpSession.setMaxInactiveInterval(
-					(int)idleTimeoutMinutes * 60);
+				int idleTimeout = (int)idleTimeoutMinutes * 60;
+
+				httpSession.setMaxInactiveInterval(idleTimeout);
+
+				httpServletRequest.setAttribute(
+					WebKeys.FIPS_SESSION_IDLE_TIMEOUT, idleTimeout);
 			}
 		}
 
