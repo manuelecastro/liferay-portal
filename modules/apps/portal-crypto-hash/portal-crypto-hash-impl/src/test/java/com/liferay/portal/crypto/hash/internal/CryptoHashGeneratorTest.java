@@ -171,7 +171,10 @@ public class CryptoHashGeneratorTest {
 			inputs.add(input);
 		}
 
-		ExecutorService executorService = Executors.newFixedThreadPool(8);
+		Runtime runtime = Runtime.getRuntime();
+
+		ExecutorService executorService = Executors.newFixedThreadPool(
+			runtime.availableProcessors());
 
 		try {
 			List<Future<CryptoHashResponse>> futures =
