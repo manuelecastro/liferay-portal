@@ -15,6 +15,8 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.security.Key;
 
+import java.util.Arrays;
+
 import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.Assert;
@@ -43,6 +45,33 @@ public class EncryptorImplTest {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
+
+			Assert.assertEquals(
+				_PLAINTEXT, encryptor.decrypt(key, encryptedString));
+		}
+	}
+
+	@Test
+	public void testDecryptAfterFailedDecrypt() throws Exception {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", false)) {
+
+			Encryptor encryptor = new EncryptorImpl();
+
+			Key key = encryptor.generateKey();
+
+			String encryptedString = encryptor.encrypt(key, _PLAINTEXT);
+
+			byte[] encryptedBytes = Base64.decode(encryptedString);
+
+			Assert.assertThrows(
+				EncryptorException.class,
+				() -> encryptor.decrypt(
+					key,
+					Base64.encode(
+						Arrays.copyOf(
+							encryptedBytes, encryptedBytes.length - 1))));
 
 			Assert.assertEquals(
 				_PLAINTEXT, encryptor.decrypt(key, encryptedString));

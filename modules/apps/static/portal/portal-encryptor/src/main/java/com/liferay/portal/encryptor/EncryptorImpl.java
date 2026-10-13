@@ -5,6 +5,8 @@
 
 package com.liferay.portal.encryptor;
 
+import com.liferay.petra.lang.CentralizedThreadLocal;
+import com.liferay.petra.lang.HashUtil;
 import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.encryptor.EncryptorException;
 import com.liferay.portal.kernel.log.Log;
@@ -19,9 +21,13 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.security.GeneralSecurityException;
 import java.security.Key;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -86,9 +92,8 @@ public class EncryptorImpl implements Encryptor {
 		}
 
 		try {
-			Cipher cipher = Cipher.getInstance(key.getAlgorithm());
-
-			cipher.init(Cipher.DECRYPT_MODE, key);
+			Cipher cipher = _getCipher(
+				_decryptCiphers.get(), encodedBytes, key, Cipher.DECRYPT_MODE);
 
 			return cipher.doFinal(encryptedBytes);
 		}
@@ -149,9 +154,8 @@ public class EncryptorImpl implements Encryptor {
 		}
 
 		try {
-			Cipher cipher = Cipher.getInstance(key.getAlgorithm());
-
-			cipher.init(Cipher.ENCRYPT_MODE, key);
+			Cipher cipher = _getCipher(
+				_encryptCiphers.get(), encodedBytes, key, Cipher.ENCRYPT_MODE);
 
 			return cipher.doFinal(plainBytes);
 		}
@@ -182,6 +186,16 @@ public class EncryptorImpl implements Encryptor {
 	@Override
 	public String serializeKey(Key key) {
 		return Base64.encode(key.getEncoded());
+	}
+
+	private Cipher _createCipher(Key key, int mode)
+		throws GeneralSecurityException {
+
+		Cipher cipher = Cipher.getInstance(key.getAlgorithm());
+
+		cipher.init(mode, key);
+
+		return cipher;
 	}
 
 	private byte[] _decryptGCM(byte[] encryptedBytes, Key key)
@@ -274,6 +288,29 @@ public class EncryptorImpl implements Encryptor {
 		}
 	}
 
+	private Cipher _getCipher(
+			Map<CipherCacheKey, Cipher> ciphers, byte[] encodedBytes, Key key,
+			int mode)
+		throws GeneralSecurityException {
+
+		if (encodedBytes == null) {
+			return _createCipher(key, mode);
+		}
+
+		CipherCacheKey cipherCacheKey = new CipherCacheKey(
+			key.getAlgorithm(), encodedBytes);
+
+		Cipher cipher = ciphers.get(cipherCacheKey);
+
+		if (cipher == null) {
+			cipher = _createCipher(key, mode);
+
+			ciphers.put(cipherCacheKey, cipher);
+		}
+
+		return cipher;
+	}
+
 	private static final String _AES_GCM_NOPADDING = "AES/GCM/NoPadding";
 
 	private static final int _AES_KEY_SIZE = 256;
@@ -283,5 +320,44 @@ public class EncryptorImpl implements Encryptor {
 	private static final int _GCM_TAG_LENGTH_BITS = 128;
 
 	private static final Log _log = LogFactoryUtil.getLog(EncryptorImpl.class);
+
+	private final ThreadLocal<Map<CipherCacheKey, Cipher>> _decryptCiphers =
+		new CentralizedThreadLocal<>(
+			EncryptorImpl.class.getName() + "._decryptCiphers", HashMap::new);
+	private final ThreadLocal<Map<CipherCacheKey, Cipher>> _encryptCiphers =
+		new CentralizedThreadLocal<>(
+			EncryptorImpl.class.getName() + "._encryptCiphers", HashMap::new);
+
+	private static class CipherCacheKey {
+
+		@Override
+		public boolean equals(Object object) {
+			CipherCacheKey cipherCacheKey = (CipherCacheKey)object;
+
+			if (Objects.equals(cipherCacheKey._algorithm, _algorithm) &&
+				Arrays.equals(cipherCacheKey._encodedBytes, _encodedBytes)) {
+
+				return true;
+			}
+
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			int hashCode = HashUtil.hash(0, _algorithm);
+
+			return HashUtil.hash(hashCode, Arrays.hashCode(_encodedBytes));
+		}
+
+		private CipherCacheKey(String algorithm, byte[] encodedBytes) {
+			_algorithm = algorithm;
+			_encodedBytes = encodedBytes;
+		}
+
+		private final String _algorithm;
+		private final byte[] _encodedBytes;
+
+	}
 
 }
