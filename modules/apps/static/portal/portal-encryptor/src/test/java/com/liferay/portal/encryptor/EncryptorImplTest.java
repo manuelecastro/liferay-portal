@@ -110,26 +110,31 @@ public class EncryptorImplTest {
 
 	@Test
 	public void testEncryptWithKeysOfTheSameHashCode() throws Exception {
-		Encryptor encryptor = new EncryptorImpl();
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", false)) {
 
-		Key key1 = encryptor.generateKey();
+			Encryptor encryptor = new EncryptorImpl();
 
-		byte[] bytes = key1.getEncoded();
+			Key key1 = encryptor.generateKey();
 
-		bytes[0] ^= 0x01;
+			byte[] bytes = key1.getEncoded();
 
-		Key key2 = new SecretKeySpec(bytes, key1.getAlgorithm());
+			bytes[0] ^= 0x01;
 
-		Assert.assertEquals(key1.hashCode(), key2.hashCode());
+			Key key2 = new SecretKeySpec(bytes, key1.getAlgorithm());
 
-		String encryptedString1 = encryptor.encrypt(key1, _PLAINTEXT);
-		String encryptedString2 = encryptor.encrypt(key2, _PLAINTEXT);
+			Assert.assertEquals(key1.hashCode(), key2.hashCode());
 
-		Assert.assertEquals(
-			_PLAINTEXT, encryptor.decrypt(key1, encryptedString1));
-		Assert.assertEquals(
-			_PLAINTEXT, encryptor.decrypt(key2, encryptedString2));
-		Assert.assertNotEquals(encryptedString1, encryptedString2);
+			String encryptedString1 = encryptor.encrypt(key1, _PLAINTEXT);
+			String encryptedString2 = encryptor.encrypt(key2, _PLAINTEXT);
+
+			Assert.assertEquals(
+				_PLAINTEXT, encryptor.decrypt(key1, encryptedString1));
+			Assert.assertEquals(
+				_PLAINTEXT, encryptor.decrypt(key2, encryptedString2));
+			Assert.assertNotEquals(encryptedString1, encryptedString2);
+		}
 	}
 
 	@Test
