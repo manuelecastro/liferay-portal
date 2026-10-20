@@ -1,0 +1,308 @@
+{
+	"cryptoUsages": [
+		{
+			"classNames": [
+				"com.liferay.portal.security.pwd.PwdAuthenticator"
+			],
+			"configuredBy": [
+				"auth.mac.algorithm"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Authentication MAC",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "PwdAuthenticator digests the login and auth.mac.shared.key when auth.mac.allow is true."
+		},
+		{
+			"algorithm": "SHA-1",
+			"classNames": [
+				"com.liferay.portal.security.auth.AuthTokenWhitelistImpl"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Authentication token shared secret",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "AuthTokenWhitelistImpl.isValidSharedSecret digests auth.token.shared.secret with the default algorithm of DigesterUtil, which is SHA (SHA-1) when FIPS mode is off."
+		},
+		{
+			"algorithm": "AES/GCM/NoPadding",
+			"classNames": [
+				"com.liferay.portal.encryptor.EncryptorImpl"
+			],
+			"cryptoFunctions": [
+				"decrypt",
+				"encrypt"
+			],
+			"featureName": "CAPTCHA tokens",
+			"jcaClassName": "Cipher",
+			"primitive": "ae",
+			"source": "CaptchaResourceImpl encrypts and decrypts its tokens with the company key through EncryptorImpl.encryptAuthenticated and EncryptorImpl.decryptAuthenticated, which always use AES/GCM/NoPadding."
+		},
+		{
+			"classNames": [
+				"com.liferay.portal.encryptor.EncryptorImpl"
+			],
+			"configuredBy": [
+				"company.encryption.algorithm",
+				"company.encryption.key.size"
+			],
+			"cryptoFunctions": [
+				"decrypt",
+				"encrypt"
+			],
+			"featureName": "Company encryption",
+			"jcaClassName": "Cipher",
+			"primitive": "unknown",
+			"source": "With FIPS mode off, EncryptorImpl.encryptUnencoded and EncryptorImpl.decryptUnencodedAsBytes use the algorithm of the key, which is company.encryption.algorithm for the company key."
+		},
+		{
+			"classNames": [
+				"com.liferay.portal.encryptor.EncryptorImpl"
+			],
+			"configuredBy": [
+				"company.encryption.algorithm",
+				"company.encryption.key.size"
+			],
+			"cryptoFunctions": [
+				"keygen"
+			],
+			"featureName": "Company encryption",
+			"jcaClassName": "KeyGenerator",
+			"primitive": "unknown",
+			"source": "EncryptorImpl.generateKey creates the company key with company.encryption.algorithm and company.encryption.key.size."
+		},
+		{
+			"algorithm": "SHA-1",
+			"classNames": [
+				"com.liferay.portal.kernel.util.URLUtil"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Download checksum verification",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "URLUtil.download compares the SHA-1 of a downloaded file with the expected one, for example for the JDBC drivers that DataSourceFactoryUtil downloads."
+		},
+		{
+			"classNames": [
+				"com.liferay.object.service.impl.ObjectEntryLocalServiceImpl",
+				"com.liferay.portal.encryptor.EncryptorImpl"
+			],
+			"configuredBy": [
+				"object.encryption.algorithm"
+			],
+			"cryptoFunctions": [
+				"decrypt",
+				"encrypt"
+			],
+			"featureName": "Encrypted object fields",
+			"jcaClassName": "Cipher",
+			"primitive": "unknown",
+			"source": "ObjectEntryLocalServiceImpl builds the key from object.encryption.key with object.encryption.algorithm, and EncryptorImpl encrypts with the algorithm of the key when FIPS mode is off."
+		},
+		{
+			"algorithm": "MD5",
+			"classNames": [
+				"com.liferay.portal.util.FileImpl"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "File checksums",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "FileImpl.getMD5Checksum, which StagingLocalServiceImpl uses to check the files that remote staging uploads."
+		},
+		{
+			"algorithm": "MD5",
+			"classNames": [
+				"com.liferay.portal.kernel.frontend.hashed.files.HashedFilesUtil"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Hashed frontend file names",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "HashedFilesUtil.computeHash uses MD5 when FIPS mode is off."
+		},
+		{
+			"algorithm": "MD5",
+			"classNames": [
+				"com.liferay.portal.model.impl.UserImpl",
+				"com.liferay.portal.service.impl.UserLocalServiceImpl",
+				"com.liferay.portal.servlet.filters.secure.NonceUtil"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "HTTP Digest authentication",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "UserImpl.getDigest, UserLocalServiceImpl.authenticateForDigest and NonceUtil.generate use MD5 when FIPS mode is off."
+		},
+		{
+			"algorithm": "SHA-1",
+			"classNames": [
+				"com.liferay.portal.kernel.model.UserConstants",
+				"com.liferay.portal.model.impl.OrganizationImpl",
+				"com.liferay.portal.webserver.WebServerServlet"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Image URL tokens",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "The img_id_token parameter of user portrait and organization logo URLs is the digest of the UUID with the default algorithm of DigesterUtil, which is SHA (SHA-1) when FIPS mode is off."
+		},
+		{
+			"algorithm": "SHA-256",
+			"classNames": [
+				"com.liferay.portal.webserver.WebServerServletTokenImpl"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Image URL version tokens",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "WebServerServletTokenImpl.getToken digests the image ID, its modified date and the company key."
+		},
+		{
+			"algorithm": "SHA-256",
+			"classNames": [
+				"com.liferay.portal.service.impl.LayoutServiceImpl"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Layout import temporary files",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "LayoutServiceImpl names the temporary folder of a layout import after the SHA-256 of the folder name."
+		},
+		{
+			"classNames": [
+				"com.liferay.portal.security.password.encryptor.internal.PBKDF2PasswordEncryptor"
+			],
+			"configuredBy": [
+				"passwords.encryption.algorithm.legacy"
+			],
+			"cryptoFunctions": [
+				"keyderive"
+			],
+			"featureName": "Legacy password verification",
+			"jcaClassName": "Mac",
+			"primitive": "kdf",
+			"source": "PBKDF2PasswordEncryptor computes PBKDF2 on the Mac that passwords.encryption.algorithm.legacy names, to verify passwords hashed before the current algorithm."
+		},
+		{
+			"classNames": [
+				"com.liferay.portal.security.password.encryptor.internal.DefaultPasswordEncryptor",
+				"com.liferay.portal.security.password.encryptor.internal.SSHAPasswordEncryptor"
+			],
+			"configuredBy": [
+				"passwords.encryption.algorithm.legacy"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Legacy password verification",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "DefaultPasswordEncryptor and SSHAPasswordEncryptor digest passwords with the algorithm that passwords.encryption.algorithm.legacy names, to verify passwords hashed before the current algorithm."
+		},
+		{
+			"classNames": [
+				"com.liferay.portal.security.password.encryptor.internal.PBKDF2PasswordEncryptor"
+			],
+			"configuredBy": [
+				"passwords.encryption.algorithm"
+			],
+			"cryptoFunctions": [
+				"keyderive"
+			],
+			"featureName": "Password hashing",
+			"jcaClassName": "Mac",
+			"primitive": "kdf",
+			"source": "PBKDF2PasswordEncryptor computes PBKDF2 on the Mac that passwords.encryption.algorithm names, for example HmacSHA1 for the default PBKDF2WithHmacSHA1/160/1300000."
+		},
+		{
+			"classNames": [
+				"com.liferay.portal.security.password.encryptor.internal.DefaultPasswordEncryptor",
+				"com.liferay.portal.security.password.encryptor.internal.SSHAPasswordEncryptor"
+			],
+			"configuredBy": [
+				"passwords.encryption.algorithm"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Password hashing",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "DefaultPasswordEncryptor and SSHAPasswordEncryptor digest passwords when passwords.encryption.algorithm names a digest or SSHA."
+		},
+		{
+			"algorithm": "SHA-1",
+			"classNames": [
+				"com.liferay.portal.cache.key.MessageDigestCacheKeyGenerator"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Portlet preferences cache keys",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "portal-impl/src/META-INF/util-spring.xml gives SHA-1 to the MessageDigestCacheKeyGenerator of PortletPreferencesFactoryImpl."
+		},
+		{
+			"algorithm": "MD5",
+			"classNames": [
+				"com.liferay.portal.events.ServicePreAction"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Request user header",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "ServicePreAction sets the X-Liferay-Request-User response header to the MD5 of the user ID."
+		},
+		{
+			"algorithm": "SHA-1",
+			"classNames": [
+				"com.liferay.portal.servlet.filters.language.LanguageFilter"
+			],
+			"cryptoFunctions": [
+				"digest"
+			],
+			"featureName": "Translated page ETags",
+			"jcaClassName": "MessageDigest",
+			"primitive": "hash",
+			"source": "LanguageFilter sets the ETag of a translated response to the SHA-1 of its content."
+		},
+		{
+			"classNames": [
+				"com.liferay.portal.encryptor.EncryptorImpl",
+				"com.liferay.portal.security.auth.tunnel.TunnelAuthenticationManagerImpl"
+			],
+			"configuredBy": [
+				"tunneling.servlet.encryption.algorithm"
+			],
+			"cryptoFunctions": [
+				"encrypt"
+			],
+			"featureName": "Tunnel authentication",
+			"jcaClassName": "Cipher",
+			"primitive": "unknown",
+			"source": "TunnelAuthenticationManagerImpl builds the key from tunneling.servlet.shared.secret with tunneling.servlet.encryption.algorithm, and encrypts the login through EncryptorImpl with the algorithm of the key when FIPS mode is off."
+		}
+	]
+}
