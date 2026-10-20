@@ -32,6 +32,7 @@ dependencies {
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
 	compileOnly project(":core:petra:petra-function")
 	compileOnly project(":core:petra:petra-string")
+	testImplementation group: "org.skyscreamer", name: "jsonassert", version: "1.2.3"
 }
 
 deploy {
