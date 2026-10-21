@@ -18,13 +18,19 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
- * Builds the CBOM of one reference configuration. The build runs it in a JVM
- * that is set up as that configuration, so the providers it reports are the
- * ones that the configuration's JVM resolves.
+ * Builds the CBOM of one reference configuration from the bytecode of the JARs
+ * the bundle ships, and from the usage data for the calls the scan cannot
+ * resolve. The build runs it in a JVM that is set up as that configuration,
+ * so the providers it reports are the ones that the configuration's JVM
+ * resolves. A call the usage data should describe, or a description no call
+ * needs, is a warning, and fails a release build.
  *
  * @author Manuele Castro
  */
@@ -56,16 +62,44 @@ public class CBOMBuilder {
 
 		File configurationDir = new File(args[0]);
 
+		Properties portalExtProperties = _loadProperties(
+			new FileInputStream(
+				new File(configurationDir, "portal-ext.properties")));
+
+		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner(
+			GetterUtil.getBoolean(
+				portalExtProperties.getProperty("fips.enabled")));
+
+		for (File file : _getFiles(new File(args[3]), new File(args[2]))) {
+			cryptoCallScanner.scan(file);
+		}
+
+		Set<String> problems = new TreeSet<>();
+
+		List<CryptoUsage> cryptoUsages =
+			CryptoUsageResolverUtil.getCryptoUsages(
+				cryptoCallScanner.getCryptoCalls(),
+				CryptoUsageDataUtil.getCryptoUsages(
+					JSONFactoryUtil.createJSONObject(
+						_read("dependencies/crypto-usages.json"))),
+				problems);
+
+		for (String problem : problems) {
+			System.out.println("Warning: " + problem);
+		}
+
+		if (!problems.isEmpty() &&
+			GetterUtil.getBoolean(System.getProperty("cbom.release"))) {
+
+			throw new IllegalStateException(
+				"Unable to build a release CBOM with " + problems.size() +
+					" problems");
+		}
+
 		ClassLoader classLoader = CBOMBuilder.class.getClassLoader();
 
 		String cbomJSON = build(
-			configurationDir.getName(),
-			CryptoUsageDataUtil.getCryptoUsages(
-				JSONFactoryUtil.createJSONObject(
-					_read("dependencies/crypto-usages.json"))),
-			_loadProperties(
-				new FileInputStream(
-					new File(configurationDir, "portal-ext.properties"))),
+			configurationDir.getName(), cryptoUsages, portalExtProperties,
 			_loadProperties(
 				classLoader.getResourceAsStream("portal.properties")));
 
@@ -78,6 +112,48 @@ public class CBOMBuilder {
 		Files.write(file.toPath(), cbomJSON.getBytes(StandardCharsets.UTF_8));
 
 		System.out.println("Wrote " + file.getAbsolutePath());
+	}
+
+	private static void _addFiles(
+		File dir, File excludedDir, List<File> files) {
+
+		File[] childFiles = dir.listFiles();
+
+		if (childFiles == null) {
+			return;
+		}
+
+		for (File childFile : childFiles) {
+			String fileName = childFile.getName();
+
+			if (childFile.isDirectory()) {
+				if (!childFile.equals(excludedDir)) {
+					_addFiles(childFile, excludedDir, files);
+				}
+			}
+			else if (fileName.endsWith(".jar") || fileName.endsWith(".lpkg")) {
+				files.add(childFile);
+			}
+		}
+	}
+
+	private static List<File> _getFiles(
+		File appServerPortalDir, File liferayHomeDir) {
+
+		List<File> files = new ArrayList<>();
+
+		File osgiDir = new File(liferayHomeDir, "osgi");
+
+		_addFiles(osgiDir, new File(osgiDir, "test"), files);
+
+		_addFiles(new File(appServerPortalDir, "WEB-INF/lib"), null, files);
+		_addFiles(
+			new File(appServerPortalDir, "WEB-INF/shielded-container-lib"),
+			null, files);
+
+		files.sort(null);
+
+		return files;
 	}
 
 	private static Properties _loadProperties(InputStream inputStream)
