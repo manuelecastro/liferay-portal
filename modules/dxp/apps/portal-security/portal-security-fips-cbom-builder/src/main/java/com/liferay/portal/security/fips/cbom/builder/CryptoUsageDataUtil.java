@@ -19,9 +19,12 @@ import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.Primitive;
 
 /**
- * Reads the usage data, which describes, for each feature, the classes that
- * call cryptography and what they call. The crypto functions and the primitive
- * are the values of the CycloneDX schema.
+ * Reads the usage data, which describes the crypto calls whose algorithm the
+ * scan cannot resolve: the classes that make the call, the JCA class, the
+ * primitive and functions, and either the algorithm or the properties that
+ * choose it. The crypto functions and the primitive are the values of the
+ * CycloneDX schema. The feature comes from the scan, so a description has
+ * none.
  *
  * @author Manuele Castro
  */
@@ -36,7 +39,7 @@ public class CryptoUsageDataUtil {
 	}
 
 	private static CryptoFunction _getCryptoFunction(
-		String featureName, String name) {
+		String className, String name) {
 
 		for (CryptoFunction cryptoFunction : CryptoFunction.values()) {
 			if (Objects.equals(cryptoFunction.getName(), name)) {
@@ -46,11 +49,11 @@ public class CryptoUsageDataUtil {
 
 		throw new IllegalArgumentException(
 			StringBundler.concat(
-				"The crypto usage of ", featureName,
+				"The crypto usage of ", className,
 				" has an invalid crypto function ", name));
 	}
 
-	private static Primitive _getPrimitive(String featureName, String name) {
+	private static Primitive _getPrimitive(String className, String name) {
 		for (Primitive primitive : Primitive.values()) {
 			if (Objects.equals(primitive.getName(), name)) {
 				return primitive;
@@ -59,49 +62,46 @@ public class CryptoUsageDataUtil {
 
 		throw new IllegalArgumentException(
 			StringBundler.concat(
-				"The crypto usage of ", featureName,
-				" has an invalid primitive ", name));
+				"The crypto usage of ", className, " has an invalid primitive ",
+				name));
 	}
 
 	private static CryptoUsage _toCryptoUsage(JSONObject jsonObject) {
-		String featureName = jsonObject.getString("featureName");
-
-		if (Validator.isNull(featureName)) {
-			throw new IllegalArgumentException(
-				"A crypto usage has no feature name");
-		}
-
 		List<String> classNames = JSONUtil.toStringList(
 			jsonObject.getJSONArray("classNames"));
 
 		if (ListUtil.isEmpty(classNames)) {
 			throw new IllegalArgumentException(
-				"The crypto usage of " + featureName + " has no class names");
+				"A crypto usage has no class names");
 		}
+
+		String className = classNames.get(0);
 
 		List<CryptoFunction> cryptoFunctions = TransformUtil.unsafeTransform(
 			JSONUtil.toStringList(jsonObject.getJSONArray("cryptoFunctions")),
 			cryptoFunctionName -> _getCryptoFunction(
-				featureName, cryptoFunctionName));
+				className, cryptoFunctionName));
 
 		if (ListUtil.isEmpty(cryptoFunctions)) {
 			throw new IllegalArgumentException(
-				"The crypto usage of " + featureName +
+				"The crypto usage of " + className +
 					" has no crypto functions");
 		}
 
 		String jcaClassName = jsonObject.getString("jcaClassName");
 
-		if (!CryptoProviderUtil.isSupportedJCAClassName(jcaClassName)) {
+		if (!CryptoProviderUtil.isSupportedJCAClassName(jcaClassName) &&
+			!Objects.equals(jcaClassName, "SecretKeySpec")) {
+
 			throw new IllegalArgumentException(
 				StringBundler.concat(
-					"The crypto usage of ", featureName,
+					"The crypto usage of ", className,
 					" has an unsupported JCA class ", jcaClassName));
 		}
 
 		CryptoUsage cryptoUsage = new CryptoUsage(
-			classNames, cryptoFunctions, featureName, jcaClassName,
-			_getPrimitive(featureName, jsonObject.getString("primitive")));
+			classNames, cryptoFunctions, null, jcaClassName,
+			_getPrimitive(className, jsonObject.getString("primitive")));
 
 		String algorithm = jsonObject.getString("algorithm");
 		List<String> configuredBy = JSONUtil.toStringList(
@@ -110,7 +110,7 @@ public class CryptoUsageDataUtil {
 		if (Validator.isNull(algorithm) == ListUtil.isEmpty(configuredBy)) {
 			throw new IllegalArgumentException(
 				StringBundler.concat(
-					"The crypto usage of ", featureName,
+					"The crypto usage of ", className,
 					" needs either an algorithm or the portal properties that ",
 					"configure it"));
 		}
