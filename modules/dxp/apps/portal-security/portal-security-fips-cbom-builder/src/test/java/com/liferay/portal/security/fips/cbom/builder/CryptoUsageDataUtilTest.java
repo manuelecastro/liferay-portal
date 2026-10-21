@@ -51,8 +51,6 @@ public class CryptoUsageDataUtilTest {
 	public void testGetCryptoUsages() throws Exception {
 		String className1 = RandomTestUtil.randomString();
 		String className2 = RandomTestUtil.randomString();
-		String featureName1 = RandomTestUtil.randomString();
-		String featureName2 = RandomTestUtil.randomString();
 		String propertyName = RandomTestUtil.randomString();
 
 		List<CryptoUsage> cryptoUsages = CryptoUsageDataUtil.getCryptoUsages(
@@ -66,8 +64,6 @@ public class CryptoUsageDataUtilTest {
 					).put(
 						"cryptoFunctions", JSONUtil.putAll("decrypt", "encrypt")
 					).put(
-						"featureName", featureName1
-					).put(
 						"jcaClassName", "Cipher"
 					).put(
 						"keySize", 256
@@ -79,13 +75,11 @@ public class CryptoUsageDataUtilTest {
 					).put(
 						"configuredBy", JSONUtil.putAll(propertyName)
 					).put(
-						"cryptoFunctions", JSONUtil.putAll("keygen")
+						"cryptoFunctions", JSONUtil.putAll("other")
 					).put(
 						"curve", "P-256"
 					).put(
-						"featureName", featureName2
-					).put(
-						"jcaClassName", "KeyGenerator"
+						"jcaClassName", "SecretKeySpec"
 					).put(
 						"primitive", "unknown"
 					))));
@@ -103,7 +97,7 @@ public class CryptoUsageDataUtilTest {
 			Arrays.asList(CryptoFunction.DECRYPT, CryptoFunction.ENCRYPT),
 			cryptoUsage.getCryptoFunctions());
 		Assert.assertNull(cryptoUsage.getCurve());
-		Assert.assertEquals(featureName1, cryptoUsage.getFeatureName());
+		Assert.assertNull(cryptoUsage.getFeatureName());
 		Assert.assertEquals("Cipher", cryptoUsage.getJCAClassName());
 		Assert.assertEquals(256, cryptoUsage.getKeySize());
 		Assert.assertEquals(Primitive.AE, cryptoUsage.getPrimitive());
@@ -118,11 +112,11 @@ public class CryptoUsageDataUtilTest {
 			Collections.singletonList(propertyName),
 			cryptoUsage.getConfiguredBy());
 		Assert.assertEquals(
-			Collections.singletonList(CryptoFunction.KEYGEN),
+			Collections.singletonList(CryptoFunction.OTHER),
 			cryptoUsage.getCryptoFunctions());
 		Assert.assertEquals("P-256", cryptoUsage.getCurve());
-		Assert.assertEquals(featureName2, cryptoUsage.getFeatureName());
-		Assert.assertEquals("KeyGenerator", cryptoUsage.getJCAClassName());
+		Assert.assertNull(cryptoUsage.getFeatureName());
+		Assert.assertEquals("SecretKeySpec", cryptoUsage.getJCAClassName());
 		Assert.assertEquals(0, cryptoUsage.getKeySize());
 		Assert.assertEquals(Primitive.UNKNOWN, cryptoUsage.getPrimitive());
 		Assert.assertTrue(cryptoUsage.isConfigurable());
@@ -130,93 +124,82 @@ public class CryptoUsageDataUtilTest {
 
 	@Test
 	public void testGetCryptoUsagesWithInvalidData() throws Exception {
-
-		// Feature name
-
-		JSONObject jsonObject = _createCryptoUsageJSONObject();
-
-		jsonObject.remove("featureName");
-
-		_testGetCryptoUsagesWithInvalidData(
-			"A crypto usage has no feature name", jsonObject);
+		String className = RandomTestUtil.randomString();
 
 		// Class names
 
-		jsonObject = _createCryptoUsageJSONObject();
+		JSONObject jsonObject = _createCryptoUsageJSONObject(className);
 
 		jsonObject.remove("classNames");
 
 		_testGetCryptoUsagesWithInvalidData(
-			"The crypto usage of " + jsonObject.getString("featureName") +
-				" has no class names",
-			jsonObject);
+			"A crypto usage has no class names", jsonObject);
 
 		// Crypto functions
 
-		jsonObject = _createCryptoUsageJSONObject();
+		jsonObject = _createCryptoUsageJSONObject(className);
 
 		jsonObject.remove("cryptoFunctions");
 
 		_testGetCryptoUsagesWithInvalidData(
-			"The crypto usage of " + jsonObject.getString("featureName") +
-				" has no crypto functions",
+			"The crypto usage of " + className + " has no crypto functions",
 			jsonObject);
 
-		jsonObject = _createCryptoUsageJSONObject();
+		jsonObject = _createCryptoUsageJSONObject(className);
 
 		jsonObject.put("cryptoFunctions", JSONUtil.putAll("decipher"));
 
 		_testGetCryptoUsagesWithInvalidData(
 			StringBundler.concat(
-				"The crypto usage of ", jsonObject.getString("featureName"),
+				"The crypto usage of ", className,
 				" has an invalid crypto function decipher"),
-			jsonObject);
-
-		// Primitive
-
-		jsonObject = _createCryptoUsageJSONObject();
-
-		jsonObject.put("primitive", "cipher");
-
-		_testGetCryptoUsagesWithInvalidData(
-			StringBundler.concat(
-				"The crypto usage of ", jsonObject.getString("featureName"),
-				" has an invalid primitive cipher"),
 			jsonObject);
 
 		// JCA class name
 
-		jsonObject = _createCryptoUsageJSONObject();
+		jsonObject = _createCryptoUsageJSONObject(className);
 
 		jsonObject.put("jcaClassName", "SecureRandom");
 
 		_testGetCryptoUsagesWithInvalidData(
 			StringBundler.concat(
-				"The crypto usage of ", jsonObject.getString("featureName"),
+				"The crypto usage of ", className,
 				" has an unsupported JCA class SecureRandom"),
+			jsonObject);
+
+		// Primitive
+
+		jsonObject = _createCryptoUsageJSONObject(className);
+
+		jsonObject.put("primitive", "cipher");
+
+		_testGetCryptoUsagesWithInvalidData(
+			StringBundler.concat(
+				"The crypto usage of ", className,
+				" has an invalid primitive cipher"),
 			jsonObject);
 
 		// Algorithm and configured by
 
-		jsonObject = _createCryptoUsageJSONObject();
+		jsonObject = _createCryptoUsageJSONObject(className);
 
 		jsonObject.put(
 			"configuredBy", JSONUtil.putAll(RandomTestUtil.randomString()));
 
 		_testGetCryptoUsagesWithInvalidData(
 			StringBundler.concat(
-				"The crypto usage of ", jsonObject.getString("featureName"),
+				"The crypto usage of ", className,
 				" needs either an algorithm or the portal properties that ",
 				"configure it"),
 			jsonObject);
 
-		jsonObject = _createCryptoUsageJSONObject();
+		jsonObject = _createCryptoUsageJSONObject(className);
 
 		jsonObject.remove("algorithm");
 
 		_testGetCryptoUsagesWithInvalidData(
 			StringBundler.concat(
-				"The crypto usage of ", jsonObject.getString("featureName"),
+				"The crypto usage of ", className,
 				" needs either an algorithm or the portal properties that ",
 				"configure it"),
 			jsonObject);
@@ -242,15 +225,13 @@ public class CryptoUsageDataUtilTest {
 		}
 	}
 
-	private JSONObject _createCryptoUsageJSONObject() {
+	private JSONObject _createCryptoUsageJSONObject(String className) {
 		return JSONUtil.put(
 			"algorithm", "SHA-256"
 		).put(
-			"classNames", JSONUtil.putAll(RandomTestUtil.randomString())
+			"classNames", JSONUtil.putAll(className)
 		).put(
 			"cryptoFunctions", JSONUtil.putAll("digest")
-		).put(
-			"featureName", RandomTestUtil.randomString()
 		).put(
 			"jcaClassName", "MessageDigest"
 		).put(

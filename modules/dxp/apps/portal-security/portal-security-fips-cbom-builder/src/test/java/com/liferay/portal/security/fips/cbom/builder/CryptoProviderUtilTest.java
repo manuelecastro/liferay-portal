@@ -26,6 +26,18 @@ public class CryptoProviderUtilTest {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Test
+	public void testFetchProviderName() throws Exception {
+		Assert.assertEquals(
+			"SUN",
+			CryptoProviderUtil.fetchProviderName("SHA-256", "MessageDigest"));
+		Assert.assertNull(
+			CryptoProviderUtil.fetchProviderName("AES", "SecretKeySpec"));
+		Assert.assertNull(
+			CryptoProviderUtil.fetchProviderName(
+				RandomTestUtil.randomString(), "MessageDigest"));
+	}
+
+	@Test
 	public void testGetProviderName() throws Exception {
 		Assert.assertEquals(
 			"SunJCE",
