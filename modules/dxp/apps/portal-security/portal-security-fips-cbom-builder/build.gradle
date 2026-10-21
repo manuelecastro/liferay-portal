@@ -9,7 +9,7 @@ file("configurations").eachDir {
 	String cbomConfigurationName = cbomConfigurationDir.name
 
 	JavaExec buildCBOMConfigurationTask = tasks.create(name: "buildCBOM-${cbomConfigurationName}", type: JavaExec) {
-		args cbomConfigurationDir, new File(cbomDir, "${cbomConfigurationName}.cdx.json")
+		args cbomConfigurationDir, new File(cbomDir, "${cbomConfigurationName}.cdx.json"), liferay.liferayHome, liferay.appServerPortalDir
 		classpath = sourceSets.main.runtimeClasspath + configurations.compileClasspath + configurations.portal
 		dependsOn copyCBOMConfigurations
 		environment = System.getenv().findAll {
@@ -17,6 +17,7 @@ file("configurations").eachDir {
 		}
 		jvmArgs "--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED"
 		mainClass = "com.liferay.portal.security.fips.cbom.builder.CBOMBuilder"
+		systemProperty "cbom.release", project.findProperty("cbom.release") ?: "false"
 	}
 
 	buildCBOM.dependsOn buildCBOMConfigurationTask
