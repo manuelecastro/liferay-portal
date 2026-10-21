@@ -230,10 +230,12 @@ public class CryptoAssetComponentUtil {
 		CryptoUsage cryptoUsage = cryptoUsages.get(0);
 
 		if (!cryptoUsage.isConfigurable()) {
-			_addProperty(
-				"provider", propertiesMap,
-				CryptoProviderUtil.getProviderName(
-					cryptoUsage.getAlgorithm(), cryptoUsage.getJCAClassName()));
+			String providerName = CryptoProviderUtil.fetchProviderName(
+				cryptoUsage.getAlgorithm(), cryptoUsage.getJCAClassName());
+
+			if (providerName != null) {
+				_addProperty("provider", propertiesMap, providerName);
+			}
 		}
 
 		for (Map.Entry<String, Set<String>> entry : propertiesMap.entrySet()) {

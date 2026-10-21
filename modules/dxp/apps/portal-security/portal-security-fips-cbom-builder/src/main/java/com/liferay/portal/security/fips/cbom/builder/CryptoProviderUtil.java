@@ -6,8 +6,11 @@
 package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -35,6 +38,26 @@ import javax.net.ssl.TrustManagerFactory;
  */
 public class CryptoProviderUtil {
 
+	public static String fetchProviderName(
+			String algorithm, String jcaClassName)
+		throws Exception {
+
+		if (!isSupportedJCAClassName(jcaClassName)) {
+			return null;
+		}
+
+		try {
+			return getProviderName(algorithm, jcaClassName);
+		}
+		catch (GeneralSecurityException generalSecurityException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(generalSecurityException);
+			}
+
+			return null;
+		}
+	}
+
 	public static String getProviderName(String algorithm, String jcaClassName)
 		throws Exception {
 
@@ -54,6 +77,9 @@ public class CryptoProviderUtil {
 	public static boolean isSupportedJCAClassName(String jcaClassName) {
 		return _providerUnsafeFunctions.containsKey(jcaClassName);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		CryptoProviderUtil.class);
 
 	private static final Map
 		<String, UnsafeFunction<String, Provider, Exception>>
