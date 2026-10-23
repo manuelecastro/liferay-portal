@@ -10,13 +10,11 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.Validator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -38,14 +36,14 @@ import org.cyclonedx.model.component.evidence.Occurrence;
  * components. Uses of the same JCA class and algorithm share one component,
  * which lists every feature and class that uses it. Uses whose algorithm a
  * portal property chooses share one component per property, which names the
- * property instead of an algorithm.
+ * property instead of an algorithm. The component leaves out the property's
+ * default value, because an installation can change it.
  *
  * @author Manuele Castro
  */
 public class CryptoAssetComponentUtil {
 
-	public static List<Component> toComponents(
-			List<CryptoUsage> cryptoUsages, Properties portalProperties)
+	public static List<Component> toComponents(List<CryptoUsage> cryptoUsages)
 		throws Exception {
 
 		Map<String, List<CryptoUsage>> cryptoUsagesMap = new TreeMap<>();
@@ -60,8 +58,7 @@ public class CryptoAssetComponentUtil {
 
 		return TransformUtil.unsafeTransform(
 			cryptoUsagesMap.entrySet(),
-			entry -> _toComponent(
-				entry.getKey(), entry.getValue(), portalProperties));
+			entry -> _toComponent(entry.getKey(), entry.getValue()));
 	}
 
 	private static void _addProperty(
@@ -197,8 +194,7 @@ public class CryptoAssetComponentUtil {
 		return firstCryptoUsage.getPrimitive();
 	}
 
-	private static List<Property> _getProperties(
-			List<CryptoUsage> cryptoUsages, Properties portalProperties)
+	private static List<Property> _getProperties(List<CryptoUsage> cryptoUsages)
 		throws Exception {
 
 		List<Property> properties = new ArrayList<>();
@@ -213,17 +209,6 @@ public class CryptoAssetComponentUtil {
 
 			for (String propertyName : curCryptoUsage.getConfiguredBy()) {
 				_addProperty("configured-by", propertiesMap, propertyName);
-
-				String defaultValue = portalProperties.getProperty(
-					propertyName);
-
-				if (Validator.isNull(defaultValue)) {
-					continue;
-				}
-
-				_addProperty(
-					"default-value", propertiesMap,
-					propertyName + StringPool.EQUAL + defaultValue);
 			}
 		}
 
@@ -283,8 +268,7 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static Component _toComponent(
-			String bomRef, List<CryptoUsage> cryptoUsages,
-			Properties portalProperties)
+			String bomRef, List<CryptoUsage> cryptoUsages)
 		throws Exception {
 
 		Component component = new Component();
@@ -299,7 +283,7 @@ public class CryptoAssetComponentUtil {
 		component.setCryptoProperties(cryptoProperties);
 		component.setEvidence(_getEvidence(cryptoUsages));
 		component.setName(_getName(cryptoUsages.get(0)));
-		component.setProperties(_getProperties(cryptoUsages, portalProperties));
+		component.setProperties(_getProperties(cryptoUsages));
 		component.setType(Component.Type.CRYPTOGRAPHIC_ASSET);
 
 		return component;

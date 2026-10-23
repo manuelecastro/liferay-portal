@@ -14,7 +14,6 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 import org.cyclonedx.Version;
 import org.cyclonedx.generators.BomGeneratorFactory;
@@ -89,17 +88,11 @@ public class CryptoAssetComponentUtilTest {
 		cipherConfigurableCryptoUsage.setConfiguredBy(
 			Arrays.asList("test.encryption.algorithm", "test.key.size"));
 
-		Properties portalProperties = new Properties();
-
-		portalProperties.setProperty("test.encryption.algorithm", "AES");
-		portalProperties.setProperty("test.key.size", "");
-
 		List<Component> components = CryptoAssetComponentUtil.toComponents(
 			Arrays.asList(
 				messageDigestCryptoUsage1, keyGeneratorCryptoUsage,
 				cipherCryptoUsage, messageDigestCryptoUsage2,
-				cipherConfigurableCryptoUsage),
-			portalProperties);
+				cipherConfigurableCryptoUsage));
 
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
@@ -239,11 +232,6 @@ public class CryptoAssetComponentUtilTest {
 							"name", "liferay:cbom:configured-by"
 						).put(
 							"value", "test.key.size"
-						),
-						JSONUtil.put(
-							"name", "liferay:cbom:default-value"
-						).put(
-							"value", "test.encryption.algorithm=AES"
 						),
 						JSONUtil.put(
 							"name", "liferay:cbom:feature"

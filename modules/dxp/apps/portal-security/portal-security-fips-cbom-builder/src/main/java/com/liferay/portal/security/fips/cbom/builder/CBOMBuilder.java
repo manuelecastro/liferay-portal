@@ -38,7 +38,7 @@ public class CBOMBuilder {
 
 	public static String build(
 			String configurationName, List<CryptoUsage> cryptoUsages,
-			Properties portalExtProperties, Properties portalProperties)
+			Properties portalExtProperties)
 		throws Exception {
 
 		if (GetterUtil.getBoolean(
@@ -49,8 +49,7 @@ public class CBOMBuilder {
 		}
 
 		return CycloneDXCBOMWriter.write(
-			CryptoAssetComponentUtil.toComponents(
-				cryptoUsages, portalProperties),
+			CryptoAssetComponentUtil.toComponents(cryptoUsages),
 			configurationName, ReleaseInfo.getName(),
 			ReleaseInfo.getVersionDisplayName());
 	}
@@ -96,12 +95,8 @@ public class CBOMBuilder {
 					" problems");
 		}
 
-		ClassLoader classLoader = CBOMBuilder.class.getClassLoader();
-
 		String cbomJSON = build(
-			configurationDir.getName(), cryptoUsages, portalExtProperties,
-			_loadProperties(
-				classLoader.getResourceAsStream("portal.properties")));
+			configurationDir.getName(), cryptoUsages, portalExtProperties);
 
 		File file = new File(args[1]);
 

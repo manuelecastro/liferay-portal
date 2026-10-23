@@ -83,25 +83,13 @@ public class CBOMBuilderTest {
 		String configurationName = RandomTestUtil.randomString();
 		Properties portalExtProperties = new Properties();
 
-		Properties portalProperties = new Properties();
-
-		ClassLoader classLoader = CBOMBuilder.class.getClassLoader();
-
-		try (InputStream inputStream = classLoader.getResourceAsStream(
-				"portal.properties")) {
-
-			portalProperties.load(inputStream);
-		}
-
 		String cbomJSON = CBOMBuilder.build(
-			configurationName, cryptoUsages, portalExtProperties,
-			portalProperties);
+			configurationName, cryptoUsages, portalExtProperties);
 
 		Assert.assertEquals(
 			cbomJSON,
 			CBOMBuilder.build(
-				configurationName, cryptoUsages, portalExtProperties,
-				portalProperties));
+				configurationName, cryptoUsages, portalExtProperties));
 
 		JsonParser jsonParser = new JsonParser();
 
@@ -151,8 +139,7 @@ public class CBOMBuilderTest {
 
 		try {
 			CBOMBuilder.build(
-				configurationName, cryptoUsages, portalExtProperties,
-				portalProperties);
+				configurationName, cryptoUsages, portalExtProperties);
 
 			Assert.fail();
 		}
