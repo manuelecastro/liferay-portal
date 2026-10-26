@@ -19,18 +19,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.cyclonedx.model.Component;
+
 /**
  * Builds the CBOM of one reference configuration from the bytecode of the JARs
  * the bundle ships, and from the usage data for the calls the scan cannot
- * resolve. The build runs it in a JVM that is set up as that configuration,
- * so the providers it reports are the ones that the configuration's JVM
- * resolves. A call the usage data should describe, or a description no call
- * needs, is a warning, and fails a release build.
+ * resolve. The CBOM holds the crypto assets, the modules that use them, the
+ * providers that answer them and the settings that choose them, and the
+ * dependency graph between them. The build runs it in a JVM that is set up as
+ * that configuration, so the providers it reports are the ones that the
+ * configuration's JVM resolves. A call the usage data should describe, or a
+ * description no call needs, is a warning, and fails a release build.
  *
  * @author Manuele Castro
  */
@@ -48,10 +53,18 @@ public class CBOMBuilder {
 				"Unable to build the CBOM of a FIPS mode configuration");
 		}
 
+		List<Component> components = new ArrayList<>(
+			CryptoAssetComponentUtil.toComponents(cryptoUsages));
+
+		components.addAll(CryptoDependencyUtil.toComponents(cryptoUsages));
+
+		components.sort(Comparator.comparing(Component::getBomRef));
+
 		return CycloneDXCBOMWriter.write(
-			CryptoAssetComponentUtil.toComponents(cryptoUsages),
-			configurationName, ReleaseInfo.getName(),
-			ReleaseInfo.getVersionDisplayName());
+			components, configurationName,
+			CryptoDependencyUtil.toDependencies(cryptoUsages),
+			ReleaseInfo.getName(), ReleaseInfo.getVersionDisplayName(),
+			CryptoDependencyUtil.toProvides(cryptoUsages));
 	}
 
 	public static void main(String[] args) throws Exception {
