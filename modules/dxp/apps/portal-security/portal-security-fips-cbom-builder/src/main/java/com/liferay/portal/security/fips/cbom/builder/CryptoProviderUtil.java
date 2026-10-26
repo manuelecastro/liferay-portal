@@ -6,6 +6,8 @@
 package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -19,6 +21,7 @@ import java.security.Provider;
 import java.security.Signature;
 
 import java.util.Map;
+import java.util.Objects;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
@@ -32,7 +35,9 @@ import javax.net.ssl.TrustManagerFactory;
 
 /**
  * Asks the JVM which JCA provider answers an algorithm, the same way the
- * portal's own calls to <code>getInstance</code> do.
+ * portal's own calls to <code>getInstance</code> do, and under which name the
+ * provider knows the algorithm. A provider resolves an alias to its standard
+ * name: <code>Signature</code> <code>DSA</code> is <code>SHA1withDSA</code>.
  *
  * @author Manuele Castro
  */
@@ -58,7 +63,58 @@ public class CryptoProviderUtil {
 		}
 	}
 
+	public static String getAlgorithmName(String algorithm, String jcaClassName)
+		throws Exception {
+
+		if (!isSupportedJCAClassName(jcaClassName)) {
+			return algorithm;
+		}
+
+		String name = algorithm;
+		String suffix = StringPool.BLANK;
+
+		if (Objects.equals(jcaClassName, "Cipher")) {
+			int index = algorithm.indexOf(CharPool.SLASH);
+
+			if (index != -1) {
+				name = algorithm.substring(0, index);
+				suffix = algorithm.substring(index);
+			}
+		}
+
+		try {
+			Provider provider = _getProvider(algorithm, jcaClassName);
+
+			Provider.Service service = provider.getService(jcaClassName, name);
+
+			if (service == null) {
+				return algorithm;
+			}
+
+			return service.getAlgorithm() + suffix;
+		}
+		catch (GeneralSecurityException generalSecurityException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(generalSecurityException);
+			}
+
+			return algorithm;
+		}
+	}
+
 	public static String getProviderName(String algorithm, String jcaClassName)
+		throws Exception {
+
+		Provider provider = _getProvider(algorithm, jcaClassName);
+
+		return provider.getName();
+	}
+
+	public static boolean isSupportedJCAClassName(String jcaClassName) {
+		return _providerUnsafeFunctions.containsKey(jcaClassName);
+	}
+
+	private static Provider _getProvider(String algorithm, String jcaClassName)
 		throws Exception {
 
 		UnsafeFunction<String, Provider, Exception> unsafeFunction =
@@ -69,13 +125,7 @@ public class CryptoProviderUtil {
 				"Unsupported JCA class " + jcaClassName);
 		}
 
-		Provider provider = unsafeFunction.apply(algorithm);
-
-		return provider.getName();
-	}
-
-	public static boolean isSupportedJCAClassName(String jcaClassName) {
-		return _providerUnsafeFunctions.containsKey(jcaClassName);
+		return unsafeFunction.apply(algorithm);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
