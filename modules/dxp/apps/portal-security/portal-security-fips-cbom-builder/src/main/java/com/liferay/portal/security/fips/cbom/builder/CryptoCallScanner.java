@@ -39,6 +39,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.MethodVisitor;
@@ -68,13 +69,18 @@ import org.objectweb.asm.tree.analysis.SourceValue;
  * passes, one side of a <code>PropsValues.FIPS_ENABLED</code> test, or what a
  * field, a private method's parameter or a private or static method without
  * parameters holds, such as <code>DigesterUtil</code>'s default. It also reads
- * the properties that choose the algorithm when the code reads one. Calls
- * inside <code>DigesterUtil</code> count for the classes that call it, and a
- * nested class counts toward its outer class.
+ * the properties that choose the algorithm when the code reads one, and
+ * whether the code builds public or private keys with a
+ * <code>KeyFactory</code>. Calls inside <code>DigesterUtil</code> count for the
+ * classes that call it, and a nested class counts toward its outer class.
  *
  * @author Manuele Castro
  */
 public class CryptoCallScanner {
+
+	public static boolean isJDKPropertyKey(String propertyKey) {
+		return _jdkPropertyKeys.containsValue(propertyKey);
+	}
 
 	public CryptoCallScanner(boolean fipsEnabled) {
 		_fipsEnabled = fipsEnabled;
@@ -114,8 +120,11 @@ public class CryptoCallScanner {
 		}
 
 		try (JarFile jarFile = new JarFile(file)) {
-			String featureName = _getFeatureName(
-				fileName, jarFile.getManifest());
+			Manifest manifest = jarFile.getManifest();
+
+			String bundleSymbolicName = _getBundleSymbolicName(
+				fileName, manifest);
+			String featureName = _getFeatureName(fileName, manifest);
 
 			for (JarEntry jarEntry : Collections.list(jarFile.entries())) {
 				if (!_isClassFileName(jarEntry.getName())) {
@@ -125,13 +134,15 @@ public class CryptoCallScanner {
 				try (InputStream inputStream = jarFile.getInputStream(
 						jarEntry)) {
 
-					scan(featureName, inputStream);
+					scan(bundleSymbolicName, featureName, inputStream);
 				}
 			}
 		}
 	}
 
-	public void scan(String featureName, InputStream inputStream)
+	public void scan(
+			String bundleSymbolicName, String featureName,
+			InputStream inputStream)
 		throws IOException {
 
 		byte[] bytes = inputStream.readAllBytes();
@@ -147,7 +158,7 @@ public class CryptoCallScanner {
 		classReader.accept(
 			classNode, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
-		_scan(classNode, featureName);
+		_scan(classNode, bundleSymbolicName, featureName);
 	}
 
 	private Frame<SourceValue>[] _analyze(
@@ -256,6 +267,27 @@ public class CryptoCallScanner {
 		return frame.getStack(frame.getStackSize() - count + index);
 	}
 
+	private String _getBundleSymbolicName(String fileName, Manifest manifest) {
+		if (manifest != null) {
+			Attributes attributes = manifest.getMainAttributes();
+
+			String bundleSymbolicName = attributes.getValue(
+				"Bundle-SymbolicName");
+
+			if (Validator.isNotNull(bundleSymbolicName)) {
+				int index = bundleSymbolicName.indexOf(CharPool.SEMICOLON);
+
+				if (index != -1) {
+					bundleSymbolicName = bundleSymbolicName.substring(0, index);
+				}
+
+				return StringUtil.trim(bundleSymbolicName);
+			}
+		}
+
+		return _getFileName(fileName);
+	}
+
 	private String _getClassName(String internalName) {
 		String className = StringUtil.replace(
 			internalName, CharPool.SLASH, CharPool.PERIOD);
@@ -356,6 +388,15 @@ public class CryptoCallScanner {
 			}
 		}
 
+		return _getFileName(fileName);
+	}
+
+	private String _getFieldKey(FieldInsnNode fieldInsnNode) {
+		return _getKeyName(fieldInsnNode.owner) + StringPool.PERIOD +
+			fieldInsnNode.name;
+	}
+
+	private String _getFileName(String fileName) {
 		String name = fileName.substring(
 			fileName.lastIndexOf(CharPool.SLASH) + 1);
 
@@ -366,11 +407,6 @@ public class CryptoCallScanner {
 		}
 
 		return name;
-	}
-
-	private String _getFieldKey(FieldInsnNode fieldInsnNode) {
-		return _getKeyName(fieldInsnNode.owner) + StringPool.PERIOD +
-			fieldInsnNode.name;
 	}
 
 	private String _getJCAClassName(MethodInsnNode methodInsnNode) {
@@ -657,6 +693,34 @@ public class CryptoCallScanner {
 		return frame.getStack(frame.getStackSize() - count - 1);
 	}
 
+	private List<RelatedCryptoMaterialType> _getRelatedCryptoMaterialTypes(
+		Frame<SourceValue>[] frames, InsnList insnList, String jcaClassName,
+		MethodInsnNode methodInsnNode) {
+
+		if (!Objects.equals(jcaClassName, "KeyFactory")) {
+			return Collections.emptyList();
+		}
+
+		Set<RelatedCryptoMaterialType> relatedCryptoMaterialTypes =
+			new TreeSet<>();
+
+		for (MethodInsnNode linkedMethodInsnNode :
+				_getLinkedMethodInsnNodes(frames, insnList, methodInsnNode)) {
+
+			RelatedCryptoMaterialType relatedCryptoMaterialType =
+				_keyFactoryRelatedCryptoMaterialTypes.get(
+					linkedMethodInsnNode.name);
+
+			if (relatedCryptoMaterialType == null) {
+				continue;
+			}
+
+			relatedCryptoMaterialTypes.add(relatedCryptoMaterialType);
+		}
+
+		return new ArrayList<>(relatedCryptoMaterialTypes);
+	}
+
 	private String _getUnresolvedReason(String reference) {
 		if (reference.indexOf(CharPool.POUND) != -1) {
 			return "a method parameter";
@@ -751,7 +815,9 @@ public class CryptoCallScanner {
 		return resolvedOrigin;
 	}
 
-	private void _scan(ClassNode classNode, String featureName) {
+	private void _scan(
+		ClassNode classNode, String bundleSymbolicName, String featureName) {
+
 		String className = _getClassName(classNode.name);
 
 		for (MethodNode methodNode : classNode.methods) {
@@ -779,7 +845,7 @@ public class CryptoCallScanner {
 						new ScannedCryptoCall(
 							origin,
 							new CryptoCall(
-								className, featureName,
+								bundleSymbolicName, className, featureName,
 								_getJCAClassName(methodInsnNode)),
 							new Origin()));
 				}
@@ -799,10 +865,13 @@ public class CryptoCallScanner {
 				String jcaClassName = _getJCAClassName(methodInsnNode);
 
 				CryptoCall cryptoCall = new CryptoCall(
-					className, featureName, jcaClassName);
+					bundleSymbolicName, className, featureName, jcaClassName);
 
 				cryptoCall.setCryptoFunctions(
 					_getCryptoFunctions(
+						frames, insnList, jcaClassName, methodInsnNode));
+				cryptoCall.setRelatedCryptoMaterialTypes(
+					_getRelatedCryptoMaterialTypes(
 						frames, insnList, jcaClassName, methodInsnNode));
 
 				_scannedCryptoCalls.add(
@@ -817,8 +886,10 @@ public class CryptoCallScanner {
 	private void _scan(JarInputStream jarInputStream, String name)
 		throws IOException {
 
-		String featureName = _getFeatureName(
-			name, jarInputStream.getManifest());
+		Manifest manifest = jarInputStream.getManifest();
+
+		String bundleSymbolicName = _getBundleSymbolicName(name, manifest);
+		String featureName = _getFeatureName(name, manifest);
 
 		JarEntry jarEntry = null;
 
@@ -827,7 +898,7 @@ public class CryptoCallScanner {
 				continue;
 			}
 
-			scan(featureName, jarInputStream);
+			scan(bundleSymbolicName, featureName, jarInputStream);
 		}
 	}
 
@@ -1084,6 +1155,12 @@ public class CryptoCallScanner {
 		).put(
 			"javax/net/ssl/TrustManagerFactory.getDefaultAlgorithm",
 			"ssl.TrustManagerFactory.algorithm"
+		).build();
+	private static final Map<String, RelatedCryptoMaterialType>
+		_keyFactoryRelatedCryptoMaterialTypes = HashMapBuilder.put(
+			"generatePrivate", RelatedCryptoMaterialType.PRIVATE_KEY
+		).put(
+			"generatePublic", RelatedCryptoMaterialType.PUBLIC_KEY
 		).build();
 	private static final Map<String, String> _keySizeMethodNames =
 		HashMapBuilder.put(

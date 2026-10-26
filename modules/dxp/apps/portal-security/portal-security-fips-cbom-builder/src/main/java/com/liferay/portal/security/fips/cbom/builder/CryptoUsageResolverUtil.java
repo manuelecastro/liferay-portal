@@ -94,6 +94,7 @@ public class CryptoUsageResolverUtil {
 
 	private static CryptoUsage _toCryptoUsage(CryptoCall cryptoCall) {
 		CryptoUsage cryptoUsage = new CryptoUsage(
+			cryptoCall.getBundleSymbolicName(),
 			Collections.singletonList(cryptoCall.getClassName()),
 			cryptoCall.getCryptoFunctions(), cryptoCall.getFeatureName(),
 			cryptoCall.getJCAClassName(),
@@ -103,6 +104,8 @@ public class CryptoUsageResolverUtil {
 		cryptoUsage.setAlgorithm(cryptoCall.getAlgorithm());
 		cryptoUsage.setConfiguredBy(cryptoCall.getConfiguredBy());
 		cryptoUsage.setKeySize(cryptoCall.getKeySize());
+		cryptoUsage.setRelatedCryptoMaterialTypes(
+			cryptoCall.getRelatedCryptoMaterialTypes());
 
 		return cryptoUsage;
 	}
@@ -111,6 +114,7 @@ public class CryptoUsageResolverUtil {
 		CryptoCall cryptoCall, CryptoUsage describedCryptoUsage) {
 
 		CryptoUsage cryptoUsage = new CryptoUsage(
+			cryptoCall.getBundleSymbolicName(),
 			Collections.singletonList(cryptoCall.getClassName()),
 			describedCryptoUsage.getCryptoFunctions(),
 			cryptoCall.getFeatureName(), cryptoCall.getJCAClassName(),
@@ -120,6 +124,8 @@ public class CryptoUsageResolverUtil {
 		cryptoUsage.setConfiguredBy(describedCryptoUsage.getConfiguredBy());
 		cryptoUsage.setCurve(describedCryptoUsage.getCurve());
 		cryptoUsage.setKeySize(describedCryptoUsage.getKeySize());
+		cryptoUsage.setRelatedCryptoMaterialTypes(
+			cryptoCall.getRelatedCryptoMaterialTypes());
 
 		return cryptoUsage;
 	}

@@ -12,20 +12,23 @@ import java.util.List;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.Primitive;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 /**
- * Describes one way a feature uses cryptography: the JCA class the feature's
- * classes call, and either the algorithm the release fixes or the portal
- * properties that choose it.
+ * Describes one way a module uses cryptography: the JCA class the module's
+ * classes call, and either the algorithm the release fixes or the settings
+ * that choose it.
  *
  * @author Manuele Castro
  */
 public class CryptoUsage {
 
 	public CryptoUsage(
-		List<String> classNames, List<CryptoFunction> cryptoFunctions,
-		String featureName, String jcaClassName, Primitive primitive) {
+		String bundleSymbolicName, List<String> classNames,
+		List<CryptoFunction> cryptoFunctions, String featureName,
+		String jcaClassName, Primitive primitive) {
 
+		_bundleSymbolicName = bundleSymbolicName;
 		_classNames = classNames;
 		_cryptoFunctions = cryptoFunctions;
 		_featureName = featureName;
@@ -35,6 +38,10 @@ public class CryptoUsage {
 
 	public String getAlgorithm() {
 		return _algorithm;
+	}
+
+	public String getBundleSymbolicName() {
+		return _bundleSymbolicName;
 	}
 
 	public List<String> getClassNames() {
@@ -69,6 +76,10 @@ public class CryptoUsage {
 		return _primitive;
 	}
 
+	public List<RelatedCryptoMaterialType> getRelatedCryptoMaterialTypes() {
+		return _relatedCryptoMaterialTypes;
+	}
+
 	public boolean isConfigurable() {
 		return ListUtil.isNotEmpty(_configuredBy);
 	}
@@ -89,7 +100,14 @@ public class CryptoUsage {
 		_keySize = keySize;
 	}
 
+	public void setRelatedCryptoMaterialTypes(
+		List<RelatedCryptoMaterialType> relatedCryptoMaterialTypes) {
+
+		_relatedCryptoMaterialTypes = relatedCryptoMaterialTypes;
+	}
+
 	private String _algorithm;
+	private final String _bundleSymbolicName;
 	private final List<String> _classNames;
 	private List<String> _configuredBy = Collections.emptyList();
 	private final List<CryptoFunction> _cryptoFunctions;
@@ -98,5 +116,7 @@ public class CryptoUsage {
 	private final String _jcaClassName;
 	private int _keySize;
 	private final Primitive _primitive;
+	private List<RelatedCryptoMaterialType> _relatedCryptoMaterialTypes =
+		Collections.emptyList();
 
 }

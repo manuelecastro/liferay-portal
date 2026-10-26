@@ -11,19 +11,22 @@ import java.util.Collections;
 import java.util.List;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 /**
  * Describes one crypto call that the scan finds in a class's bytecode: the JCA
- * class it calls, and the algorithm or the settings that choose it, when the
- * bytecode shows them.
+ * class it calls, the module the class ships in, and the algorithm or the
+ * settings that choose it, when the bytecode shows them.
  *
  * @author Manuele Castro
  */
 public class CryptoCall {
 
 	public CryptoCall(
-		String className, String featureName, String jcaClassName) {
+		String bundleSymbolicName, String className, String featureName,
+		String jcaClassName) {
 
+		_bundleSymbolicName = bundleSymbolicName;
 		_className = className;
 		_featureName = featureName;
 		_jcaClassName = jcaClassName;
@@ -31,6 +34,10 @@ public class CryptoCall {
 
 	public String getAlgorithm() {
 		return _algorithm;
+	}
+
+	public String getBundleSymbolicName() {
+		return _bundleSymbolicName;
 	}
 
 	public String getClassName() {
@@ -55,6 +62,10 @@ public class CryptoCall {
 
 	public int getKeySize() {
 		return _keySize;
+	}
+
+	public List<RelatedCryptoMaterialType> getRelatedCryptoMaterialTypes() {
+		return _relatedCryptoMaterialTypes;
 	}
 
 	public String getUnresolvedReason() {
@@ -85,17 +96,26 @@ public class CryptoCall {
 		_keySize = keySize;
 	}
 
+	public void setRelatedCryptoMaterialTypes(
+		List<RelatedCryptoMaterialType> relatedCryptoMaterialTypes) {
+
+		_relatedCryptoMaterialTypes = relatedCryptoMaterialTypes;
+	}
+
 	public void setUnresolvedReason(String unresolvedReason) {
 		_unresolvedReason = unresolvedReason;
 	}
 
 	private String _algorithm;
+	private final String _bundleSymbolicName;
 	private final String _className;
 	private List<String> _configuredBy = Collections.emptyList();
 	private List<CryptoFunction> _cryptoFunctions = Collections.emptyList();
 	private final String _featureName;
 	private final String _jcaClassName;
 	private int _keySize;
+	private List<RelatedCryptoMaterialType> _relatedCryptoMaterialTypes =
+		Collections.emptyList();
 	private String _unresolvedReason;
 
 }

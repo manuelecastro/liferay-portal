@@ -23,7 +23,7 @@ import org.cyclonedx.model.component.crypto.enums.Primitive;
  * scan cannot resolve: the classes that make the call, the JCA class, the
  * primitive and functions, and either the algorithm or the properties that
  * choose it. The crypto functions and the primitive are the values of the
- * CycloneDX schema. The feature comes from the scan, so a description has
+ * CycloneDX schema. The module comes from the scan, so a description has
  * none.
  *
  * @author Manuele Castro
@@ -100,7 +100,7 @@ public class CryptoUsageDataUtil {
 		}
 
 		CryptoUsage cryptoUsage = new CryptoUsage(
-			classNames, cryptoFunctions, null, jcaClassName,
+			null, classNames, cryptoFunctions, null, jcaClassName,
 			_getPrimitive(className, jsonObject.getString("primitive")));
 
 		String algorithm = jsonObject.getString("algorithm");
