@@ -134,7 +134,7 @@ public class CryptoDependencyUtil {
 	private static String _fetchProviderName(CryptoUsage cryptoUsage)
 		throws Exception {
 
-		if (cryptoUsage.isConfigurable()) {
+		if (cryptoUsage.getAlgorithm() == null) {
 			return null;
 		}
 

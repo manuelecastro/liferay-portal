@@ -5,8 +5,7 @@
 
 package com.liferay.portal.security.fips.cbom.builder;
 
-import com.liferay.portal.json.JSONFactoryImpl;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -29,13 +28,13 @@ import org.cyclonedx.model.Component;
 
 /**
  * Builds the CBOM of one reference configuration from the bytecode of the JARs
- * the bundle ships, and from the usage data for the calls the scan cannot
- * resolve. The CBOM holds the crypto assets, the modules that use them, the
- * providers that answer them and the settings that choose them, and the
- * dependency graph between them. The build runs it in a JVM that is set up as
- * that configuration, so the providers it reports are the ones that the
- * configuration's JVM resolves. A call the usage data should describe, or a
- * description no call needs, is a warning, and fails a release build.
+ * the bundle ships. The CBOM holds the crypto assets, the modules that use
+ * them, the providers that answer them and the settings that choose them, and
+ * the dependency graph between them. A call whose algorithm the scan cannot
+ * read is in the CBOM too, with where its algorithm comes from, and the build
+ * lists it. The build runs it in a JVM that is set up as that configuration,
+ * so the providers it reports are the ones that the configuration's JVM
+ * resolves.
  *
  * @author Manuele Castro
  */
@@ -68,10 +67,6 @@ public class CBOMBuilder {
 	}
 
 	public static void main(String[] args) throws Exception {
-		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
-
-		jsonFactoryUtil.setJSONFactory(new JSONFactoryImpl());
-
 		File configurationDir = new File(args[0]);
 
 		Properties portalExtProperties = _loadProperties(
@@ -86,26 +81,26 @@ public class CBOMBuilder {
 			cryptoCallScanner.scan(file);
 		}
 
-		Set<String> problems = new TreeSet<>();
+		List<CryptoUsage> cryptoUsages = CryptoUsageUtil.toCryptoUsages(
+			cryptoCallScanner.getCryptoCalls());
 
-		List<CryptoUsage> cryptoUsages =
-			CryptoUsageResolverUtil.getCryptoUsages(
-				cryptoCallScanner.getCryptoCalls(),
-				CryptoUsageDataUtil.getCryptoUsages(
-					JSONFactoryUtil.createJSONObject(
-						_read("dependencies/crypto-usages.json"))),
-				problems);
+		Set<String> messages = new TreeSet<>();
 
-		for (String problem : problems) {
-			System.out.println("Warning: " + problem);
+		for (CryptoUsage cryptoUsage : cryptoUsages) {
+			if (cryptoUsage.isResolved()) {
+				continue;
+			}
+
+			messages.add(
+				StringBundler.concat(
+					"The scan cannot read the algorithm of the ",
+					cryptoUsage.getJCAClassName(), " call in ",
+					StringUtil.merge(cryptoUsage.getClassNames(), ", "),
+					", which comes from ", cryptoUsage.getUnresolvedReason()));
 		}
 
-		if (!problems.isEmpty() &&
-			GetterUtil.getBoolean(System.getProperty("cbom.release"))) {
-
-			throw new IllegalStateException(
-				"Unable to build a release CBOM with " + problems.size() +
-					" problems");
+		for (String message : messages) {
+			System.out.println(message);
 		}
 
 		String cbomJSON = build(
@@ -174,14 +169,6 @@ public class CBOMBuilder {
 		}
 
 		return properties;
-	}
-
-	private static String _read(String name) throws Exception {
-		try (InputStream inputStream = CBOMBuilder.class.getResourceAsStream(
-				name)) {
-
-			return StringUtil.read(inputStream);
-		}
 	}
 
 }

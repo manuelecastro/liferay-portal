@@ -722,11 +722,25 @@ public class CryptoCallScanner {
 	}
 
 	private String _getUnresolvedReason(String reference) {
-		if (reference.indexOf(CharPool.POUND) != -1) {
-			return "a method parameter";
+		int index = reference.indexOf(CharPool.POUND);
+
+		if (index != -1) {
+			String methodName = reference.substring(
+				0, reference.indexOf(CharPool.OPEN_PARENTHESIS));
+
+			if (methodName.endsWith(".<init>")) {
+				methodName =
+					"the constructor of " +
+						methodName.substring(0, methodName.length() - 7);
+			}
+
+			return StringBundler.concat(
+				"parameter ",
+				GetterUtil.getInteger(reference.substring(index + 1)) + 1,
+				" of ", methodName);
 		}
 
-		int index = reference.indexOf(CharPool.OPEN_PARENTHESIS);
+		index = reference.indexOf(CharPool.OPEN_PARENTHESIS);
 
 		if (index != -1) {
 			return "the return value of " + reference.substring(0, index) +

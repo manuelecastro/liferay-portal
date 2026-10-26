@@ -45,8 +45,10 @@ import org.cyclonedx.model.component.evidence.Occurrence;
  * component, which lists every class that uses it and takes the name
  * CycloneDX's cryptography definitions give the algorithm. Uses whose
  * algorithm a setting chooses share one component per JCA class and setting,
- * which is named after the setting. A key points at the algorithm its class
- * uses it with, when there is exactly one.
+ * which is named after the setting. A call whose algorithm the scan cannot
+ * read gets a component of its own, named after its JCA class, whose
+ * description says where the algorithm comes from. A key points at the
+ * algorithm its class uses it with, when there is exactly one.
  *
  * @author Manuele Castro
  */
@@ -63,6 +65,14 @@ public class CryptoAssetComponentUtil {
 			List<String> configuredBy = cryptoUsage.getConfiguredBy();
 
 			sb.append(configuredBy.get(0));
+
+			return sb.toString();
+		}
+
+		if (cryptoUsage.getAlgorithm() == null) {
+			sb.append(
+				StringUtil.merge(
+					cryptoUsage.getClassNames(), StringPool.COMMA));
 
 			return sb.toString();
 		}
@@ -123,7 +133,7 @@ public class CryptoAssetComponentUtil {
 
 		CryptoUsage cryptoUsage = cryptoUsages.get(0);
 
-		if (cryptoUsage.isConfigurable()) {
+		if (cryptoUsage.getAlgorithm() == null) {
 			return algorithmProperties;
 		}
 
@@ -149,6 +159,10 @@ public class CryptoAssetComponentUtil {
 		TreeSet<String> algorithmRefs = new TreeSet<>();
 
 		for (CryptoUsage keyCryptoUsage : keyCryptoUsages) {
+			if (!keyCryptoUsage.isResolved()) {
+				continue;
+			}
+
 			for (String className : keyCryptoUsage.getClassNames()) {
 				List<CryptoUsage> candidateCryptoUsages = new ArrayList<>();
 				List<CryptoUsage> matchingCryptoUsages = new ArrayList<>();
@@ -200,6 +214,26 @@ public class CryptoAssetComponentUtil {
 		return new ArrayList<>(cryptoFunctions);
 	}
 
+	private static String _getDescription(List<CryptoUsage> cryptoUsages) {
+		Set<String> unresolvedReasons = new TreeSet<>();
+
+		for (CryptoUsage cryptoUsage : cryptoUsages) {
+			if (cryptoUsage.isResolved()) {
+				continue;
+			}
+
+			unresolvedReasons.add(cryptoUsage.getUnresolvedReason());
+		}
+
+		if (unresolvedReasons.isEmpty()) {
+			return null;
+		}
+
+		return StringBundler.concat(
+			"The scan cannot read the algorithm, which comes from ",
+			StringUtil.merge(unresolvedReasons, ", "), StringPool.PERIOD);
+	}
+
 	private static Evidence _getEvidence(List<CryptoUsage> cryptoUsages) {
 		Evidence evidence = new Evidence();
 
@@ -238,6 +272,10 @@ public class CryptoAssetComponentUtil {
 			List<String> configuredBy = cryptoUsage.getConfiguredBy();
 
 			return configuredBy.get(0);
+		}
+
+		if (cryptoUsage.getAlgorithm() == null) {
+			return cryptoUsage.getJCAClassName();
 		}
 
 		return CryptoAlgorithmNameUtil.getName(
@@ -285,7 +323,7 @@ public class CryptoAssetComponentUtil {
 
 		ProtocolProperties protocolProperties = new ProtocolProperties();
 
-		if (cryptoUsage.isConfigurable()) {
+		if (cryptoUsage.getAlgorithm() == null) {
 			protocolProperties.setType(ProtocolType.TLS);
 
 			return protocolProperties;
@@ -320,7 +358,7 @@ public class CryptoAssetComponentUtil {
 		CryptoUsage keyCryptoUsage = keyCryptoUsages.get(0);
 
 		if (Objects.equals(keyCryptoUsage.getJCAClassName(), "KeyStore")) {
-			if (!keyCryptoUsage.isConfigurable()) {
+			if (keyCryptoUsage.getAlgorithm() != null) {
 				relatedCryptoMaterialProperties.setFormat(
 					CryptoProviderUtil.getAlgorithmName(
 						keyCryptoUsage.getAlgorithm(), "KeyStore"));
@@ -418,7 +456,7 @@ public class CryptoAssetComponentUtil {
 
 		if (!_keyAlgorithmJCAClassNames.contains(
 				cryptoUsage.getJCAClassName()) ||
-			!classNames.contains(className) ||
+			!classNames.contains(className) || !cryptoUsage.isResolved() ||
 			(cryptoUsage.isConfigurable() != keyCryptoUsage.isConfigurable())) {
 
 			return false;
@@ -505,6 +543,7 @@ public class CryptoAssetComponentUtil {
 
 		component.setBomRef(bomRef);
 		component.setCryptoProperties(cryptoProperties);
+		component.setDescription(_getDescription(bomRefCryptoUsages));
 		component.setEvidence(_getEvidence(bomRefCryptoUsages));
 		component.setName(_getName(cryptoUsage));
 		component.setProperties(_getProperties(bomRefCryptoUsages));

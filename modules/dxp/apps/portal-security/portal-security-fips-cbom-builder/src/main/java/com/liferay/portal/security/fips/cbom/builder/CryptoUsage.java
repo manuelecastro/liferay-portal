@@ -16,8 +16,9 @@ import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 /**
  * Describes one way a module uses cryptography: the JCA class the module's
- * classes call, and either the algorithm the release fixes or the settings
- * that choose it.
+ * classes call, and either the algorithm the release fixes, the settings that
+ * choose it, or, when the scan cannot read either, where the algorithm comes
+ * from.
  *
  * @author Manuele Castro
  */
@@ -80,8 +81,20 @@ public class CryptoUsage {
 		return _relatedCryptoMaterialTypes;
 	}
 
+	public String getUnresolvedReason() {
+		return _unresolvedReason;
+	}
+
 	public boolean isConfigurable() {
 		return ListUtil.isNotEmpty(_configuredBy);
+	}
+
+	public boolean isResolved() {
+		if ((_algorithm != null) || isConfigurable()) {
+			return true;
+		}
+
+		return false;
 	}
 
 	public void setAlgorithm(String algorithm) {
@@ -106,6 +119,10 @@ public class CryptoUsage {
 		_relatedCryptoMaterialTypes = relatedCryptoMaterialTypes;
 	}
 
+	public void setUnresolvedReason(String unresolvedReason) {
+		_unresolvedReason = unresolvedReason;
+	}
+
 	private String _algorithm;
 	private final String _bundleSymbolicName;
 	private final List<String> _classNames;
@@ -118,5 +135,6 @@ public class CryptoUsage {
 	private final Primitive _primitive;
 	private List<RelatedCryptoMaterialType> _relatedCryptoMaterialTypes =
 		Collections.emptyList();
+	private String _unresolvedReason;
 
 }
