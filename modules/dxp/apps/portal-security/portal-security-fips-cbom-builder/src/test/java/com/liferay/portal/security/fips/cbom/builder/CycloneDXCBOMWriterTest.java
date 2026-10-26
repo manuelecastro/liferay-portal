@@ -10,12 +10,17 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.cyclonedx.model.Component;
+import org.cyclonedx.model.Dependency;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -45,23 +50,46 @@ public class CycloneDXCBOMWriterTest {
 
 	@Test
 	public void testWrite() throws Exception {
-		Component component = new Component();
+		Component component1 = new Component();
 
-		component.setBomRef(RandomTestUtil.randomString());
+		component1.setBomRef(RandomTestUtil.randomString());
 
-		List<Component> components = Collections.singletonList(component);
+		Component component2 = new Component();
+
+		component2.setBomRef(RandomTestUtil.randomString());
+
+		List<Component> components = Arrays.asList(component1, component2);
+
+		Dependency dependency1 = new Dependency(component1.getBomRef());
+
+		dependency1.setDependencies(
+			Collections.singletonList(new Dependency(component2.getBomRef())));
+
+		Dependency dependency2 = new Dependency(component2.getBomRef());
+
+		dependency2.setDependencies(Collections.emptyList());
+
+		List<Dependency> dependencies = Arrays.asList(dependency1, dependency2);
+
+		Map<String, Set<String>> provides =
+			HashMapBuilder.<String, Set<String>>put(
+				component2.getBomRef(),
+				Collections.singleton(component1.getBomRef())
+			).build();
 
 		String configurationName = RandomTestUtil.randomString();
 		String productName = RandomTestUtil.randomString();
 		String productVersion = RandomTestUtil.randomString();
 
 		String json = CycloneDXCBOMWriter.write(
-			components, configurationName, productName, productVersion);
+			components, configurationName, dependencies, productName,
+			productVersion, provides);
 
 		Assert.assertEquals(
 			json,
 			CycloneDXCBOMWriter.write(
-				components, configurationName, productName, productVersion));
+				components, configurationName, dependencies, productName,
+				productVersion, provides));
 
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(json);
 
@@ -78,7 +106,24 @@ public class CycloneDXCBOMWriterTest {
 				"bomFormat", "CycloneDX"
 			).put(
 				"components",
-				JSONUtil.putAll(JSONUtil.put("bom-ref", component.getBomRef()))
+				JSONUtil.putAll(
+					JSONUtil.put("bom-ref", component1.getBomRef()),
+					JSONUtil.put("bom-ref", component2.getBomRef()))
+			).put(
+				"dependencies",
+				JSONUtil.putAll(
+					JSONUtil.put(
+						"dependsOn", JSONUtil.putAll(component2.getBomRef())
+					).put(
+						"ref", component1.getBomRef()
+					),
+					JSONUtil.put(
+						"dependsOn", JSONUtil.putAll()
+					).put(
+						"provides", JSONUtil.putAll(component1.getBomRef())
+					).put(
+						"ref", component2.getBomRef()
+					))
 			).put(
 				"metadata",
 				JSONUtil.put(
@@ -90,6 +135,9 @@ public class CycloneDXCBOMWriterTest {
 					).put(
 						"version", productVersion
 					)
+				).put(
+					"lifecycles",
+					JSONUtil.putAll(JSONUtil.put("phase", "post-build"))
 				).put(
 					"properties",
 					JSONUtil.putAll(
@@ -116,13 +164,13 @@ public class CycloneDXCBOMWriterTest {
 		Assert.assertNotEquals(
 			json,
 			CycloneDXCBOMWriter.write(
-				components, RandomTestUtil.randomString(), productName,
-				productVersion));
+				components, RandomTestUtil.randomString(), dependencies,
+				productName, productVersion, provides));
 		Assert.assertNotEquals(
 			json,
 			CycloneDXCBOMWriter.write(
-				components, configurationName, productName,
-				RandomTestUtil.randomString()));
+				components, configurationName, dependencies, productName,
+				RandomTestUtil.randomString(), provides));
 	}
 
 }

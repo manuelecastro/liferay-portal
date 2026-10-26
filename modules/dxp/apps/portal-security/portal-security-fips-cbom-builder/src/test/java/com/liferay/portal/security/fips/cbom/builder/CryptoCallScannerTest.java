@@ -26,9 +26,13 @@ import java.io.InputStream;
 import java.nio.file.Files;
 
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.MessageDigest;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 import java.util.Arrays;
 import java.util.List;
@@ -47,6 +51,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -84,6 +89,10 @@ public class CryptoCallScannerTest {
 			InstanceFieldTestClass.class, false,
 			"SecretKeySpec configured by [test.algorithm] [other]");
 		_testScan(
+			KeyFactoryTestClass.class, false,
+			"KeyFactory RSA [other] [private-key]",
+			"KeyFactory RSA [other] [public-key]");
+		_testScan(
 			KeyGeneratorTestClass.class, false,
 			"KeyGenerator AES [keygen] 256");
 		_testScan(
@@ -114,18 +123,20 @@ public class CryptoCallScannerTest {
 	@Test
 	public void testScanFile() throws Exception {
 		String bundleName = RandomTestUtil.randomString();
+		String bundleSymbolicName = RandomTestUtil.randomString();
 
 		File bundleJarFile = temporaryFolder.newFile("bundle.jar");
 
-		_writeJarFile(bundleName, bundleJarFile);
+		_writeJarFile(
+			bundleName, bundleSymbolicName + ";singleton:=true", bundleJarFile);
 
-		_testScanFile(bundleName, bundleJarFile);
+		_testScanFile(bundleSymbolicName, bundleName, bundleJarFile);
 
 		File libraryJarFile = temporaryFolder.newFile("library.jar");
 
-		_writeJarFile(null, libraryJarFile);
+		_writeJarFile(null, null, libraryJarFile);
 
-		_testScanFile("library", libraryJarFile);
+		_testScanFile("library", "library", libraryJarFile);
 
 		File lpkgFile = temporaryFolder.newFile("package.lpkg");
 
@@ -139,7 +150,7 @@ public class CryptoCallScannerTest {
 			zipOutputStream.closeEntry();
 		}
 
-		_testScanFile(bundleName, lpkgFile);
+		_testScanFile(bundleSymbolicName, bundleName, lpkgFile);
 	}
 
 	@Rule
@@ -200,6 +211,22 @@ public class CryptoCallScannerTest {
 		}
 
 		private String _algorithm;
+
+	}
+
+	public static class KeyFactoryTestClass {
+
+		public PrivateKey getPrivateKey(byte[] bytes) throws Exception {
+			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+
+			return keyFactory.generatePrivate(new PKCS8EncodedKeySpec(bytes));
+		}
+
+		public PublicKey getPublicKey(byte[] bytes) throws Exception {
+			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+
+			return keyFactory.generatePublic(new X509EncodedKeySpec(bytes));
+		}
 
 	}
 
@@ -296,7 +323,7 @@ public class CryptoCallScannerTest {
 	}
 
 	private String _getDescription(CryptoCall cryptoCall) {
-		StringBundler sb = new StringBundler(8);
+		StringBundler sb = new StringBundler(10);
 
 		sb.append(cryptoCall.getJCAClassName());
 		sb.append(StringPool.SPACE);
@@ -324,6 +351,15 @@ public class CryptoCallScannerTest {
 			sb.append(String.valueOf(cryptoCall.getKeySize()));
 		}
 
+		if (ListUtil.isNotEmpty(cryptoCall.getRelatedCryptoMaterialTypes())) {
+			sb.append(StringPool.SPACE);
+			sb.append(
+				String.valueOf(
+					TransformUtil.transform(
+						cryptoCall.getRelatedCryptoMaterialTypes(),
+						RelatedCryptoMaterialType::getName)));
+		}
+
 		return sb.toString();
 	}
 
@@ -344,19 +380,23 @@ public class CryptoCallScannerTest {
 		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner(
 			fipsEnabled);
 
+		String bundleSymbolicName = RandomTestUtil.randomString();
 		String featureName = RandomTestUtil.randomString();
 
 		for (Class<?> curClass : new Class<?>[] {DigesterUtil.class, clazz}) {
 			try (InputStream inputStream = new ByteArrayInputStream(
 					_read(curClass))) {
 
-				cryptoCallScanner.scan(featureName, inputStream);
+				cryptoCallScanner.scan(
+					bundleSymbolicName, featureName, inputStream);
 			}
 		}
 
 		List<CryptoCall> cryptoCalls = cryptoCallScanner.getCryptoCalls();
 
 		for (CryptoCall cryptoCall : cryptoCalls) {
+			Assert.assertEquals(
+				bundleSymbolicName, cryptoCall.getBundleSymbolicName());
 			Assert.assertEquals(
 				CryptoCallScannerTest.class.getName(),
 				cryptoCall.getClassName());
@@ -371,7 +411,9 @@ public class CryptoCallScannerTest {
 		Assert.assertEquals(Arrays.asList(expectedDescriptions), descriptions);
 	}
 
-	private void _testScanFile(String expectedFeatureName, File file)
+	private void _testScanFile(
+			String expectedBundleSymbolicName, String expectedFeatureName,
+			File file)
 		throws Exception {
 
 		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner(false);
@@ -385,11 +427,16 @@ public class CryptoCallScannerTest {
 		CryptoCall cryptoCall = cryptoCalls.get(0);
 
 		Assert.assertEquals(
+			expectedBundleSymbolicName, cryptoCall.getBundleSymbolicName());
+		Assert.assertEquals(
 			CryptoCallScannerTest.class.getName(), cryptoCall.getClassName());
 		Assert.assertEquals(expectedFeatureName, cryptoCall.getFeatureName());
 	}
 
-	private void _writeJarFile(String bundleName, File file) throws Exception {
+	private void _writeJarFile(
+			String bundleName, String bundleSymbolicName, File file)
+		throws Exception {
+
 		Manifest manifest = new Manifest();
 
 		Attributes attributes = manifest.getMainAttributes();
@@ -398,6 +445,10 @@ public class CryptoCallScannerTest {
 
 		if (bundleName != null) {
 			attributes.putValue("Bundle-Name", bundleName);
+		}
+
+		if (bundleSymbolicName != null) {
+			attributes.putValue("Bundle-SymbolicName", bundleSymbolicName);
 		}
 
 		try (JarOutputStream jarOutputStream = new JarOutputStream(

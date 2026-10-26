@@ -9,6 +9,7 @@ import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
@@ -114,14 +115,31 @@ public class CBOMBuilderTest {
 
 		Assert.assertFalse(metadataJSONObject.has("timestamp"));
 
+		JSONArray lifecyclesJSONArray = metadataJSONObject.getJSONArray(
+			"lifecycles");
+
+		JSONObject lifecycleJSONObject = lifecyclesJSONArray.getJSONObject(0);
+
+		Assert.assertEquals(
+			"post-build", lifecycleJSONObject.getString("phase"));
+
 		JSONArray componentsJSONArray = jsonObject.getJSONArray("components");
 
 		List<String> bomRefs = new ArrayList<>();
+		Set<String> moduleBOMRefs = new TreeSet<>();
 
 		for (int i = 0; i < componentsJSONArray.length(); i++) {
 			componentJSONObject = componentsJSONArray.getJSONObject(i);
 
-			bomRefs.add(componentJSONObject.getString("bom-ref"));
+			String bomRef = componentJSONObject.getString("bom-ref");
+
+			bomRefs.add(bomRef);
+
+			if (!bomRef.startsWith("module:")) {
+				continue;
+			}
+
+			moduleBOMRefs.add(bomRef);
 		}
 
 		List<String> sortedBOMRefs = new ArrayList<>(bomRefs);
@@ -133,7 +151,53 @@ public class CBOMBuilderTest {
 		Assert.assertTrue(
 			bomRefs.toString(), bomRefs.contains("crypto:MessageDigest:MD5"));
 		Assert.assertTrue(
-			bomRefs.toString(), bomRefs.contains("crypto:auth.mac.algorithm"));
+			bomRefs.toString(),
+			bomRefs.contains("crypto:MessageDigest:auth.mac.algorithm"));
+		Assert.assertTrue(bomRefs.toString(), bomRefs.contains("provider:SUN"));
+		Assert.assertTrue(
+			bomRefs.toString(), bomRefs.contains("setting:auth.mac.algorithm"));
+		Assert.assertFalse(moduleBOMRefs.isEmpty());
+
+		JSONArray dependenciesJSONArray = jsonObject.getJSONArray(
+			"dependencies");
+
+		List<String> refs = new ArrayList<>();
+		Set<String> moduleDependsOn = new TreeSet<>();
+
+		for (int i = 0; i < dependenciesJSONArray.length(); i++) {
+			JSONObject dependencyJSONObject =
+				dependenciesJSONArray.getJSONObject(i);
+
+			String ref = dependencyJSONObject.getString("ref");
+
+			refs.add(ref);
+
+			List<String> dependsOn = JSONUtil.toStringList(
+				dependencyJSONObject.getJSONArray("dependsOn"));
+
+			Assert.assertTrue(
+				dependsOn.toString(), bomRefs.containsAll(dependsOn));
+
+			if (moduleBOMRefs.contains(ref)) {
+				moduleDependsOn.addAll(dependsOn);
+			}
+
+			List<String> provides = JSONUtil.toStringList(
+				dependencyJSONObject.getJSONArray("provides"));
+
+			Assert.assertTrue(
+				provides.toString(), bomRefs.containsAll(provides));
+		}
+
+		Assert.assertEquals(bomRefs, refs);
+
+		for (String bomRef : bomRefs) {
+			if (!bomRef.startsWith("crypto:")) {
+				continue;
+			}
+
+			Assert.assertTrue(bomRef, moduleDependsOn.contains(bomRef));
+		}
 
 		portalExtProperties.setProperty("fips.enabled", "true");
 

@@ -38,6 +38,30 @@ public class CryptoProviderUtilTest {
 	}
 
 	@Test
+	public void testGetAlgorithmName() throws Exception {
+		Assert.assertEquals(
+			"AES/GCM/NoPadding",
+			CryptoProviderUtil.getAlgorithmName("aes/GCM/NoPadding", "Cipher"));
+		Assert.assertEquals(
+			"SHA-1",
+			CryptoProviderUtil.getAlgorithmName("SHA", "MessageDigest"));
+		Assert.assertEquals(
+			"SHA1withDSA",
+			CryptoProviderUtil.getAlgorithmName("DSA", "Signature"));
+		Assert.assertEquals(
+			"TLS", CryptoProviderUtil.getAlgorithmName("TLS", "SSLContext"));
+
+		String algorithm = RandomTestUtil.randomString();
+
+		Assert.assertEquals(
+			algorithm,
+			CryptoProviderUtil.getAlgorithmName(algorithm, "MessageDigest"));
+		Assert.assertEquals(
+			algorithm,
+			CryptoProviderUtil.getAlgorithmName(algorithm, "SecretKeySpec"));
+	}
+
+	@Test
 	public void testGetProviderName() throws Exception {
 		Assert.assertEquals(
 			"SunJCE",

@@ -6,9 +6,11 @@
 package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.portal.json.JSONFactoryImpl;
+import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Arrays;
@@ -22,6 +24,7 @@ import org.cyclonedx.model.Bom;
 import org.cyclonedx.model.Component;
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.Primitive;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -50,56 +53,67 @@ public class CryptoAssetComponentUtilTest {
 
 	@Test
 	public void testToComponents() throws Exception {
-		CryptoUsage cipherCryptoUsage = new CryptoUsage(
-			Collections.singletonList("com.liferay.test.Class1"),
+		CryptoUsage cipherCryptoUsage = _createCryptoUsage(
+			"AES/GCM/NoPadding",
 			Arrays.asList(CryptoFunction.ENCRYPT, CryptoFunction.DECRYPT),
-			"Feature 1", "Cipher", Primitive.AE);
+			"Cipher", Primitive.AE, "com.liferay.test.Class1");
 
-		cipherCryptoUsage.setAlgorithm("AES/GCM/NoPadding");
 		cipherCryptoUsage.setKeySize(256);
 
-		CryptoUsage keyGeneratorCryptoUsage = new CryptoUsage(
-			Collections.singletonList("com.liferay.test.Class2"),
-			Collections.singletonList(CryptoFunction.KEYGEN), "Feature 2",
-			"KeyGenerator", Primitive.BLOCK_CIPHER);
+		CryptoUsage keyGeneratorCryptoUsage = _createCryptoUsage(
+			null, Collections.singletonList(CryptoFunction.KEYGEN),
+			"KeyGenerator", Primitive.BLOCK_CIPHER, "com.liferay.test.Class2");
 
 		keyGeneratorCryptoUsage.setConfiguredBy(
 			Arrays.asList("test.encryption.algorithm", "test.key.size"));
 
-		CryptoUsage messageDigestCryptoUsage1 = new CryptoUsage(
-			Collections.singletonList("com.liferay.test.Class3"),
-			Collections.singletonList(CryptoFunction.DIGEST), "Feature 3",
-			"MessageDigest", Primitive.HASH);
-
-		messageDigestCryptoUsage1.setAlgorithm("SHA-256");
-
-		CryptoUsage messageDigestCryptoUsage2 = new CryptoUsage(
-			Arrays.asList("com.liferay.test.Class4", "com.liferay.test.Class3"),
-			Collections.singletonList(CryptoFunction.DIGEST), "Feature 4",
-			"MessageDigest", Primitive.HASH);
-
-		messageDigestCryptoUsage2.setAlgorithm("SHA-256");
-
-		CryptoUsage cipherConfigurableCryptoUsage = new CryptoUsage(
-			Collections.singletonList("com.liferay.test.Class5"),
-			Collections.singletonList(CryptoFunction.ENCRYPT), "Feature 2",
-			"Cipher", Primitive.UNKNOWN);
+		CryptoUsage cipherConfigurableCryptoUsage = _createCryptoUsage(
+			null, Collections.singletonList(CryptoFunction.ENCRYPT), "Cipher",
+			Primitive.UNKNOWN, "com.liferay.test.Class2");
 
 		cipherConfigurableCryptoUsage.setConfiguredBy(
 			Arrays.asList("test.encryption.algorithm", "test.key.size"));
 
+		CryptoUsage keyFactoryCryptoUsage = _createCryptoUsage(
+			"DSA", Collections.singletonList(CryptoFunction.OTHER),
+			"KeyFactory", Primitive.UNKNOWN, "com.liferay.test.Class3");
+
+		keyFactoryCryptoUsage.setRelatedCryptoMaterialTypes(
+			Collections.singletonList(RelatedCryptoMaterialType.PUBLIC_KEY));
+
 		List<Component> components = CryptoAssetComponentUtil.toComponents(
 			Arrays.asList(
-				messageDigestCryptoUsage1, keyGeneratorCryptoUsage,
-				cipherCryptoUsage, messageDigestCryptoUsage2,
-				cipherConfigurableCryptoUsage));
+				_createCryptoUsage(
+					"SHA-256", Collections.singletonList(CryptoFunction.DIGEST),
+					"MessageDigest", Primitive.HASH, "com.liferay.test.Class4"),
+				keyGeneratorCryptoUsage, cipherCryptoUsage,
+				_createCryptoUsage(
+					"SHA-256", Collections.singletonList(CryptoFunction.DIGEST),
+					"MessageDigest", Primitive.HASH, "com.liferay.test.Class5",
+					"com.liferay.test.Class4"),
+				cipherConfigurableCryptoUsage, keyFactoryCryptoUsage,
+				_createCryptoUsage(
+					"DSA", Collections.singletonList(CryptoFunction.VERIFY),
+					"Signature", Primitive.SIGNATURE,
+					"com.liferay.test.Class3"),
+				_createCryptoUsage(
+					"HmacSHA1", Collections.singletonList(CryptoFunction.TAG),
+					"Mac", Primitive.MAC, "com.liferay.test.Class6"),
+				_createCryptoUsage(
+					"RAW", Collections.singletonList(CryptoFunction.OTHER),
+					"SecretKeySpec", Primitive.UNKNOWN,
+					"com.liferay.test.Class6"),
+				_createCryptoUsage(
+					"pkcs12", Collections.singletonList(CryptoFunction.OTHER),
+					"KeyStore", Primitive.OTHER, "com.liferay.test.Class7"),
+				_createCryptoUsage(
+					"TLSv1.2", Collections.singletonList(CryptoFunction.OTHER),
+					"SSLContext", Primitive.OTHER, "com.liferay.test.Class8")));
 
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
-				JSONUtil.put(
-					"bom-ref", "crypto:Cipher:AES/GCM/NoPadding:256"
-				).put(
-					"cryptoProperties",
+				_toJSONObject(
+					"crypto:Cipher:AES/GCM/NoPadding:256",
 					JSONUtil.put(
 						"algorithmProperties",
 						JSONUtil.put(
@@ -114,41 +128,77 @@ public class CryptoAssetComponentUtilTest {
 						)
 					).put(
 						"assetType", "algorithm"
-					)
-				).put(
-					"evidence",
+					),
+					"Cipher", "AES-256-GCM", "com.liferay.test.Class1"),
+				_toJSONObject(
+					"crypto:Cipher:test.encryption.algorithm",
 					JSONUtil.put(
-						"occurrences",
-						JSONUtil.putAll(
-							JSONUtil.put(
-								"location", "com.liferay.test.Class1")))
-				).put(
-					"name", "AES/GCM/NoPadding"
-				).put(
-					"properties",
-					JSONUtil.putAll(
+						"algorithmProperties",
 						JSONUtil.put(
-							"name", "liferay:cbom:feature"
+							"cryptoFunctions", JSONUtil.putAll("encrypt")
 						).put(
-							"value", "Feature 1"
-						),
+							"primitive", "unknown"
+						)
+					).put(
+						"assetType", "algorithm"
+					),
+					"Cipher", "test.encryption.algorithm",
+					"com.liferay.test.Class2"),
+				_toJSONObject(
+					"crypto:KeyFactory:DSA",
+					JSONUtil.put(
+						"assetType", "related-crypto-material"
+					).put(
+						"relatedCryptoMaterialProperties",
 						JSONUtil.put(
-							"name", "liferay:cbom:jca-class"
+							"algorithmRef", "crypto:Signature:SHA1withDSA"
 						).put(
-							"value", "Cipher"
-						),
+							"type", "public-key"
+						)
+					),
+					"KeyFactory", "DSA", "com.liferay.test.Class3"),
+				_toJSONObject(
+					"crypto:KeyGenerator:test.encryption.algorithm",
+					JSONUtil.put(
+						"algorithmProperties",
 						JSONUtil.put(
-							"name", "liferay:cbom:provider"
+							"cryptoFunctions", JSONUtil.putAll("keygen")
 						).put(
-							"value", "SunJCE"
-						))
-				).put(
-					"type", "cryptographic-asset"
-				),
-				JSONUtil.put(
-					"bom-ref", "crypto:MessageDigest:SHA-256"
-				).put(
-					"cryptoProperties",
+							"primitive", "block-cipher"
+						)
+					).put(
+						"assetType", "algorithm"
+					),
+					"KeyGenerator", "test.encryption.algorithm",
+					"com.liferay.test.Class2"),
+				_toJSONObject(
+					"crypto:KeyStore:PKCS12",
+					JSONUtil.put(
+						"assetType", "related-crypto-material"
+					).put(
+						"relatedCryptoMaterialProperties",
+						JSONUtil.put(
+							"format", "PKCS12"
+						).put(
+							"type", "other"
+						)
+					),
+					"KeyStore", "PKCS12", "com.liferay.test.Class7"),
+				_toJSONObject(
+					"crypto:Mac:HmacSHA1",
+					JSONUtil.put(
+						"algorithmProperties",
+						JSONUtil.put(
+							"cryptoFunctions", JSONUtil.putAll("tag")
+						).put(
+							"primitive", "mac"
+						)
+					).put(
+						"assetType", "algorithm"
+					),
+					"Mac", "HMAC-SHA-1", "com.liferay.test.Class6"),
+				_toJSONObject(
+					"crypto:MessageDigest:SHA-256",
 					JSONUtil.put(
 						"algorithmProperties",
 						JSONUtil.put(
@@ -158,101 +208,64 @@ public class CryptoAssetComponentUtilTest {
 						)
 					).put(
 						"assetType", "algorithm"
-					)
-				).put(
-					"evidence",
+					),
+					"MessageDigest", "SHA-256", "com.liferay.test.Class4",
+					"com.liferay.test.Class5"),
+				_toJSONObject(
+					"crypto:SSLContext:TLSv1.2",
 					JSONUtil.put(
-						"occurrences",
-						JSONUtil.putAll(
-							JSONUtil.put("location", "com.liferay.test.Class3"),
-							JSONUtil.put(
-								"location", "com.liferay.test.Class4")))
-				).put(
-					"name", "SHA-256"
-				).put(
-					"properties",
-					JSONUtil.putAll(
+						"assetType", "protocol"
+					).put(
+						"protocolProperties",
 						JSONUtil.put(
-							"name", "liferay:cbom:feature"
+							"type", "tls"
 						).put(
-							"value", "Feature 3"
-						),
+							"version", "1.2"
+						)
+					),
+					"SSLContext", "TLSv1.2", "com.liferay.test.Class8"),
+				_toJSONObject(
+					"crypto:SecretKeySpec:RAW",
+					JSONUtil.put(
+						"assetType", "related-crypto-material"
+					).put(
+						"relatedCryptoMaterialProperties",
 						JSONUtil.put(
-							"name", "liferay:cbom:feature"
+							"algorithmRef", "crypto:Mac:HmacSHA1"
 						).put(
-							"value", "Feature 4"
-						),
-						JSONUtil.put(
-							"name", "liferay:cbom:jca-class"
-						).put(
-							"value", "MessageDigest"
-						),
-						JSONUtil.put(
-							"name", "liferay:cbom:provider"
-						).put(
-							"value", "SUN"
-						))
-				).put(
-					"type", "cryptographic-asset"
-				),
-				JSONUtil.put(
-					"bom-ref", "crypto:test.encryption.algorithm"
-				).put(
-					"cryptoProperties",
+							"type", "secret-key"
+						)
+					),
+					"SecretKeySpec", "RAW", "com.liferay.test.Class6"),
+				_toJSONObject(
+					"crypto:Signature:SHA1withDSA",
 					JSONUtil.put(
 						"algorithmProperties",
 						JSONUtil.put(
-							"cryptoFunctions",
-							JSONUtil.putAll("keygen", "encrypt")
+							"cryptoFunctions", JSONUtil.putAll("verify")
 						).put(
-							"primitive", "unknown"
+							"primitive", "signature"
 						)
 					).put(
 						"assetType", "algorithm"
-					)
-				).put(
-					"evidence",
-					JSONUtil.put(
-						"occurrences",
-						JSONUtil.putAll(
-							JSONUtil.put("location", "com.liferay.test.Class2"),
-							JSONUtil.put(
-								"location", "com.liferay.test.Class5")))
-				).put(
-					"name", "test.encryption.algorithm"
-				).put(
-					"properties",
-					JSONUtil.putAll(
-						JSONUtil.put(
-							"name", "liferay:cbom:configured-by"
-						).put(
-							"value", "test.encryption.algorithm"
-						),
-						JSONUtil.put(
-							"name", "liferay:cbom:configured-by"
-						).put(
-							"value", "test.key.size"
-						),
-						JSONUtil.put(
-							"name", "liferay:cbom:feature"
-						).put(
-							"value", "Feature 2"
-						),
-						JSONUtil.put(
-							"name", "liferay:cbom:jca-class"
-						).put(
-							"value", "Cipher"
-						),
-						JSONUtil.put(
-							"name", "liferay:cbom:jca-class"
-						).put(
-							"value", "KeyGenerator"
-						))
-				).put(
-					"type", "cryptographic-asset"
-				)
+					),
+					"Signature", "DSA-SHA-1", "com.liferay.test.Class3")
 			).toString(),
 			_toJSON(components), JSONCompareMode.STRICT);
+	}
+
+	private CryptoUsage _createCryptoUsage(
+		String algorithm, List<CryptoFunction> cryptoFunctions,
+		String jcaClassName, Primitive primitive, String... classNames) {
+
+		CryptoUsage cryptoUsage = new CryptoUsage(
+			RandomTestUtil.randomString(), Arrays.asList(classNames),
+			cryptoFunctions, RandomTestUtil.randomString(), jcaClassName,
+			primitive);
+
+		cryptoUsage.setAlgorithm(algorithm);
+
+		return cryptoUsage;
 	}
 
 	private String _toJSON(List<Component> components) throws Exception {
@@ -267,6 +280,36 @@ public class CryptoAssetComponentUtilTest {
 			bomJsonGenerator.toJsonString());
 
 		return String.valueOf(jsonObject.getJSONArray("components"));
+	}
+
+	private JSONObject _toJSONObject(
+			String bomRef, JSONObject cryptoPropertiesJSONObject,
+			String jcaClassName, String name, String... locations)
+		throws Exception {
+
+		JSONArray occurrencesJSONArray = JSONUtil.toJSONArray(
+			Arrays.asList(locations),
+			location -> JSONUtil.put("location", location));
+
+		return JSONUtil.put(
+			"bom-ref", bomRef
+		).put(
+			"cryptoProperties", cryptoPropertiesJSONObject
+		).put(
+			"evidence", JSONUtil.put("occurrences", occurrencesJSONArray)
+		).put(
+			"name", name
+		).put(
+			"properties",
+			JSONUtil.putAll(
+				JSONUtil.put(
+					"name", "liferay:cbom:jca-class"
+				).put(
+					"value", jcaClassName
+				))
+		).put(
+			"type", "cryptographic-asset"
+		);
 	}
 
 }
