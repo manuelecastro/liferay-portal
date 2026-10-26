@@ -10,6 +10,7 @@ import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -91,10 +92,12 @@ public class CryptoDependencyUtilTest {
 				"crypto:KeyStore:keystore.type [setting:keystore.type]",
 				"crypto:MessageDigest:MD5 []",
 				"crypto:MessageDigest:SHA-256 []",
+				"crypto:MessageDigest:com.liferay.test.Class5 []",
 				"crypto:SecretKeySpec:AES []",
 				"module:Liferay Test Three [crypto:MessageDigest:MD5]",
 				"module:com.liferay.test.one [crypto:MessageDigest:SHA-256, " +
-					"crypto:SecretKeySpec:AES]",
+					"crypto:MessageDigest:com.liferay.test.Class5, " +
+						"crypto:SecretKeySpec:AES]",
 				"module:com.liferay.test.two [crypto:Cipher:test.algorithm, " +
 					"crypto:KeyStore:keystore.type]",
 				"provider:SUN []", "setting:keystore.type []",
@@ -169,21 +172,24 @@ public class CryptoDependencyUtilTest {
 
 	private static final List<CryptoUsage> _cryptoUsages = Arrays.asList(
 		_createCryptoUsage(
-			"SHA-256", "com.liferay.test.one", "com.liferay.test.Class1",
+			"SHA-256", "com.liferay.test.one", RandomTestUtil.randomString(),
 			Collections.emptyList(), "Liferay Test One", "MessageDigest"),
 		_createCryptoUsage(
-			"AES", "com.liferay.test.one", "com.liferay.test.Class1",
+			"AES", "com.liferay.test.one", RandomTestUtil.randomString(),
 			Collections.emptyList(), "Liferay Test One", "SecretKeySpec"),
 		_createCryptoUsage(
-			null, "com.liferay.test.two", "com.liferay.test.Class2",
+			null, "com.liferay.test.two", RandomTestUtil.randomString(),
 			Collections.singletonList("test.algorithm"), "Liferay Test Two",
 			"Cipher"),
 		_createCryptoUsage(
-			null, "com.liferay.test.two", "com.liferay.test.Class3",
+			null, "com.liferay.test.two", RandomTestUtil.randomString(),
 			Collections.singletonList("keystore.type"), "Liferay Test Two",
 			"KeyStore"),
 		_createCryptoUsage(
-			"MD5", null, "com.liferay.test.Class4", Collections.emptyList(),
-			"Liferay Test Three", "MessageDigest"));
+			"MD5", null, RandomTestUtil.randomString(), Collections.emptyList(),
+			"Liferay Test Three", "MessageDigest"),
+		_createCryptoUsage(
+			null, "com.liferay.test.one", "com.liferay.test.Class5",
+			Collections.emptyList(), "Liferay Test One", "MessageDigest"));
 
 }

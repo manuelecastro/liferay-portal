@@ -13,11 +13,9 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.File;
-import java.io.InputStream;
 
 import java.net.URL;
 
@@ -27,7 +25,9 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -66,20 +66,8 @@ public class CBOMBuilderTest {
 		cryptoCallScanner.scan(_getJarFile(DigesterUtil.class));
 		cryptoCallScanner.scan(_getJarFile(JSONFactoryImpl.class));
 
-		Set<String> problems = new TreeSet<>();
-
-		List<CryptoUsage> cryptoUsages =
-			CryptoUsageResolverUtil.getCryptoUsages(
-				cryptoCallScanner.getCryptoCalls(),
-				CryptoUsageDataUtil.getCryptoUsages(
-					JSONFactoryUtil.createJSONObject(
-						_read("dependencies/crypto-usages.json"))),
-				problems);
-
-		for (String problem : problems) {
-			Assert.assertFalse(
-				problem, problem.startsWith("Unable to resolve"));
-		}
+		List<CryptoUsage> cryptoUsages = CryptoUsageUtil.toCryptoUsages(
+			cryptoCallScanner.getCryptoCalls());
 
 		String configurationName = RandomTestUtil.randomString();
 		Properties portalExtProperties = new Properties();
@@ -126,6 +114,7 @@ public class CBOMBuilderTest {
 		JSONArray componentsJSONArray = jsonObject.getJSONArray("components");
 
 		List<String> bomRefs = new ArrayList<>();
+		Map<String, String> descriptions = new HashMap<>();
 		Set<String> moduleBOMRefs = new TreeSet<>();
 
 		for (int i = 0; i < componentsJSONArray.length(); i++) {
@@ -134,6 +123,8 @@ public class CBOMBuilderTest {
 			String bomRef = componentJSONObject.getString("bom-ref");
 
 			bomRefs.add(bomRef);
+			descriptions.put(
+				bomRef, componentJSONObject.getString("description"));
 
 			if (!bomRef.startsWith("module:")) {
 				continue;
@@ -157,6 +148,17 @@ public class CBOMBuilderTest {
 		Assert.assertTrue(
 			bomRefs.toString(), bomRefs.contains("setting:auth.mac.algorithm"));
 		Assert.assertFalse(moduleBOMRefs.isEmpty());
+
+		String description = descriptions.get(
+			"crypto:MessageDigest:com.liferay.portal.cache.key." +
+				"MessageDigestCacheKeyGenerator");
+
+		Assert.assertTrue(
+			description,
+			description.contains(
+				"parameter 1 of the constructor of " +
+					"com.liferay.portal.cache.key." +
+						"MessageDigestCacheKeyGenerator"));
 
 		JSONArray dependenciesJSONArray = jsonObject.getJSONArray(
 			"dependencies");
@@ -222,14 +224,6 @@ public class CBOMBuilderTest {
 		URL url = codeSource.getLocation();
 
 		return new File(url.toURI());
-	}
-
-	private String _read(String name) throws Exception {
-		try (InputStream inputStream = CBOMBuilder.class.getResourceAsStream(
-				name)) {
-
-			return StringUtil.read(inputStream);
-		}
 	}
 
 }

@@ -11,8 +11,6 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.Primitive;
@@ -26,7 +24,7 @@ import org.junit.Test;
 /**
  * @author Manuele Castro
  */
-public class CryptoUsageResolverUtilTest {
+public class CryptoUsageUtilTest {
 
 	@ClassRule
 	@Rule
@@ -34,7 +32,7 @@ public class CryptoUsageResolverUtilTest {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Test
-	public void testGetCryptoUsages() {
+	public void testToCryptoUsages() {
 		String bundleSymbolicName = RandomTestUtil.randomString();
 		String featureName = RandomTestUtil.randomString();
 
@@ -46,39 +44,33 @@ public class CryptoUsageResolverUtilTest {
 		resolvedCryptoCall.setCryptoFunctions(
 			Collections.singletonList(CryptoFunction.DIGEST));
 
-		CryptoCall describedCryptoCall = new CryptoCall(
-			bundleSymbolicName, "com.liferay.test.Class2", featureName,
+		CryptoCall configurableCryptoCall = new CryptoCall(
+			bundleSymbolicName, RandomTestUtil.randomString(), featureName,
 			"KeyFactory");
 
-		describedCryptoCall.setRelatedCryptoMaterialTypes(
-			Collections.singletonList(RelatedCryptoMaterialType.PUBLIC_KEY));
-		describedCryptoCall.setUnresolvedReason("a method parameter");
-
-		CryptoCall undescribedCryptoCall = new CryptoCall(
-			bundleSymbolicName, "com.liferay.test.Class3", featureName, "Mac");
-
-		undescribedCryptoCall.setUnresolvedReason(
-			"the field com.liferay.test.Class3._algorithm");
-
-		CryptoUsage describedCryptoUsage = new CryptoUsage(
-			null,
-			Arrays.asList("com.liferay.test.Class2", "com.liferay.test.Class4"),
-			Collections.singletonList(CryptoFunction.OTHER), null, "KeyFactory",
-			Primitive.UNKNOWN);
-
-		describedCryptoUsage.setConfiguredBy(
+		configurableCryptoCall.setConfiguredBy(
 			Collections.singletonList("test.algorithm"));
+		configurableCryptoCall.setCryptoFunctions(
+			Collections.singletonList(CryptoFunction.OTHER));
+		configurableCryptoCall.setRelatedCryptoMaterialTypes(
+			Collections.singletonList(RelatedCryptoMaterialType.PUBLIC_KEY));
 
-		Set<String> problems = new TreeSet<>();
+		CryptoCall unresolvedCryptoCall = new CryptoCall(
+			bundleSymbolicName, RandomTestUtil.randomString(), featureName,
+			"Mac");
 
-		List<CryptoUsage> cryptoUsages =
-			CryptoUsageResolverUtil.getCryptoUsages(
-				Arrays.asList(
-					resolvedCryptoCall, describedCryptoCall,
-					undescribedCryptoCall),
-				Collections.singletonList(describedCryptoUsage), problems);
+		String unresolvedReason = RandomTestUtil.randomString();
 
-		Assert.assertEquals(cryptoUsages.toString(), 2, cryptoUsages.size());
+		unresolvedCryptoCall.setCryptoFunctions(
+			Collections.singletonList(CryptoFunction.TAG));
+		unresolvedCryptoCall.setUnresolvedReason(unresolvedReason);
+
+		List<CryptoUsage> cryptoUsages = CryptoUsageUtil.toCryptoUsages(
+			Arrays.asList(
+				resolvedCryptoCall, configurableCryptoCall,
+				unresolvedCryptoCall));
+
+		Assert.assertEquals(cryptoUsages.toString(), 3, cryptoUsages.size());
 
 		CryptoUsage cryptoUsage = cryptoUsages.get(0);
 
@@ -96,38 +88,30 @@ public class CryptoUsageResolverUtilTest {
 		Assert.assertEquals(featureName, cryptoUsage.getFeatureName());
 		Assert.assertEquals("MessageDigest", cryptoUsage.getJCAClassName());
 		Assert.assertEquals(Primitive.HASH, cryptoUsage.getPrimitive());
+		Assert.assertNull(cryptoUsage.getUnresolvedReason());
+		Assert.assertTrue(cryptoUsage.isResolved());
 
 		cryptoUsage = cryptoUsages.get(1);
 
 		Assert.assertNull(cryptoUsage.getAlgorithm());
 		Assert.assertEquals(
-			bundleSymbolicName, cryptoUsage.getBundleSymbolicName());
-		Assert.assertEquals(
-			Collections.singletonList("com.liferay.test.Class2"),
-			cryptoUsage.getClassNames());
-		Assert.assertEquals(
 			Collections.singletonList("test.algorithm"),
 			cryptoUsage.getConfiguredBy());
-		Assert.assertEquals(
-			Collections.singletonList(CryptoFunction.OTHER),
-			cryptoUsage.getCryptoFunctions());
-		Assert.assertEquals(featureName, cryptoUsage.getFeatureName());
-		Assert.assertEquals("KeyFactory", cryptoUsage.getJCAClassName());
 		Assert.assertEquals(Primitive.UNKNOWN, cryptoUsage.getPrimitive());
 		Assert.assertEquals(
 			Collections.singletonList(RelatedCryptoMaterialType.PUBLIC_KEY),
 			cryptoUsage.getRelatedCryptoMaterialTypes());
+		Assert.assertTrue(cryptoUsage.isResolved());
 
+		cryptoUsage = cryptoUsages.get(2);
+
+		Assert.assertNull(cryptoUsage.getAlgorithm());
 		Assert.assertEquals(
-			new TreeSet<>(
-				Arrays.asList(
-					"Unable to resolve the algorithm of the Mac call in " +
-						"com.liferay.test.Class3, which comes from the field " +
-							"com.liferay.test.Class3._algorithm",
-					"The usage data describes the KeyFactory call in " +
-						"com.liferay.test.Class4, but the scan finds no such " +
-							"call whose algorithm it cannot resolve")),
-			problems);
+			Collections.emptyList(), cryptoUsage.getConfiguredBy());
+		Assert.assertEquals(Primitive.MAC, cryptoUsage.getPrimitive());
+		Assert.assertEquals(
+			unresolvedReason, cryptoUsage.getUnresolvedReason());
+		Assert.assertFalse(cryptoUsage.isResolved());
 	}
 
 }

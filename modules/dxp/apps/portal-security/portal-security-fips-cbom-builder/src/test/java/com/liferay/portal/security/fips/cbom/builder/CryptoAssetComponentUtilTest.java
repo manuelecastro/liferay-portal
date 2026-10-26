@@ -81,6 +81,20 @@ public class CryptoAssetComponentUtilTest {
 		keyFactoryCryptoUsage.setRelatedCryptoMaterialTypes(
 			Collections.singletonList(RelatedCryptoMaterialType.PUBLIC_KEY));
 
+		CryptoUsage unresolvedKeyStoreCryptoUsage = _createCryptoUsage(
+			null, Collections.singletonList(CryptoFunction.OTHER), "KeyStore",
+			Primitive.OTHER, "com.liferay.test.Class10");
+
+		unresolvedKeyStoreCryptoUsage.setUnresolvedReason(
+			"the return value of com.liferay.test.Class10.getKeyStoreType()");
+
+		CryptoUsage unresolvedMessageDigestCryptoUsage = _createCryptoUsage(
+			null, Collections.singletonList(CryptoFunction.DIGEST),
+			"MessageDigest", Primitive.HASH, "com.liferay.test.Class9");
+
+		unresolvedMessageDigestCryptoUsage.setUnresolvedReason(
+			"parameter 1 of com.liferay.test.Class9.digest");
+
 		List<Component> components = CryptoAssetComponentUtil.toComponents(
 			Arrays.asList(
 				_createCryptoUsage(
@@ -108,7 +122,9 @@ public class CryptoAssetComponentUtilTest {
 					"KeyStore", Primitive.OTHER, "com.liferay.test.Class7"),
 				_createCryptoUsage(
 					"TLSv1.2", Collections.singletonList(CryptoFunction.OTHER),
-					"SSLContext", Primitive.OTHER, "com.liferay.test.Class8")));
+					"SSLContext", Primitive.OTHER, "com.liferay.test.Class8"),
+				unresolvedKeyStoreCryptoUsage,
+				unresolvedMessageDigestCryptoUsage));
 
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
@@ -185,6 +201,21 @@ public class CryptoAssetComponentUtilTest {
 					),
 					"KeyStore", "PKCS12", "com.liferay.test.Class7"),
 				_toJSONObject(
+					"crypto:KeyStore:com.liferay.test.Class10",
+					JSONUtil.put(
+						"assetType", "related-crypto-material"
+					).put(
+						"relatedCryptoMaterialProperties",
+						JSONUtil.put("type", "other")
+					),
+					"KeyStore", "KeyStore", "com.liferay.test.Class10"
+				).put(
+					"description",
+					"The scan cannot read the algorithm, which comes from " +
+						"the return value of " +
+							"com.liferay.test.Class10.getKeyStoreType()."
+				),
+				_toJSONObject(
 					"crypto:Mac:HmacSHA1",
 					JSONUtil.put(
 						"algorithmProperties",
@@ -211,6 +242,24 @@ public class CryptoAssetComponentUtilTest {
 					),
 					"MessageDigest", "SHA-256", "com.liferay.test.Class4",
 					"com.liferay.test.Class5"),
+				_toJSONObject(
+					"crypto:MessageDigest:com.liferay.test.Class9",
+					JSONUtil.put(
+						"algorithmProperties",
+						JSONUtil.put(
+							"cryptoFunctions", JSONUtil.putAll("digest")
+						).put(
+							"primitive", "hash"
+						)
+					).put(
+						"assetType", "algorithm"
+					),
+					"MessageDigest", "MessageDigest", "com.liferay.test.Class9"
+				).put(
+					"description",
+					"The scan cannot read the algorithm, which comes from " +
+						"parameter 1 of com.liferay.test.Class9.digest."
+				),
 				_toJSONObject(
 					"crypto:SSLContext:TLSv1.2",
 					JSONUtil.put(

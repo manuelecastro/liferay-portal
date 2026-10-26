@@ -74,6 +74,10 @@ public class CryptoCallScannerTest {
 		_testScan(
 			ConstantTestClass.class, false, "MessageDigest SHA-256 [digest]");
 		_testScan(
+			ConstructorParameterTestClass.class, false,
+			"MessageDigest unresolved: parameter 1 of the constructor of " +
+				ConstructorParameterTestClass.class.getName() + " [digest]");
+		_testScan(
 			DigesterUtilDefaultTestClass.class, false,
 			"MessageDigest SHA-1 [digest]");
 		_testScan(
@@ -100,7 +104,8 @@ public class CryptoCallScannerTest {
 			"SecretKeySpec HmacSHA256 [other]");
 		_testScan(
 			ParameterTestClass.class, false,
-			"MessageDigest unresolved: a method parameter [digest]");
+			"MessageDigest unresolved: parameter 1 of " +
+				ParameterTestClass.class.getName() + ".digest [digest]");
 		_testScan(
 			PrivateMethodTestClass.class, false,
 			"Cipher AES/CBC/PKCS5Padding [encrypt]");
@@ -163,6 +168,20 @@ public class CryptoCallScannerTest {
 
 			MessageDigest.getInstance(algorithm);
 		}
+
+	}
+
+	public static class ConstructorParameterTestClass {
+
+		public ConstructorParameterTestClass(String algorithm) {
+			_algorithm = algorithm;
+		}
+
+		public void digest() throws Exception {
+			MessageDigest.getInstance(_algorithm);
+		}
+
+		private final String _algorithm;
 
 	}
 
