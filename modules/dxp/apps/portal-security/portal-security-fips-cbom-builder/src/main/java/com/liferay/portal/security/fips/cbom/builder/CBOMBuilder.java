@@ -8,7 +8,6 @@ package com.liferay.portal.security.fips.cbom.builder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
-import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,7 +40,7 @@ import org.cyclonedx.model.Component;
 public class CBOMBuilder {
 
 	public static String build(
-			String configurationName, List<CryptoUsage> cryptoUsages,
+			String configurationName, List<CryptoCall> cryptoCalls,
 			Properties portalExtProperties)
 		throws Exception {
 
@@ -53,17 +52,17 @@ public class CBOMBuilder {
 		}
 
 		List<Component> components = new ArrayList<>(
-			CryptoAssetComponentUtil.toComponents(cryptoUsages));
+			CryptoAssetComponentUtil.toComponents(cryptoCalls));
 
-		components.addAll(CryptoDependencyUtil.toComponents(cryptoUsages));
+		components.addAll(CryptoDependencyUtil.toComponents(cryptoCalls));
 
 		components.sort(Comparator.comparing(Component::getBomRef));
 
 		return CycloneDXCBOMWriter.write(
 			components, configurationName,
-			CryptoDependencyUtil.toDependencies(cryptoUsages),
+			CryptoDependencyUtil.toDependencies(cryptoCalls),
 			ReleaseInfo.getName(), ReleaseInfo.getVersionDisplayName(),
-			CryptoDependencyUtil.toProvides(cryptoUsages));
+			CryptoDependencyUtil.toProvides(cryptoCalls));
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -81,22 +80,21 @@ public class CBOMBuilder {
 			cryptoCallScanner.scan(file);
 		}
 
-		List<CryptoUsage> cryptoUsages = CryptoUsageUtil.toCryptoUsages(
-			cryptoCallScanner.getCryptoCalls());
+		List<CryptoCall> cryptoCalls = cryptoCallScanner.getCryptoCalls();
 
 		Set<String> messages = new TreeSet<>();
 
-		for (CryptoUsage cryptoUsage : cryptoUsages) {
-			if (cryptoUsage.isResolved()) {
+		for (CryptoCall cryptoCall : cryptoCalls) {
+			if (cryptoCall.isResolved()) {
 				continue;
 			}
 
 			messages.add(
 				StringBundler.concat(
 					"The scan cannot read the algorithm of the ",
-					cryptoUsage.getJCAClassName(), " call in ",
-					StringUtil.merge(cryptoUsage.getClassNames(), ", "),
-					", which comes from ", cryptoUsage.getUnresolvedReason()));
+					cryptoCall.getJCAClassName(), " call in ",
+					cryptoCall.getClassName(), ", which comes from ",
+					cryptoCall.getUnresolvedReason()));
 		}
 
 		for (String message : messages) {
@@ -104,7 +102,7 @@ public class CBOMBuilder {
 		}
 
 		String cbomJSON = build(
-			configurationDir.getName(), cryptoUsages, portalExtProperties);
+			configurationDir.getName(), cryptoCalls, portalExtProperties);
 
 		File file = new File(args[1]);
 

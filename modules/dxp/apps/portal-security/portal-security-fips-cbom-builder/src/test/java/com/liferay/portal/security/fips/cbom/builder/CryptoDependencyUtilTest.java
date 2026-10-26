@@ -24,8 +24,6 @@ import org.cyclonedx.generators.BomGeneratorFactory;
 import org.cyclonedx.generators.json.BomJsonGenerator;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.model.Dependency;
-import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
-import org.cyclonedx.model.component.crypto.enums.Primitive;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -57,7 +55,7 @@ public class CryptoDependencyUtilTest {
 	public void testToComponents() throws Exception {
 		Bom bom = new Bom();
 
-		bom.setComponents(CryptoDependencyUtil.toComponents(_cryptoUsages));
+		bom.setComponents(CryptoDependencyUtil.toComponents(_cryptoCalls));
 
 		BomJsonGenerator bomJsonGenerator = BomGeneratorFactory.createJson(
 			Version.VERSION_16, bom);
@@ -103,7 +101,7 @@ public class CryptoDependencyUtilTest {
 				"provider:SUN []", "setting:keystore.type []",
 				"setting:test.algorithm []"),
 			TransformUtil.transform(
-				CryptoDependencyUtil.toDependencies(_cryptoUsages),
+				CryptoDependencyUtil.toDependencies(_cryptoCalls),
 				dependency -> {
 					List<String> refs = TransformUtil.transform(
 						dependency.getDependencies(), Dependency::getRef);
@@ -122,22 +120,20 @@ public class CryptoDependencyUtilTest {
 						"crypto:MessageDigest:MD5",
 						"crypto:MessageDigest:SHA-256"))
 			).build(),
-			CryptoDependencyUtil.toProvides(_cryptoUsages));
+			CryptoDependencyUtil.toProvides(_cryptoCalls));
 	}
 
-	private static CryptoUsage _createCryptoUsage(
+	private static CryptoCall _createCryptoCall(
 		String algorithm, String bundleSymbolicName, String className,
 		List<String> configuredBy, String featureName, String jcaClassName) {
 
-		CryptoUsage cryptoUsage = new CryptoUsage(
-			bundleSymbolicName, Collections.singletonList(className),
-			Collections.singletonList(CryptoFunction.OTHER), featureName,
-			jcaClassName, Primitive.UNKNOWN);
+		CryptoCall cryptoCall = new CryptoCall(
+			bundleSymbolicName, className, featureName, jcaClassName);
 
-		cryptoUsage.setAlgorithm(algorithm);
-		cryptoUsage.setConfiguredBy(configuredBy);
+		cryptoCall.setAlgorithm(algorithm);
+		cryptoCall.setConfiguredBy(configuredBy);
 
-		return cryptoUsage;
+		return cryptoCall;
 	}
 
 	private JSONObject _toDataJSONObject(
@@ -170,25 +166,25 @@ public class CryptoDependencyUtilTest {
 		);
 	}
 
-	private static final List<CryptoUsage> _cryptoUsages = Arrays.asList(
-		_createCryptoUsage(
+	private static final List<CryptoCall> _cryptoCalls = Arrays.asList(
+		_createCryptoCall(
 			"SHA-256", "com.liferay.test.one", RandomTestUtil.randomString(),
 			Collections.emptyList(), "Liferay Test One", "MessageDigest"),
-		_createCryptoUsage(
+		_createCryptoCall(
 			"AES", "com.liferay.test.one", RandomTestUtil.randomString(),
 			Collections.emptyList(), "Liferay Test One", "SecretKeySpec"),
-		_createCryptoUsage(
+		_createCryptoCall(
 			null, "com.liferay.test.two", RandomTestUtil.randomString(),
 			Collections.singletonList("test.algorithm"), "Liferay Test Two",
 			"Cipher"),
-		_createCryptoUsage(
+		_createCryptoCall(
 			null, "com.liferay.test.two", RandomTestUtil.randomString(),
 			Collections.singletonList("keystore.type"), "Liferay Test Two",
 			"KeyStore"),
-		_createCryptoUsage(
+		_createCryptoCall(
 			"MD5", null, RandomTestUtil.randomString(), Collections.emptyList(),
 			"Liferay Test Three", "MessageDigest"),
-		_createCryptoUsage(
+		_createCryptoCall(
 			null, "com.liferay.test.one", "com.liferay.test.Class5",
 			Collections.emptyList(), "Liferay Test One", "MessageDigest"));
 

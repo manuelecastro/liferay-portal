@@ -23,7 +23,6 @@ import org.cyclonedx.generators.json.BomJsonGenerator;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.model.Component;
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
-import org.cyclonedx.model.component.crypto.enums.Primitive;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 import org.junit.BeforeClass;
@@ -53,78 +52,81 @@ public class CryptoAssetComponentUtilTest {
 
 	@Test
 	public void testToComponents() throws Exception {
-		CryptoUsage cipherCryptoUsage = _createCryptoUsage(
-			"AES/GCM/NoPadding",
+		CryptoCall cipherCryptoCall = _createCryptoCall(
+			"AES/GCM/NoPadding", "com.liferay.test.Class1",
 			Arrays.asList(CryptoFunction.ENCRYPT, CryptoFunction.DECRYPT),
-			"Cipher", Primitive.AE, "com.liferay.test.Class1");
+			"Cipher");
 
-		cipherCryptoUsage.setKeySize(256);
+		cipherCryptoCall.setKeySize(256);
 
-		CryptoUsage keyGeneratorCryptoUsage = _createCryptoUsage(
-			null, Collections.singletonList(CryptoFunction.KEYGEN),
-			"KeyGenerator", Primitive.BLOCK_CIPHER, "com.liferay.test.Class2");
+		CryptoCall keyGeneratorCryptoCall = _createCryptoCall(
+			null, "com.liferay.test.Class2",
+			Collections.singletonList(CryptoFunction.KEYGEN), "KeyGenerator");
 
-		keyGeneratorCryptoUsage.setConfiguredBy(
+		keyGeneratorCryptoCall.setConfiguredBy(
 			Arrays.asList("test.encryption.algorithm", "test.key.size"));
 
-		CryptoUsage cipherConfigurableCryptoUsage = _createCryptoUsage(
-			null, Collections.singletonList(CryptoFunction.ENCRYPT), "Cipher",
-			Primitive.UNKNOWN, "com.liferay.test.Class2");
+		CryptoCall cipherConfigurableCryptoCall = _createCryptoCall(
+			null, "com.liferay.test.Class2",
+			Collections.singletonList(CryptoFunction.ENCRYPT), "Cipher");
 
-		cipherConfigurableCryptoUsage.setConfiguredBy(
+		cipherConfigurableCryptoCall.setConfiguredBy(
 			Arrays.asList("test.encryption.algorithm", "test.key.size"));
 
-		CryptoUsage keyFactoryCryptoUsage = _createCryptoUsage(
-			"DSA", Collections.singletonList(CryptoFunction.OTHER),
-			"KeyFactory", Primitive.UNKNOWN, "com.liferay.test.Class3");
+		CryptoCall keyFactoryCryptoCall = _createCryptoCall(
+			"DSA", "com.liferay.test.Class3",
+			Collections.singletonList(CryptoFunction.OTHER), "KeyFactory");
 
-		keyFactoryCryptoUsage.setRelatedCryptoMaterialTypes(
+		keyFactoryCryptoCall.setRelatedCryptoMaterialTypes(
 			Collections.singletonList(RelatedCryptoMaterialType.PUBLIC_KEY));
 
-		CryptoUsage unresolvedKeyStoreCryptoUsage = _createCryptoUsage(
-			null, Collections.singletonList(CryptoFunction.OTHER), "KeyStore",
-			Primitive.OTHER, "com.liferay.test.Class10");
+		CryptoCall unresolvedKeyStoreCryptoCall = _createCryptoCall(
+			null, "com.liferay.test.Class10",
+			Collections.singletonList(CryptoFunction.OTHER), "KeyStore");
 
-		unresolvedKeyStoreCryptoUsage.setUnresolvedReason(
+		unresolvedKeyStoreCryptoCall.setUnresolvedReason(
 			"the return value of com.liferay.test.Class10.getKeyStoreType()");
 
-		CryptoUsage unresolvedMessageDigestCryptoUsage = _createCryptoUsage(
-			null, Collections.singletonList(CryptoFunction.DIGEST),
-			"MessageDigest", Primitive.HASH, "com.liferay.test.Class9");
+		CryptoCall unresolvedMessageDigestCryptoCall = _createCryptoCall(
+			null, "com.liferay.test.Class9",
+			Collections.singletonList(CryptoFunction.DIGEST), "MessageDigest");
 
-		unresolvedMessageDigestCryptoUsage.setUnresolvedReason(
+		unresolvedMessageDigestCryptoCall.setUnresolvedReason(
 			"parameter 1 of com.liferay.test.Class9.digest");
 
 		List<Component> components = CryptoAssetComponentUtil.toComponents(
 			Arrays.asList(
-				_createCryptoUsage(
-					"SHA-256", Collections.singletonList(CryptoFunction.DIGEST),
-					"MessageDigest", Primitive.HASH, "com.liferay.test.Class4"),
-				keyGeneratorCryptoUsage, cipherCryptoUsage,
-				_createCryptoUsage(
-					"SHA-256", Collections.singletonList(CryptoFunction.DIGEST),
-					"MessageDigest", Primitive.HASH, "com.liferay.test.Class5",
-					"com.liferay.test.Class4"),
-				cipherConfigurableCryptoUsage, keyFactoryCryptoUsage,
-				_createCryptoUsage(
-					"DSA", Collections.singletonList(CryptoFunction.VERIFY),
-					"Signature", Primitive.SIGNATURE,
-					"com.liferay.test.Class3"),
-				_createCryptoUsage(
-					"HmacSHA1", Collections.singletonList(CryptoFunction.TAG),
-					"Mac", Primitive.MAC, "com.liferay.test.Class6"),
-				_createCryptoUsage(
-					"RAW", Collections.singletonList(CryptoFunction.OTHER),
-					"SecretKeySpec", Primitive.UNKNOWN,
-					"com.liferay.test.Class6"),
-				_createCryptoUsage(
-					"pkcs12", Collections.singletonList(CryptoFunction.OTHER),
-					"KeyStore", Primitive.OTHER, "com.liferay.test.Class7"),
-				_createCryptoUsage(
-					"TLSv1.2", Collections.singletonList(CryptoFunction.OTHER),
-					"SSLContext", Primitive.OTHER, "com.liferay.test.Class8"),
-				unresolvedKeyStoreCryptoUsage,
-				unresolvedMessageDigestCryptoUsage));
+				_createCryptoCall(
+					"SHA-256", "com.liferay.test.Class4",
+					Collections.singletonList(CryptoFunction.DIGEST),
+					"MessageDigest"),
+				keyGeneratorCryptoCall, cipherCryptoCall,
+				_createCryptoCall(
+					"SHA-256", "com.liferay.test.Class5",
+					Collections.singletonList(CryptoFunction.DIGEST),
+					"MessageDigest"),
+				cipherConfigurableCryptoCall, keyFactoryCryptoCall,
+				_createCryptoCall(
+					"DSA", "com.liferay.test.Class3",
+					Collections.singletonList(CryptoFunction.VERIFY),
+					"Signature"),
+				_createCryptoCall(
+					"HmacSHA1", "com.liferay.test.Class6",
+					Collections.singletonList(CryptoFunction.TAG), "Mac"),
+				_createCryptoCall(
+					"RAW", "com.liferay.test.Class6",
+					Collections.singletonList(CryptoFunction.OTHER),
+					"SecretKeySpec"),
+				_createCryptoCall(
+					"pkcs12", "com.liferay.test.Class7",
+					Collections.singletonList(CryptoFunction.OTHER),
+					"KeyStore"),
+				_createCryptoCall(
+					"TLSv1.2", "com.liferay.test.Class8",
+					Collections.singletonList(CryptoFunction.OTHER),
+					"SSLContext"),
+				unresolvedKeyStoreCryptoCall,
+				unresolvedMessageDigestCryptoCall));
 
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
@@ -180,7 +182,7 @@ public class CryptoAssetComponentUtilTest {
 						JSONUtil.put(
 							"cryptoFunctions", JSONUtil.putAll("keygen")
 						).put(
-							"primitive", "block-cipher"
+							"primitive", "unknown"
 						)
 					).put(
 						"assetType", "algorithm"
@@ -303,18 +305,18 @@ public class CryptoAssetComponentUtilTest {
 			_toJSON(components), JSONCompareMode.STRICT);
 	}
 
-	private CryptoUsage _createCryptoUsage(
-		String algorithm, List<CryptoFunction> cryptoFunctions,
-		String jcaClassName, Primitive primitive, String... classNames) {
+	private CryptoCall _createCryptoCall(
+		String algorithm, String className,
+		List<CryptoFunction> cryptoFunctions, String jcaClassName) {
 
-		CryptoUsage cryptoUsage = new CryptoUsage(
-			RandomTestUtil.randomString(), Arrays.asList(classNames),
-			cryptoFunctions, RandomTestUtil.randomString(), jcaClassName,
-			primitive);
+		CryptoCall cryptoCall = new CryptoCall(
+			RandomTestUtil.randomString(), className,
+			RandomTestUtil.randomString(), jcaClassName);
 
-		cryptoUsage.setAlgorithm(algorithm);
+		cryptoCall.setAlgorithm(algorithm);
+		cryptoCall.setCryptoFunctions(cryptoFunctions);
 
-		return cryptoUsage;
+		return cryptoCall;
 	}
 
 	private String _toJSON(List<Component> components) throws Exception {

@@ -34,18 +34,18 @@ import org.cyclonedx.model.component.data.ComponentData;
  */
 public class CryptoDependencyUtil {
 
-	public static List<Component> toComponents(List<CryptoUsage> cryptoUsages)
+	public static List<Component> toComponents(List<CryptoCall> cryptoCalls)
 		throws Exception {
 
 		Map<String, Component> componentsMap = new TreeMap<>();
 
-		for (CryptoUsage cryptoUsage : cryptoUsages) {
+		for (CryptoCall cryptoCall : cryptoCalls) {
 			componentsMap.computeIfAbsent(
-				_getModuleBOMRef(cryptoUsage),
+				_getModuleBOMRef(cryptoCall),
 				bomRef -> _toLibraryComponent(
-					bomRef, cryptoUsage.getFeatureName()));
+					bomRef, cryptoCall.getFeatureName()));
 
-			String providerName = _fetchProviderName(cryptoUsage);
+			String providerName = _fetchProviderName(cryptoCall);
 
 			if (providerName != null) {
 				componentsMap.computeIfAbsent(
@@ -53,7 +53,7 @@ public class CryptoDependencyUtil {
 					bomRef -> _toLibraryComponent(bomRef, providerName));
 			}
 
-			for (String propertyKey : cryptoUsage.getConfiguredBy()) {
+			for (String propertyKey : cryptoCall.getConfiguredBy()) {
 				componentsMap.computeIfAbsent(
 					"setting:" + propertyKey,
 					bomRef -> _toDataComponent(bomRef, propertyKey));
@@ -63,19 +63,18 @@ public class CryptoDependencyUtil {
 		return new ArrayList<>(componentsMap.values());
 	}
 
-	public static List<Dependency> toDependencies(
-			List<CryptoUsage> cryptoUsages)
+	public static List<Dependency> toDependencies(List<CryptoCall> cryptoCalls)
 		throws Exception {
 
 		Map<String, Set<String>> dependsOnMap = new TreeMap<>();
 
-		for (CryptoUsage cryptoUsage : cryptoUsages) {
-			String bomRef = CryptoAssetComponentUtil.getBOMRef(cryptoUsage);
+		for (CryptoCall cryptoCall : cryptoCalls) {
+			String bomRef = CryptoAssetComponentUtil.getBOMRef(cryptoCall);
 
 			Set<String> bomRefDependsOn = dependsOnMap.computeIfAbsent(
 				bomRef, key -> new TreeSet<>());
 
-			for (String propertyKey : cryptoUsage.getConfiguredBy()) {
+			for (String propertyKey : cryptoCall.getConfiguredBy()) {
 				bomRefDependsOn.add("setting:" + propertyKey);
 
 				dependsOnMap.computeIfAbsent(
@@ -83,11 +82,11 @@ public class CryptoDependencyUtil {
 			}
 
 			Set<String> moduleDependsOn = dependsOnMap.computeIfAbsent(
-				_getModuleBOMRef(cryptoUsage), key -> new TreeSet<>());
+				_getModuleBOMRef(cryptoCall), key -> new TreeSet<>());
 
 			moduleDependsOn.add(bomRef);
 
-			String providerName = _fetchProviderName(cryptoUsage);
+			String providerName = _fetchProviderName(cryptoCall);
 
 			if (providerName == null) {
 				continue;
@@ -110,13 +109,13 @@ public class CryptoDependencyUtil {
 	}
 
 	public static Map<String, Set<String>> toProvides(
-			List<CryptoUsage> cryptoUsages)
+			List<CryptoCall> cryptoCalls)
 		throws Exception {
 
 		Map<String, Set<String>> provides = new TreeMap<>();
 
-		for (CryptoUsage cryptoUsage : cryptoUsages) {
-			String providerName = _fetchProviderName(cryptoUsage);
+		for (CryptoCall cryptoCall : cryptoCalls) {
+			String providerName = _fetchProviderName(cryptoCall);
 
 			if (providerName == null) {
 				continue;
@@ -125,28 +124,28 @@ public class CryptoDependencyUtil {
 			Set<String> bomRefs = provides.computeIfAbsent(
 				"provider:" + providerName, key -> new TreeSet<>());
 
-			bomRefs.add(CryptoAssetComponentUtil.getBOMRef(cryptoUsage));
+			bomRefs.add(CryptoAssetComponentUtil.getBOMRef(cryptoCall));
 		}
 
 		return provides;
 	}
 
-	private static String _fetchProviderName(CryptoUsage cryptoUsage)
+	private static String _fetchProviderName(CryptoCall cryptoCall)
 		throws Exception {
 
-		if (cryptoUsage.getAlgorithm() == null) {
+		if (cryptoCall.getAlgorithm() == null) {
 			return null;
 		}
 
 		return CryptoProviderUtil.fetchProviderName(
-			cryptoUsage.getAlgorithm(), cryptoUsage.getJCAClassName());
+			cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName());
 	}
 
-	private static String _getModuleBOMRef(CryptoUsage cryptoUsage) {
-		String bundleSymbolicName = cryptoUsage.getBundleSymbolicName();
+	private static String _getModuleBOMRef(CryptoCall cryptoCall) {
+		String bundleSymbolicName = cryptoCall.getBundleSymbolicName();
 
 		if (bundleSymbolicName == null) {
-			bundleSymbolicName = cryptoUsage.getFeatureName();
+			bundleSymbolicName = cryptoCall.getFeatureName();
 		}
 
 		return "module:" + bundleSymbolicName;

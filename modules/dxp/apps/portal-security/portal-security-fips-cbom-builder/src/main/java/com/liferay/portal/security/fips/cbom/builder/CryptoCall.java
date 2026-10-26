@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.Primitive;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 /**
@@ -64,6 +65,10 @@ public class CryptoCall {
 		return _keySize;
 	}
 
+	public Primitive getPrimitive() {
+		return CryptoPrimitiveUtil.getPrimitive(_algorithm, _jcaClassName);
+	}
+
 	public List<RelatedCryptoMaterialType> getRelatedCryptoMaterialTypes() {
 		return _relatedCryptoMaterialTypes;
 	}
@@ -72,8 +77,12 @@ public class CryptoCall {
 		return _unresolvedReason;
 	}
 
+	public boolean isConfigurable() {
+		return ListUtil.isNotEmpty(_configuredBy);
+	}
+
 	public boolean isResolved() {
-		if ((_algorithm != null) || ListUtil.isNotEmpty(_configuredBy)) {
+		if ((_algorithm != null) || isConfigurable()) {
 			return true;
 		}
 

@@ -66,19 +66,18 @@ public class CBOMBuilderTest {
 		cryptoCallScanner.scan(_getJarFile(DigesterUtil.class));
 		cryptoCallScanner.scan(_getJarFile(JSONFactoryImpl.class));
 
-		List<CryptoUsage> cryptoUsages = CryptoUsageUtil.toCryptoUsages(
-			cryptoCallScanner.getCryptoCalls());
+		List<CryptoCall> cryptoCalls = cryptoCallScanner.getCryptoCalls();
 
 		String configurationName = RandomTestUtil.randomString();
 		Properties portalExtProperties = new Properties();
 
 		String cbomJSON = CBOMBuilder.build(
-			configurationName, cryptoUsages, portalExtProperties);
+			configurationName, cryptoCalls, portalExtProperties);
 
 		Assert.assertEquals(
 			cbomJSON,
 			CBOMBuilder.build(
-				configurationName, cryptoUsages, portalExtProperties));
+				configurationName, cryptoCalls, portalExtProperties));
 
 		JsonParser jsonParser = new JsonParser();
 
@@ -205,7 +204,7 @@ public class CBOMBuilderTest {
 
 		try {
 			CBOMBuilder.build(
-				configurationName, cryptoUsages, portalExtProperties);
+				configurationName, cryptoCalls, portalExtProperties);
 
 			Assert.fail();
 		}

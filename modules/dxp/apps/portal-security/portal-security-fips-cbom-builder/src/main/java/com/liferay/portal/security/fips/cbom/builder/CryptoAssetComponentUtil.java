@@ -38,7 +38,7 @@ import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 import org.cyclonedx.model.component.evidence.Occurrence;
 
 /**
- * Turns the crypto usages into CycloneDX 1.6 <code>cryptographic-asset</code>
+ * Turns the crypto calls into CycloneDX 1.6 <code>cryptographic-asset</code>
  * components, typed the way CycloneDX's guide to CBOM types them: an
  * algorithm, related crypto material for keys and key stores, or a protocol
  * for an SSL context. Uses of the same JCA class and algorithm share one
@@ -54,63 +54,55 @@ import org.cyclonedx.model.component.evidence.Occurrence;
  */
 public class CryptoAssetComponentUtil {
 
-	public static String getBOMRef(CryptoUsage cryptoUsage) throws Exception {
-		StringBundler sb = new StringBundler(7);
+	public static String getBOMRef(CryptoCall cryptoCall) throws Exception {
+		StringBundler sb = new StringBundler(6);
 
 		sb.append("crypto:");
-		sb.append(cryptoUsage.getJCAClassName());
+		sb.append(cryptoCall.getJCAClassName());
 		sb.append(StringPool.COLON);
 
-		if (cryptoUsage.isConfigurable()) {
-			List<String> configuredBy = cryptoUsage.getConfiguredBy();
+		if (cryptoCall.isConfigurable()) {
+			List<String> configuredBy = cryptoCall.getConfiguredBy();
 
 			sb.append(configuredBy.get(0));
 
 			return sb.toString();
 		}
 
-		if (cryptoUsage.getAlgorithm() == null) {
-			sb.append(
-				StringUtil.merge(
-					cryptoUsage.getClassNames(), StringPool.COMMA));
+		if (cryptoCall.getAlgorithm() == null) {
+			sb.append(cryptoCall.getClassName());
 
 			return sb.toString();
 		}
 
 		sb.append(
 			CryptoProviderUtil.getAlgorithmName(
-				cryptoUsage.getAlgorithm(), cryptoUsage.getJCAClassName()));
+				cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName()));
 
-		if (cryptoUsage.getKeySize() > 0) {
+		if (cryptoCall.getKeySize() > 0) {
 			sb.append(StringPool.COLON);
-			sb.append(cryptoUsage.getKeySize());
-		}
-
-		if (cryptoUsage.getCurve() != null) {
-			sb.append(StringPool.COLON);
-			sb.append(cryptoUsage.getCurve());
+			sb.append(cryptoCall.getKeySize());
 		}
 
 		return sb.toString();
 	}
 
-	public static List<Component> toComponents(List<CryptoUsage> cryptoUsages)
+	public static List<Component> toComponents(List<CryptoCall> cryptoCalls)
 		throws Exception {
 
-		Map<String, List<CryptoUsage>> cryptoUsagesMap = new TreeMap<>();
+		Map<String, List<CryptoCall>> cryptoCallsMap = new TreeMap<>();
 
-		for (CryptoUsage cryptoUsage : cryptoUsages) {
-			List<CryptoUsage> bomRefCryptoUsages =
-				cryptoUsagesMap.computeIfAbsent(
-					getBOMRef(cryptoUsage), bomRef -> new ArrayList<>());
+		for (CryptoCall cryptoCall : cryptoCalls) {
+			List<CryptoCall> bomRefCryptoCalls = cryptoCallsMap.computeIfAbsent(
+				getBOMRef(cryptoCall), bomRef -> new ArrayList<>());
 
-			bomRefCryptoUsages.add(cryptoUsage);
+			bomRefCryptoCalls.add(cryptoCall);
 		}
 
 		return TransformUtil.unsafeTransform(
-			cryptoUsagesMap.entrySet(),
+			cryptoCallsMap.entrySet(),
 			entry -> _toComponent(
-				entry.getKey(), entry.getValue(), cryptoUsages));
+				entry.getKey(), entry.getValue(), cryptoCalls));
 	}
 
 	private static void _addProperty(
@@ -123,75 +115,69 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static AlgorithmProperties _getAlgorithmProperties(
-		List<CryptoUsage> cryptoUsages) {
+		List<CryptoCall> cryptoCalls) {
 
 		AlgorithmProperties algorithmProperties = new AlgorithmProperties();
 
 		algorithmProperties.setCryptoFunctions(
-			_getCryptoFunctions(cryptoUsages));
-		algorithmProperties.setPrimitive(_getPrimitive(cryptoUsages));
+			_getCryptoFunctions(cryptoCalls));
+		algorithmProperties.setPrimitive(_getPrimitive(cryptoCalls));
 
-		CryptoUsage cryptoUsage = cryptoUsages.get(0);
+		CryptoCall cryptoCall = cryptoCalls.get(0);
 
-		if (cryptoUsage.getAlgorithm() == null) {
+		if (cryptoCall.getAlgorithm() == null) {
 			return algorithmProperties;
 		}
 
-		algorithmProperties.setCurve(cryptoUsage.getCurve());
-
-		if (cryptoUsage.getKeySize() > 0) {
+		if (cryptoCall.getKeySize() > 0) {
 			algorithmProperties.setParameterSetIdentifier(
-				String.valueOf(cryptoUsage.getKeySize()));
+				String.valueOf(cryptoCall.getKeySize()));
 		}
 
-		if (Objects.equals(cryptoUsage.getJCAClassName(), "Cipher")) {
+		if (Objects.equals(cryptoCall.getJCAClassName(), "Cipher")) {
 			_setCipherProperties(
-				algorithmProperties, cryptoUsage.getAlgorithm());
+				algorithmProperties, cryptoCall.getAlgorithm());
 		}
 
 		return algorithmProperties;
 	}
 
 	private static String _getAlgorithmRef(
-			List<CryptoUsage> cryptoUsages, List<CryptoUsage> keyCryptoUsages)
+			List<CryptoCall> cryptoCalls, List<CryptoCall> keyCryptoCalls)
 		throws Exception {
 
 		TreeSet<String> algorithmRefs = new TreeSet<>();
 
-		for (CryptoUsage keyCryptoUsage : keyCryptoUsages) {
-			if (!keyCryptoUsage.isResolved()) {
+		for (CryptoCall keyCryptoCall : keyCryptoCalls) {
+			if (!keyCryptoCall.isResolved()) {
 				continue;
 			}
 
-			for (String className : keyCryptoUsage.getClassNames()) {
-				List<CryptoUsage> candidateCryptoUsages = new ArrayList<>();
-				List<CryptoUsage> matchingCryptoUsages = new ArrayList<>();
+			List<CryptoCall> candidateCryptoCalls = new ArrayList<>();
+			List<CryptoCall> matchingCryptoCalls = new ArrayList<>();
 
-				for (CryptoUsage cryptoUsage : cryptoUsages) {
-					if (!_isKeyCandidate(
-							className, cryptoUsage, keyCryptoUsage)) {
-
-						continue;
-					}
-
-					candidateCryptoUsages.add(cryptoUsage);
-
-					if (!_isKeyAlgorithm(cryptoUsage, keyCryptoUsage)) {
-						continue;
-					}
-
-					matchingCryptoUsages.add(cryptoUsage);
+			for (CryptoCall cryptoCall : cryptoCalls) {
+				if (!_isKeyCandidate(cryptoCall, keyCryptoCall)) {
+					continue;
 				}
 
-				if (matchingCryptoUsages.isEmpty() &&
-					(candidateCryptoUsages.size() == 1)) {
+				candidateCryptoCalls.add(cryptoCall);
 
-					matchingCryptoUsages = candidateCryptoUsages;
+				if (!_isKeyAlgorithm(cryptoCall, keyCryptoCall)) {
+					continue;
 				}
 
-				for (CryptoUsage matchingCryptoUsage : matchingCryptoUsages) {
-					algorithmRefs.add(getBOMRef(matchingCryptoUsage));
-				}
+				matchingCryptoCalls.add(cryptoCall);
+			}
+
+			if (matchingCryptoCalls.isEmpty() &&
+				(candidateCryptoCalls.size() == 1)) {
+
+				matchingCryptoCalls = candidateCryptoCalls;
+			}
+
+			for (CryptoCall matchingCryptoCall : matchingCryptoCalls) {
+				algorithmRefs.add(getBOMRef(matchingCryptoCall));
 			}
 		}
 
@@ -203,26 +189,26 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static List<CryptoFunction> _getCryptoFunctions(
-		List<CryptoUsage> cryptoUsages) {
+		List<CryptoCall> cryptoCalls) {
 
 		Set<CryptoFunction> cryptoFunctions = new TreeSet<>();
 
-		for (CryptoUsage cryptoUsage : cryptoUsages) {
-			cryptoFunctions.addAll(cryptoUsage.getCryptoFunctions());
+		for (CryptoCall cryptoCall : cryptoCalls) {
+			cryptoFunctions.addAll(cryptoCall.getCryptoFunctions());
 		}
 
 		return new ArrayList<>(cryptoFunctions);
 	}
 
-	private static String _getDescription(List<CryptoUsage> cryptoUsages) {
+	private static String _getDescription(List<CryptoCall> cryptoCalls) {
 		Set<String> unresolvedReasons = new TreeSet<>();
 
-		for (CryptoUsage cryptoUsage : cryptoUsages) {
-			if (cryptoUsage.isResolved()) {
+		for (CryptoCall cryptoCall : cryptoCalls) {
+			if (cryptoCall.isResolved()) {
 				continue;
 			}
 
-			unresolvedReasons.add(cryptoUsage.getUnresolvedReason());
+			unresolvedReasons.add(cryptoCall.getUnresolvedReason());
 		}
 
 		if (unresolvedReasons.isEmpty()) {
@@ -234,13 +220,13 @@ public class CryptoAssetComponentUtil {
 			StringUtil.merge(unresolvedReasons, ", "), StringPool.PERIOD);
 	}
 
-	private static Evidence _getEvidence(List<CryptoUsage> cryptoUsages) {
+	private static Evidence _getEvidence(List<CryptoCall> cryptoCalls) {
 		Evidence evidence = new Evidence();
 
 		Set<String> classNames = new TreeSet<>();
 
-		for (CryptoUsage cryptoUsage : cryptoUsages) {
-			classNames.addAll(cryptoUsage.getClassNames());
+		for (CryptoCall cryptoCall : cryptoCalls) {
+			classNames.add(cryptoCall.getClassName());
 		}
 
 		evidence.setOccurrences(
@@ -267,45 +253,43 @@ public class CryptoAssetComponentUtil {
 		return Mode.OTHER;
 	}
 
-	private static String _getName(CryptoUsage cryptoUsage) throws Exception {
-		if (cryptoUsage.isConfigurable()) {
-			List<String> configuredBy = cryptoUsage.getConfiguredBy();
+	private static String _getName(CryptoCall cryptoCall) throws Exception {
+		if (cryptoCall.isConfigurable()) {
+			List<String> configuredBy = cryptoCall.getConfiguredBy();
 
 			return configuredBy.get(0);
 		}
 
-		if (cryptoUsage.getAlgorithm() == null) {
-			return cryptoUsage.getJCAClassName();
+		if (cryptoCall.getAlgorithm() == null) {
+			return cryptoCall.getJCAClassName();
 		}
 
 		return CryptoAlgorithmNameUtil.getName(
 			CryptoProviderUtil.getAlgorithmName(
-				cryptoUsage.getAlgorithm(), cryptoUsage.getJCAClassName()),
-			cryptoUsage.getJCAClassName(), cryptoUsage.getKeySize());
+				cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName()),
+			cryptoCall.getJCAClassName(), cryptoCall.getKeySize());
 	}
 
-	private static Primitive _getPrimitive(List<CryptoUsage> cryptoUsages) {
-		CryptoUsage firstCryptoUsage = cryptoUsages.get(0);
+	private static Primitive _getPrimitive(List<CryptoCall> cryptoCalls) {
+		CryptoCall firstCryptoCall = cryptoCalls.get(0);
 
-		for (CryptoUsage cryptoUsage : cryptoUsages) {
-			if (cryptoUsage.getPrimitive() != firstCryptoUsage.getPrimitive()) {
+		for (CryptoCall cryptoCall : cryptoCalls) {
+			if (cryptoCall.getPrimitive() != firstCryptoCall.getPrimitive()) {
 				return Primitive.UNKNOWN;
 			}
 		}
 
-		return firstCryptoUsage.getPrimitive();
+		return firstCryptoCall.getPrimitive();
 	}
 
-	private static List<Property> _getProperties(
-		List<CryptoUsage> cryptoUsages) {
-
+	private static List<Property> _getProperties(List<CryptoCall> cryptoCalls) {
 		List<Property> properties = new ArrayList<>();
 
 		Map<String, Set<String>> propertiesMap = new TreeMap<>();
 
-		for (CryptoUsage cryptoUsage : cryptoUsages) {
+		for (CryptoCall cryptoCall : cryptoCalls) {
 			_addProperty(
-				"jca-class", propertiesMap, cryptoUsage.getJCAClassName());
+				"jca-class", propertiesMap, cryptoCall.getJCAClassName());
 		}
 
 		for (Map.Entry<String, Set<String>> entry : propertiesMap.entrySet()) {
@@ -318,19 +302,19 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static ProtocolProperties _getProtocolProperties(
-			CryptoUsage cryptoUsage)
+			CryptoCall cryptoCall)
 		throws Exception {
 
 		ProtocolProperties protocolProperties = new ProtocolProperties();
 
-		if (cryptoUsage.getAlgorithm() == null) {
+		if (cryptoCall.getAlgorithm() == null) {
 			protocolProperties.setType(ProtocolType.TLS);
 
 			return protocolProperties;
 		}
 
 		String algorithm = CryptoProviderUtil.getAlgorithmName(
-			cryptoUsage.getAlgorithm(), cryptoUsage.getJCAClassName());
+			cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName());
 
 		if (algorithm.equals("TLS")) {
 			protocolProperties.setType(ProtocolType.TLS);
@@ -348,20 +332,19 @@ public class CryptoAssetComponentUtil {
 
 	private static RelatedCryptoMaterialProperties
 			_getRelatedCryptoMaterialProperties(
-				List<CryptoUsage> cryptoUsages,
-				List<CryptoUsage> keyCryptoUsages)
+				List<CryptoCall> cryptoCalls, List<CryptoCall> keyCryptoCalls)
 		throws Exception {
 
 		RelatedCryptoMaterialProperties relatedCryptoMaterialProperties =
 			new RelatedCryptoMaterialProperties();
 
-		CryptoUsage keyCryptoUsage = keyCryptoUsages.get(0);
+		CryptoCall keyCryptoCall = keyCryptoCalls.get(0);
 
-		if (Objects.equals(keyCryptoUsage.getJCAClassName(), "KeyStore")) {
-			if (keyCryptoUsage.getAlgorithm() != null) {
+		if (Objects.equals(keyCryptoCall.getJCAClassName(), "KeyStore")) {
+			if (keyCryptoCall.getAlgorithm() != null) {
 				relatedCryptoMaterialProperties.setFormat(
 					CryptoProviderUtil.getAlgorithmName(
-						keyCryptoUsage.getAlgorithm(), "KeyStore"));
+						keyCryptoCall.getAlgorithm(), "KeyStore"));
 			}
 
 			relatedCryptoMaterialProperties.setType(
@@ -371,9 +354,9 @@ public class CryptoAssetComponentUtil {
 		}
 
 		relatedCryptoMaterialProperties.setAlgorithmRef(
-			_getAlgorithmRef(cryptoUsages, keyCryptoUsages));
+			_getAlgorithmRef(cryptoCalls, keyCryptoCalls));
 
-		if (Objects.equals(keyCryptoUsage.getJCAClassName(), "SecretKeySpec")) {
+		if (Objects.equals(keyCryptoCall.getJCAClassName(), "SecretKeySpec")) {
 			relatedCryptoMaterialProperties.setType(
 				RelatedCryptoMaterialType.SECRET_KEY);
 
@@ -383,9 +366,9 @@ public class CryptoAssetComponentUtil {
 		TreeSet<RelatedCryptoMaterialType> relatedCryptoMaterialTypes =
 			new TreeSet<>();
 
-		for (CryptoUsage cryptoUsage : keyCryptoUsages) {
+		for (CryptoCall cryptoCall : keyCryptoCalls) {
 			relatedCryptoMaterialTypes.addAll(
-				cryptoUsage.getRelatedCryptoMaterialTypes());
+				cryptoCall.getRelatedCryptoMaterialTypes());
 		}
 
 		if (relatedCryptoMaterialTypes.size() == 1) {
@@ -401,22 +384,21 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static boolean _isKeyAlgorithm(
-			CryptoUsage cryptoUsage, CryptoUsage keyCryptoUsage)
+			CryptoCall cryptoCall, CryptoCall keyCryptoCall)
 		throws Exception {
 
-		if (keyCryptoUsage.isConfigurable()) {
+		if (keyCryptoCall.isConfigurable()) {
 			return true;
 		}
 
 		String algorithm = StringUtil.toUpperCase(
 			CryptoProviderUtil.getAlgorithmName(
-				cryptoUsage.getAlgorithm(), cryptoUsage.getJCAClassName()));
+				cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName()));
 		String keyAlgorithm = StringUtil.toUpperCase(
 			CryptoProviderUtil.getAlgorithmName(
-				keyCryptoUsage.getAlgorithm(),
-				keyCryptoUsage.getJCAClassName()));
+				keyCryptoCall.getAlgorithm(), keyCryptoCall.getJCAClassName()));
 
-		String jcaClassName = cryptoUsage.getJCAClassName();
+		String jcaClassName = cryptoCall.getJCAClassName();
 
 		if (jcaClassName.equals("Cipher")) {
 			String[] transformationParts = StringUtil.split(
@@ -450,25 +432,25 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static boolean _isKeyCandidate(
-		String className, CryptoUsage cryptoUsage, CryptoUsage keyCryptoUsage) {
-
-		List<String> classNames = cryptoUsage.getClassNames();
+		CryptoCall cryptoCall, CryptoCall keyCryptoCall) {
 
 		if (!_keyAlgorithmJCAClassNames.contains(
-				cryptoUsage.getJCAClassName()) ||
-			!classNames.contains(className) || !cryptoUsage.isResolved() ||
-			(cryptoUsage.isConfigurable() != keyCryptoUsage.isConfigurable())) {
+				cryptoCall.getJCAClassName()) ||
+			!Objects.equals(
+				cryptoCall.getClassName(), keyCryptoCall.getClassName()) ||
+			!cryptoCall.isResolved() ||
+			(cryptoCall.isConfigurable() != keyCryptoCall.isConfigurable())) {
 
 			return false;
 		}
 
-		if (!keyCryptoUsage.isConfigurable()) {
+		if (!keyCryptoCall.isConfigurable()) {
 			return true;
 		}
 
-		List<String> configuredBy = cryptoUsage.getConfiguredBy();
+		List<String> configuredBy = cryptoCall.getConfiguredBy();
 
-		for (String propertyKey : keyCryptoUsage.getConfiguredBy()) {
+		for (String propertyKey : keyCryptoCall.getConfiguredBy()) {
 			if (configuredBy.contains(propertyKey)) {
 				return true;
 			}
@@ -513,40 +495,40 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static Component _toComponent(
-			String bomRef, List<CryptoUsage> bomRefCryptoUsages,
-			List<CryptoUsage> cryptoUsages)
+			String bomRef, List<CryptoCall> bomRefCryptoCalls,
+			List<CryptoCall> cryptoCalls)
 		throws Exception {
 
 		Component component = new Component();
 		CryptoProperties cryptoProperties = new CryptoProperties();
 
-		CryptoUsage cryptoUsage = bomRefCryptoUsages.get(0);
+		CryptoCall cryptoCall = bomRefCryptoCalls.get(0);
 
 		AssetType assetType = _assetTypes.getOrDefault(
-			cryptoUsage.getJCAClassName(), AssetType.ALGORITHM);
+			cryptoCall.getJCAClassName(), AssetType.ALGORITHM);
 
 		if (assetType == AssetType.ALGORITHM) {
 			cryptoProperties.setAlgorithmProperties(
-				_getAlgorithmProperties(bomRefCryptoUsages));
+				_getAlgorithmProperties(bomRefCryptoCalls));
 		}
 		else if (assetType == AssetType.PROTOCOL) {
 			cryptoProperties.setProtocolProperties(
-				_getProtocolProperties(cryptoUsage));
+				_getProtocolProperties(cryptoCall));
 		}
 		else {
 			cryptoProperties.setRelatedCryptoMaterialProperties(
 				_getRelatedCryptoMaterialProperties(
-					cryptoUsages, bomRefCryptoUsages));
+					cryptoCalls, bomRefCryptoCalls));
 		}
 
 		cryptoProperties.setAssetType(assetType);
 
 		component.setBomRef(bomRef);
 		component.setCryptoProperties(cryptoProperties);
-		component.setDescription(_getDescription(bomRefCryptoUsages));
-		component.setEvidence(_getEvidence(bomRefCryptoUsages));
-		component.setName(_getName(cryptoUsage));
-		component.setProperties(_getProperties(bomRefCryptoUsages));
+		component.setDescription(_getDescription(bomRefCryptoCalls));
+		component.setEvidence(_getEvidence(bomRefCryptoCalls));
+		component.setName(_getName(cryptoCall));
+		component.setProperties(_getProperties(bomRefCryptoCalls));
 		component.setType(Component.Type.CRYPTOGRAPHIC_ASSET);
 
 		return component;
