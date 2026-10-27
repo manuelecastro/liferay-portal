@@ -29,6 +29,20 @@ public class CryptoCall {
 		_jcaClassName = jcaClassName;
 	}
 
+	public CryptoCall copy() {
+		CryptoCall cryptoCall = new CryptoCall(
+			_bundleSymbolicName, _className, _featureName, _jcaClassName);
+
+		cryptoCall.setAlgorithm(_algorithm);
+		cryptoCall.setConfiguredBy(_configuredBy);
+		cryptoCall.setCryptoFunctions(_cryptoFunctions);
+		cryptoCall.setKeySize(_keySize);
+		cryptoCall.setRelatedCryptoMaterialTypes(_relatedCryptoMaterialTypes);
+		cryptoCall.setUnresolvedReason(_unresolvedReason);
+
+		return cryptoCall;
+	}
+
 	public String getAlgorithm() {
 		return _algorithm;
 	}

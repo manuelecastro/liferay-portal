@@ -132,20 +132,14 @@ public class CryptoDependencyUtil {
 
 		ComponentData componentData = new ComponentData();
 
-		if (CryptoCallScanner.isJDKPropertyKey(propertyKey)) {
-			componentData.setName("java.security");
-		}
-		else {
-			componentData.setName("portal.properties");
-		}
-
+		componentData.setName(CryptoSettingUtil.getFileName(propertyKey));
 		componentData.setType(ComponentData.ComponentDataType.CONFIGURATION);
 
 		Component component = new Component();
 
 		component.setBomRef(bomRef);
 		component.setData(Collections.singletonList(componentData));
-		component.setName(propertyKey);
+		component.setName(CryptoSettingUtil.getName(propertyKey));
 		component.setType(Component.Type.DATA);
 
 		return component;

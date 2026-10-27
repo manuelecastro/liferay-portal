@@ -7,9 +7,11 @@ package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
+import com.liferay.portal.security.xml.SecureXMLFactoryProviderImpl;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -50,6 +52,12 @@ public class CBOMBuilder {
 	}
 
 	public static void main(String[] args) throws Exception {
+		SecureXMLFactoryProviderUtil secureXMLFactoryProviderUtil =
+			new SecureXMLFactoryProviderUtil();
+
+		secureXMLFactoryProviderUtil.setSecureXMLFactoryProvider(
+			new SecureXMLFactoryProviderImpl());
+
 		File configurationDir = new File(args[0]);
 
 		Properties portalExtProperties = _loadProperties(

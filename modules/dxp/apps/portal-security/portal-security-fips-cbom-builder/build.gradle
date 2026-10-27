@@ -38,6 +38,9 @@ dependencies {
 	implementation group: "org.ow2.asm", name: "asm", version: "9.11.1"
 	implementation group: "org.ow2.asm", name: "asm-analysis", version: "9.11.1"
 	implementation group: "org.ow2.asm", name: "asm-tree", version: "9.11.1"
+	testImplementation group: "com.liferay", name: "biz.aQute.bnd.annotation", version: "4.2.0.LIFERAY-PATCHED-2"
+	testImplementation group: "com.liferay.jakarta.portlet", name: "com.liferay.jakarta.portlet-api", version: "4.0.0"
+	testImplementation group: "jakarta.servlet", name: "jakarta.servlet-api", version: "6.0.0"
 	testImplementation group: "org.skyscreamer", name: "jsonassert", version: "1.2.3"
 }
 

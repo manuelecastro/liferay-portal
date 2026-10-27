@@ -8,11 +8,16 @@ package com.liferay.portal.security.fips.cbom.builder;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -22,9 +27,12 @@ import java.nio.charset.StandardCharsets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,37 +40,55 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import javax.crypto.Cipher;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Frame;
 import org.objectweb.asm.tree.analysis.SourceInterpreter;
 import org.objectweb.asm.tree.analysis.SourceValue;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import org.xml.sax.SAXException;
 
 /**
  * @author Manuele Castro
@@ -77,44 +103,31 @@ public class CryptoCallScanner {
 		_fipsEnabled = fipsEnabled;
 	}
 
-	public List<CryptoCall> getCryptoCalls() {
+	public List<CryptoCall> getCryptoCalls() throws IOException {
+		_follow();
+
 		List<CryptoCall> cryptoCalls = new ArrayList<>();
 
 		for (ScannedCryptoCall scannedCryptoCall : _scannedCryptoCalls) {
-			cryptoCalls.add(_toCryptoCall(scannedCryptoCall));
+			cryptoCalls.addAll(_toCryptoCalls(scannedCryptoCall));
 		}
 
 		return cryptoCalls;
 	}
 
 	public void scan(File file) throws IOException {
-		String fileName = file.getName();
+		_files.add(file);
 
-		if (fileName.endsWith(".lpkg")) {
-			try (ZipFile zipFile = new ZipFile(file)) {
-				for (ZipEntry zipEntry : Collections.list(zipFile.entries())) {
-					String name = zipEntry.getName();
-
-					if (!name.endsWith(".jar")) {
-						continue;
-					}
-
-					try (JarInputStream jarInputStream = new JarInputStream(
-							zipFile.getInputStream(zipEntry))) {
-
-						_scan(jarInputStream, name);
-					}
+		_visit(
+			file, this::_isScannedFileName,
+			(bundleSymbolicName, featureName, name, bytes) -> {
+				if (name.endsWith(".class")) {
+					_scan(bundleSymbolicName, featureName, bytes);
 				}
-			}
-
-			return;
-		}
-
-		try (JarInputStream jarInputStream = new JarInputStream(
-				new FileInputStream(file))) {
-
-			_scan(jarInputStream, fileName);
-		}
+				else {
+					_scanSpringXML(bytes);
+				}
+			});
 	}
 
 	public void scan(
@@ -124,18 +137,9 @@ public class CryptoCallScanner {
 
 		byte[] bytes = inputStream.readAllBytes();
 
-		if (!_hasCryptoReference(bytes)) {
-			return;
-		}
+		_scannedClassBytes.add(bytes);
 
-		ClassNode classNode = new ClassNode();
-
-		ClassReader classReader = new ClassReader(bytes);
-
-		classReader.accept(
-			classNode, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-		_scan(classNode, bundleSymbolicName, featureName);
+		_scan(bundleSymbolicName, featureName, bytes);
 	}
 
 	private Frame<SourceValue>[] _analyze(
@@ -150,6 +154,42 @@ public class CryptoCallScanner {
 				methodNode));
 
 		return analyzer.analyze(classNode.name, methodNode);
+	}
+
+	private void _collectReferences(
+		Origin origin, Set<String> references, Set<String> visitedReferences) {
+
+		List<String> originReferences = new ArrayList<>(origin.getReferences());
+
+		originReferences.addAll(origin.getDerivedReferences());
+
+		for (String reference : originReferences) {
+			if (!visitedReferences.add(reference)) {
+				continue;
+			}
+
+			Origin referenceOrigin = _getReferenceOrigin(reference);
+
+			if (referenceOrigin == null) {
+				if (reference.startsWith("com.liferay.")) {
+					references.add(reference);
+				}
+
+				continue;
+			}
+
+			_collectReferences(referenceOrigin, references, visitedReferences);
+		}
+	}
+
+	private boolean _containsAny(String content, Collection<String> needles) {
+		for (String needle : needles) {
+			if (content.contains(needle)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private void _foldFIPSEnabled(InsnList insnList) {
@@ -188,6 +228,262 @@ public class CryptoCallScanner {
 		}
 	}
 
+	private void _follow() throws IOException {
+		for (int i = 0; i < _FOLLOW_PASS_COUNT; i++) {
+			Set<String> references = new TreeSet<>();
+
+			for (ScannedCryptoCall scannedCryptoCall : _scannedCryptoCalls) {
+				_collectReferences(
+					scannedCryptoCall.getAlgorithmOrigin(), references,
+					new HashSet<>());
+				_collectReferences(
+					scannedCryptoCall.getKeySizeOrigin(), references,
+					new HashSet<>());
+			}
+
+			references.removeAll(_followedReferences);
+
+			if (references.isEmpty()) {
+				return;
+			}
+
+			_followedReferences.addAll(references);
+
+			_follow(references);
+		}
+	}
+
+	private void _follow(Set<String> references) throws IOException {
+		Set<String> needles = new HashSet<>();
+		Map<String, List<String>> parameterReferences = new HashMap<>();
+
+		for (String reference : references) {
+			int index = reference.indexOf(CharPool.POUND);
+
+			if (index == -1) {
+				String className = _getReferenceClassName(reference);
+
+				needles.add(StringUtil.replace(className, '.', '/'));
+
+				for (String superTypeName :
+						_getSuperTypeNames(
+							StringUtil.replace(className, '.', '/'))) {
+
+					if (!superTypeName.startsWith("com/liferay/")) {
+						continue;
+					}
+
+					needles.add(superTypeName);
+				}
+
+				continue;
+			}
+
+			String methodName = _getReferenceMethodName(reference);
+
+			if (Objects.equals(methodName, "<init>")) {
+				needles.add(
+					StringUtil.replace(
+						_getReferenceClassName(reference), '.', '/'));
+			}
+			else {
+				needles.add(methodName);
+			}
+
+			List<String> methodParameterReferences =
+				parameterReferences.computeIfAbsent(
+					methodName, key -> new ArrayList<>());
+
+			methodParameterReferences.add(reference);
+		}
+
+		for (File file : _files) {
+			_visit(
+				file, this::_isFollowedFileName,
+				(bundleSymbolicName, featureName, name, bytes) -> {
+					if (name.endsWith(".class")) {
+						_followClass(bytes, needles, parameterReferences);
+					}
+					else {
+						_followJSP(
+							new String(bytes, StandardCharsets.UTF_8),
+							parameterReferences);
+					}
+				});
+		}
+
+		for (byte[] bytes : _scannedClassBytes) {
+			_followClass(bytes, needles, parameterReferences);
+		}
+	}
+
+	private void _followClass(
+		byte[] bytes, Set<String> needles,
+		Map<String, List<String>> parameterReferences) {
+
+		String classFileContent = new String(
+			bytes, StandardCharsets.ISO_8859_1);
+
+		if (!_containsAny(classFileContent, needles)) {
+			return;
+		}
+
+		ClassNode classNode = new ClassNode();
+
+		ClassReader classReader = new ClassReader(bytes);
+
+		classReader.accept(
+			classNode, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+
+		_recordConfigurationAttributes(classNode);
+
+		for (MethodNode methodNode : classNode.methods) {
+			if (methodNode.instructions.size() == 0) {
+				continue;
+			}
+
+			Frame<SourceValue>[] frames = null;
+
+			try {
+				frames = _analyze(classNode, methodNode);
+			}
+			catch (AnalyzerException analyzerException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(analyzerException);
+				}
+
+				continue;
+			}
+
+			_scanAssignments(classNode, frames, methodNode);
+
+			InsnList insnList = methodNode.instructions;
+
+			for (AbstractInsnNode abstractInsnNode : insnList) {
+				if (!(abstractInsnNode instanceof MethodInsnNode) ||
+					(frames[insnList.indexOf(abstractInsnNode)] == null)) {
+
+					continue;
+				}
+
+				MethodInsnNode methodInsnNode =
+					(MethodInsnNode)abstractInsnNode;
+
+				List<String> methodParameterReferences =
+					parameterReferences.get(methodInsnNode.name);
+
+				if (methodParameterReferences == null) {
+					continue;
+				}
+
+				for (String reference : methodParameterReferences) {
+					_followParameterReference(
+						frames, insnList, methodInsnNode, reference);
+				}
+			}
+		}
+	}
+
+	private void _followJSP(
+		String content, Map<String, List<String>> parameterReferences) {
+
+		for (Map.Entry<String, List<String>> entry :
+				parameterReferences.entrySet()) {
+
+			Pattern pattern = Pattern.compile(
+				"\\." + Pattern.quote(entry.getKey()) + "\\(");
+
+			Matcher matcher = pattern.matcher(content);
+
+			while (matcher.find()) {
+				List<String> arguments = _getJSPArguments(
+					content, matcher.end());
+
+				for (String reference : entry.getValue()) {
+					if (reference.endsWith(_SUFFIX_KEY_ALGORITHM)) {
+						continue;
+					}
+
+					int index = GetterUtil.getInteger(
+						reference.substring(
+							reference.indexOf(CharPool.POUND) + 1));
+
+					if (index >= arguments.size()) {
+						continue;
+					}
+
+					Matcher literalMatcher = _jspLiteralPattern.matcher(
+						arguments.get(index));
+
+					if (!literalMatcher.matches()) {
+						continue;
+					}
+
+					Origin origin = new Origin();
+
+					origin.addValue(literalMatcher.group(1));
+
+					_track(reference, origin);
+				}
+			}
+		}
+	}
+
+	private void _followParameterReference(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		MethodInsnNode methodInsnNode, String reference) {
+
+		String methodKey = reference.substring(
+			0, reference.indexOf(CharPool.POUND));
+
+		String desc = methodKey.substring(
+			methodKey.indexOf(CharPool.OPEN_PARENTHESIS));
+
+		if (!Objects.equals(methodInsnNode.desc, desc) ||
+			!_isCompatible(
+				methodInsnNode.owner,
+				StringUtil.replace(
+					_getReferenceClassName(reference), '.', '/'))) {
+
+			return;
+		}
+
+		String parameter = reference.substring(
+			reference.indexOf(CharPool.POUND) + 1);
+
+		boolean keyAlgorithm = false;
+
+		if (parameter.endsWith(_SUFFIX_KEY_ALGORITHM)) {
+			keyAlgorithm = true;
+
+			parameter = parameter.substring(
+				0, parameter.length() - _SUFFIX_KEY_ALGORITHM.length());
+		}
+
+		int count = Type.getArgumentCount(methodInsnNode.desc);
+		int index = GetterUtil.getInteger(parameter);
+
+		if (index >= count) {
+			return;
+		}
+
+		if (keyAlgorithm) {
+			_track(
+				reference,
+				_getKeyAlgorithmOrigin(
+					frames, insnList,
+					_getArgument(
+						frames[insnList.indexOf(methodInsnNode)], index, count),
+					new HashSet<>()));
+		}
+		else {
+			_track(
+				reference,
+				_getArgumentOrigin(
+					frames, insnList, methodInsnNode, index, count));
+		}
+	}
+
 	private Origin _getAlgorithmOrigin(
 		Frame<SourceValue>[] frames, InsnList insnList,
 		MethodInsnNode methodInsnNode) {
@@ -216,6 +512,47 @@ public class CryptoCallScanner {
 
 		return _getArgumentOrigin(
 			frames, insnList, methodInsnNode, index, argumentTypes.length);
+	}
+
+	private List<AnnotationNode> _getAnnotationNodes(
+		List<AnnotationNode> invisibleAnnotationNodes,
+		List<AnnotationNode> visibleAnnotationNodes) {
+
+		List<AnnotationNode> annotationNodes = new ArrayList<>();
+
+		if (invisibleAnnotationNodes != null) {
+			annotationNodes.addAll(invisibleAnnotationNodes);
+		}
+
+		if (visibleAnnotationNodes != null) {
+			annotationNodes.addAll(visibleAnnotationNodes);
+		}
+
+		return annotationNodes;
+	}
+
+	private String _getAnnotationValue(
+		List<AnnotationNode> annotationNodes, String desc, String name) {
+
+		for (AnnotationNode annotationNode : annotationNodes) {
+			if (!Objects.equals(annotationNode.desc, desc)) {
+				continue;
+			}
+
+			if (annotationNode.values == null) {
+				return StringPool.BLANK;
+			}
+
+			for (int i = 0; i < annotationNode.values.size(); i += 2) {
+				if (Objects.equals(annotationNode.values.get(i), name)) {
+					return String.valueOf(annotationNode.values.get(i + 1));
+				}
+			}
+
+			return StringPool.BLANK;
+		}
+
+		return null;
 	}
 
 	private SourceValue _getArgument(
@@ -267,6 +604,39 @@ public class CryptoCallScanner {
 		}
 
 		return className;
+	}
+
+	private Origin _getComputedOrigin(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		List<SourceValue> sourceValues,
+		Set<AbstractInsnNode> visitedAbstractInsnNodes) {
+
+		Origin origin = new Origin();
+
+		origin.setComputed(true);
+
+		for (SourceValue sourceValue : sourceValues) {
+			Origin inputOrigin = _getOrigin(
+				frames, insnList, sourceValue, visitedAbstractInsnNodes);
+
+			for (String propertyKey : inputOrigin.getPropertyKeys()) {
+				origin.addPropertyKey(propertyKey);
+			}
+
+			for (String reference : inputOrigin.getReferences()) {
+				origin.addDerivedReference(reference);
+			}
+
+			for (String reference : inputOrigin.getDerivedReferences()) {
+				origin.addDerivedReference(reference);
+			}
+
+			for (String unresolvedReason : inputOrigin.getUnresolvedReasons()) {
+				origin.addUnresolvedReason(unresolvedReason);
+			}
+		}
+
+		return origin;
 	}
 
 	private List<CryptoFunction> _getCryptoFunctions(
@@ -374,6 +744,96 @@ public class CryptoCallScanner {
 		return name;
 	}
 
+	private Origin _getImplementationReturnValueOrigin(String reference) {
+		String className = _getReferenceClassName(reference);
+
+		String internalName = StringUtil.replace(className, '.', '/');
+		String methodSignature = reference.substring(className.length());
+
+		Origin origin = null;
+
+		for (String subtypeName : _getSubtypeNames(internalName)) {
+			Origin subtypeOrigin = _referenceOrigins.get(
+				_getKeyName(subtypeName) + methodSignature);
+
+			if (subtypeOrigin == null) {
+				continue;
+			}
+
+			if (origin == null) {
+				origin = new Origin();
+			}
+
+			origin.addAll(subtypeOrigin);
+		}
+
+		return origin;
+	}
+
+	private Origin _getInheritedReturnValueOrigin(String reference) {
+		String className = _getReferenceClassName(reference);
+
+		String methodSignature = reference.substring(className.length());
+
+		for (String superTypeName :
+				_getSuperTypeNames(StringUtil.replace(className, '.', '/'))) {
+
+			String superTypeReference =
+				_getKeyName(superTypeName) + methodSignature;
+
+			Origin origin = _referenceOrigins.get(superTypeReference);
+
+			if (origin != null) {
+				return origin;
+			}
+
+			String settingKey = _configurationSettingKeys.get(
+				superTypeReference.substring(
+					0, superTypeReference.indexOf(CharPool.OPEN_PARENTHESIS)));
+
+			if (settingKey != null) {
+				origin = new Origin();
+
+				origin.addPropertyKey(settingKey);
+
+				return origin;
+			}
+		}
+
+		return null;
+	}
+
+	private MethodInsnNode _getInitMethodInsnNode(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		TypeInsnNode typeInsnNode) {
+
+		for (AbstractInsnNode abstractInsnNode : insnList) {
+			if (abstractInsnNode.getOpcode() != Opcodes.INVOKESPECIAL) {
+				continue;
+			}
+
+			MethodInsnNode methodInsnNode = (MethodInsnNode)abstractInsnNode;
+
+			Frame<SourceValue> frame = frames[insnList.indexOf(methodInsnNode)];
+
+			if ((frame == null) ||
+				!Objects.equals(methodInsnNode.owner, typeInsnNode.desc) ||
+				!Objects.equals(methodInsnNode.name, "<init>")) {
+
+				continue;
+			}
+
+			SourceValue sourceValue = _getReceiver(
+				frame, Type.getArgumentCount(methodInsnNode.desc));
+
+			if (sourceValue.insns.contains(typeInsnNode)) {
+				return methodInsnNode;
+			}
+		}
+
+		return null;
+	}
+
 	private String _getJCAClassName(MethodInsnNode methodInsnNode) {
 		if (methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC) {
 			if (Objects.equals(
@@ -401,6 +861,165 @@ public class CryptoCallScanner {
 		}
 
 		return null;
+	}
+
+	private List<String> _getJSPArguments(String content, int start) {
+		List<String> arguments = new ArrayList<>();
+
+		int depth = 0;
+		boolean quoted = false;
+
+		StringBundler sb = new StringBundler();
+
+		for (int i = start; i < content.length(); i++) {
+			char c = content.charAt(i);
+
+			if (quoted) {
+				sb.append(c);
+
+				if (c == CharPool.QUOTE) {
+					quoted = false;
+				}
+
+				continue;
+			}
+
+			if (c == CharPool.QUOTE) {
+				quoted = true;
+			}
+			else if (c == CharPool.OPEN_PARENTHESIS) {
+				depth++;
+			}
+			else if (c == CharPool.CLOSE_PARENTHESIS) {
+				if (depth == 0) {
+					arguments.add(StringUtil.trim(sb.toString()));
+
+					return arguments;
+				}
+
+				depth--;
+			}
+			else if ((c == CharPool.COMMA) && (depth == 0)) {
+				arguments.add(StringUtil.trim(sb.toString()));
+
+				sb.setIndex(0);
+
+				continue;
+			}
+
+			sb.append(c);
+		}
+
+		return arguments;
+	}
+
+	private Origin _getKeyAlgorithmOrigin(
+		Frame<SourceValue>[] frames, InsnList insnList, SourceValue sourceValue,
+		Set<AbstractInsnNode> visitedAbstractInsnNodes) {
+
+		Origin origin = new Origin();
+
+		for (AbstractInsnNode abstractInsnNode : sourceValue.insns) {
+			if (!visitedAbstractInsnNodes.add(abstractInsnNode)) {
+				continue;
+			}
+
+			int opcode = abstractInsnNode.getOpcode();
+
+			if (abstractInsnNode instanceof ParameterInsnNode) {
+				ParameterInsnNode parameterInsnNode =
+					(ParameterInsnNode)abstractInsnNode;
+
+				origin.addReference(
+					parameterInsnNode.getParameterKey() +
+						_SUFFIX_KEY_ALGORITHM);
+			}
+			else if (opcode == Opcodes.NEW) {
+				TypeInsnNode typeInsnNode = (TypeInsnNode)abstractInsnNode;
+
+				MethodInsnNode methodInsnNode = _getInitMethodInsnNode(
+					frames, insnList, typeInsnNode);
+
+				if ((methodInsnNode != null) &&
+					Objects.equals(
+						typeInsnNode.desc, _CLASS_NAME_SECRET_KEY_SPEC) &&
+					methodInsnNode.desc.endsWith("Ljava/lang/String;)V")) {
+
+					origin.addAll(
+						_getAlgorithmOrigin(frames, insnList, methodInsnNode));
+				}
+				else {
+					origin.addUnresolvedReason(
+						"a key that the code builds as a " +
+							_getKeyName(typeInsnNode.desc));
+				}
+			}
+			else if (opcode == Opcodes.CHECKCAST) {
+				origin.addAll(
+					_getKeyAlgorithmOrigin(
+						frames, insnList,
+						_getArgument(
+							frames[insnList.indexOf(abstractInsnNode)], 0, 1),
+						visitedAbstractInsnNodes));
+			}
+			else if (abstractInsnNode instanceof MethodInsnNode) {
+				MethodInsnNode methodInsnNode =
+					(MethodInsnNode)abstractInsnNode;
+
+				if (Objects.equals(
+						methodInsnNode.owner, "javax/crypto/KeyGenerator") &&
+					Objects.equals(methodInsnNode.name, "generateKey")) {
+
+					Frame<SourceValue> frame =
+						frames[insnList.indexOf(methodInsnNode)];
+
+					SourceValue receiverSourceValue = _getReceiver(frame, 0);
+
+					for (AbstractInsnNode receiverAbstractInsnNode :
+							receiverSourceValue.insns) {
+
+						if (!(receiverAbstractInsnNode instanceof
+								MethodInsnNode)) {
+
+							continue;
+						}
+
+						MethodInsnNode receiverMethodInsnNode =
+							(MethodInsnNode)receiverAbstractInsnNode;
+
+						String jcaClassName = _getJCAClassName(
+							receiverMethodInsnNode);
+
+						if (jcaClassName == null) {
+							continue;
+						}
+
+						origin.addAll(
+							_getAlgorithmOrigin(
+								frames, insnList, receiverMethodInsnNode));
+					}
+				}
+				else {
+					String methodKey = _getMethodKey(
+						methodInsnNode.owner, methodInsnNode.name,
+						methodInsnNode.desc);
+
+					origin.addReference(methodKey + _SUFFIX_KEY_ALGORITHM);
+				}
+			}
+			else if ((opcode == Opcodes.GETFIELD) ||
+					 (opcode == Opcodes.GETSTATIC)) {
+
+				origin.addReference(
+					_getFieldKey((FieldInsnNode)abstractInsnNode) +
+						_SUFFIX_KEY_ALGORITHM);
+			}
+			else if (opcode != Opcodes.ACONST_NULL) {
+				origin.addUnresolvedReason("a key the code computes");
+			}
+		}
+
+		return origin;
 	}
 
 	private String _getKeyName(String internalName) {
@@ -530,8 +1149,26 @@ public class CryptoCallScanner {
 					frames, insnList, (MethodInsnNode)abstractInsnNode,
 					visitedAbstractInsnNodes));
 		}
+		else if (_isConcatenation(abstractInsnNode)) {
+			InvokeDynamicInsnNode invokeDynamicInsnNode =
+				(InvokeDynamicInsnNode)abstractInsnNode;
+
+			Frame<SourceValue> frame =
+				frames[insnList.indexOf(invokeDynamicInsnNode)];
+			int count = Type.getArgumentCount(invokeDynamicInsnNode.desc);
+
+			List<SourceValue> sourceValues = new ArrayList<>();
+
+			for (int i = 0; i < count; i++) {
+				sourceValues.add(_getArgument(frame, i, count));
+			}
+
+			origin.addAll(
+				_getComputedOrigin(
+					frames, insnList, sourceValues, visitedAbstractInsnNodes));
+		}
 		else if (opcode != Opcodes.ACONST_NULL) {
-			origin.addUnresolvedReason("a value the code computes");
+			origin.setComputed(true);
 		}
 
 		return origin;
@@ -559,6 +1196,89 @@ public class CryptoCallScanner {
 
 	private SourceValue _getReceiver(Frame<SourceValue> frame, int count) {
 		return frame.getStack(frame.getStackSize() - count - 1);
+	}
+
+	private String _getReferenceClassName(String reference) {
+		int index = reference.indexOf(CharPool.OPEN_PARENTHESIS);
+
+		if (index == -1) {
+			index = reference.length();
+		}
+
+		String name = reference.substring(0, index);
+
+		return name.substring(0, name.lastIndexOf(CharPool.PERIOD));
+	}
+
+	private String _getReferenceMethodName(String reference) {
+		String name = reference.substring(
+			0, reference.indexOf(CharPool.OPEN_PARENTHESIS));
+
+		return name.substring(name.lastIndexOf(CharPool.PERIOD) + 1);
+	}
+
+	private Origin _getReferenceOrigin(String reference) {
+		Origin origin = new Origin();
+
+		boolean found = false;
+
+		Origin trackedOrigin = _referenceOrigins.get(reference);
+
+		if ((trackedOrigin != null) && _isResolvable(reference)) {
+			origin.addAll(trackedOrigin);
+
+			found = true;
+		}
+
+		int index = reference.indexOf(CharPool.POUND);
+
+		if (index != -1) {
+			String methodName = reference.substring(
+				0, reference.indexOf(CharPool.OPEN_PARENTHESIS));
+
+			Origin springOrigin = _springOrigins.get(
+				methodName + reference.substring(index));
+
+			if (springOrigin != null) {
+				origin.addAll(springOrigin);
+
+				found = true;
+			}
+		}
+		else if (reference.indexOf(CharPool.OPEN_PARENTHESIS) != -1) {
+			String settingKey = _configurationSettingKeys.get(
+				reference.substring(
+					0, reference.indexOf(CharPool.OPEN_PARENTHESIS)));
+
+			if (settingKey != null) {
+				origin.addPropertyKey(settingKey);
+
+				found = true;
+			}
+			else if (!found) {
+				Origin inheritedOrigin = _getInheritedReturnValueOrigin(
+					reference);
+
+				if ((inheritedOrigin == null) &&
+					reference.endsWith(_SUFFIX_KEY_ALGORITHM)) {
+
+					inheritedOrigin = _getImplementationReturnValueOrigin(
+						reference);
+				}
+
+				if (inheritedOrigin != null) {
+					origin.addAll(inheritedOrigin);
+
+					found = true;
+				}
+			}
+		}
+
+		if (!found) {
+			return null;
+		}
+
+		return origin;
 	}
 
 	private List<RelatedCryptoMaterialType> _getRelatedCryptoMaterialTypes(
@@ -627,6 +1347,57 @@ public class CryptoCallScanner {
 			return origin;
 		}
 
+		if (methodInsnNode.owner.endsWith("/MapUtil") &&
+			methodInsnNode.name.startsWith("get") && (count > 1)) {
+
+			Origin keyOrigin = _getOrigin(
+				frames, insnList, _getArgument(frame, 1, count),
+				visitedAbstractInsnNodes);
+
+			for (String value : keyOrigin.getValues()) {
+				origin.addPropertyKey(
+					CryptoSettingUtil.toSettingKey(
+						"OSGi configuration", value));
+			}
+
+			if (!keyOrigin.isConstant()) {
+				origin.addUnresolvedReason(
+					"a configuration property whose name the code computes");
+			}
+
+			return origin;
+		}
+
+		if (methodInsnNode.owner.endsWith("/ParamUtil") &&
+			methodInsnNode.name.startsWith("get") && (count > 1)) {
+
+			Origin nameOrigin = _getOrigin(
+				frames, insnList, _getArgument(frame, 1, count),
+				visitedAbstractInsnNodes);
+
+			for (String value : nameOrigin.getValues()) {
+				origin.addUnresolvedReason(
+					"the request parameter " + value +
+						", which the user chooses");
+			}
+
+			if (nameOrigin.getValues(
+				).isEmpty()) {
+
+				origin.addUnresolvedReason("a request parameter");
+			}
+
+			return origin;
+		}
+
+		if (_keyClassNames.contains(methodInsnNode.owner) &&
+			Objects.equals(methodInsnNode.name, "getAlgorithm") &&
+			(count == 0)) {
+
+			return _getKeyAlgorithmOrigin(
+				frames, insnList, _getReceiver(frame, count), new HashSet<>());
+		}
+
 		if (_jcaClassNames.containsKey(methodInsnNode.owner) &&
 			Objects.equals(methodInsnNode.name, "getAlgorithm") &&
 			(count == 0)) {
@@ -657,30 +1428,103 @@ public class CryptoCallScanner {
 		Function<String, String> function = _stringFunctions.get(
 			methodInsnNode.owner + StringPool.PERIOD + methodInsnNode.name);
 
-		if (function == null) {
-			origin.addReference(
-				_getMethodKey(
-					methodInsnNode.owner, methodInsnNode.name,
-					methodInsnNode.desc));
+		if (function != null) {
+			SourceValue sourceValue = null;
 
-			return origin;
+			if (methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC) {
+				sourceValue = _getArgument(frame, 0, count);
+			}
+			else {
+				sourceValue = _getReceiver(frame, count);
+			}
+
+			Origin wrappedOrigin = _getOrigin(
+				frames, insnList, sourceValue, visitedAbstractInsnNodes);
+
+			wrappedOrigin.transformValues(function);
+
+			return wrappedOrigin;
 		}
 
-		SourceValue sourceValue = null;
+		if (_isComputation(methodInsnNode)) {
+			List<SourceValue> sourceValues = new ArrayList<>();
 
-		if (methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC) {
-			sourceValue = _getArgument(frame, 0, count);
+			if (methodInsnNode.getOpcode() != Opcodes.INVOKESTATIC) {
+				sourceValues.add(_getReceiver(frame, count));
+			}
+
+			Type[] argumentTypes = Type.getArgumentTypes(methodInsnNode.desc);
+
+			for (int i = 0; i < count; i++) {
+				if (!Objects.equals(
+						argumentTypes[i], Type.getType(String.class))) {
+
+					continue;
+				}
+
+				sourceValues.add(_getArgument(frame, i, count));
+			}
+
+			return _getComputedOrigin(
+				frames, insnList, sourceValues, visitedAbstractInsnNodes);
 		}
-		else {
-			sourceValue = _getReceiver(frame, count);
+
+		origin.addReference(
+			_getMethodKey(
+				methodInsnNode.owner, methodInsnNode.name,
+				methodInsnNode.desc));
+
+		return origin;
+	}
+
+	private List<String> _getSubtypeNames(String internalName) {
+		List<String> subtypeNames = _subtypeNames.get(internalName);
+
+		if (subtypeNames != null) {
+			return subtypeNames;
 		}
 
-		Origin wrappedOrigin = _getOrigin(
-			frames, insnList, sourceValue, visitedAbstractInsnNodes);
+		subtypeNames = new ArrayList<>();
 
-		wrappedOrigin.transformValues(function);
+		for (String curInternalName : _superTypeNames.keySet()) {
+			List<String> superTypeNames = _getSuperTypeNames(curInternalName);
 
-		return wrappedOrigin;
+			if (!superTypeNames.contains(internalName)) {
+				continue;
+			}
+
+			subtypeNames.add(curInternalName);
+		}
+
+		Collections.sort(subtypeNames);
+
+		_subtypeNames.put(internalName, subtypeNames);
+
+		return subtypeNames;
+	}
+
+	private List<String> _getSuperTypeNames(String internalName) {
+		List<String> superTypeNames = new ArrayList<>();
+
+		LinkedList<String> internalNames = new LinkedList<>(
+			_superTypeNames.getOrDefault(
+				internalName, Collections.emptyList()));
+
+		while (!internalNames.isEmpty()) {
+			String superTypeName = internalNames.removeFirst();
+
+			if (superTypeNames.contains(superTypeName)) {
+				continue;
+			}
+
+			superTypeNames.add(superTypeName);
+
+			internalNames.addAll(
+				_superTypeNames.getOrDefault(
+					superTypeName, Collections.emptyList()));
+		}
+
+		return superTypeNames;
 	}
 
 	private String _getUnresolvedReason(String reference) {
@@ -696,13 +1540,33 @@ public class CryptoCallScanner {
 						StringUtil.removeLast(methodName, ".<init>");
 			}
 
+			String parameter = reference.substring(index + 1);
+
+			if (parameter.endsWith(_SUFFIX_KEY_ALGORITHM)) {
+				int parameterIndex = GetterUtil.getInteger(
+					StringUtil.removeLast(parameter, _SUFFIX_KEY_ALGORITHM));
+
+				return StringBundler.concat(
+					"the algorithm of the key in parameter ",
+					parameterIndex + 1, " of ", methodName);
+			}
+
 			return StringBundler.concat(
-				"parameter ",
-				GetterUtil.getInteger(reference.substring(index + 1)) + 1,
-				" of ", methodName);
+				"parameter ", GetterUtil.getInteger(parameter) + 1, " of ",
+				methodName);
 		}
 
 		index = reference.indexOf(CharPool.OPEN_PARENTHESIS);
+
+		if (reference.endsWith(_SUFFIX_KEY_ALGORITHM)) {
+			if (index != -1) {
+				return "the key that " + reference.substring(0, index) +
+					"() returns";
+			}
+
+			return "the key in the field " +
+				StringUtil.removeLast(reference, _SUFFIX_KEY_ALGORITHM);
+		}
 
 		if (index != -1) {
 			return "the return value of " + reference.substring(0, index) +
@@ -716,13 +1580,7 @@ public class CryptoCallScanner {
 		String classFileContent = new String(
 			bytes, StandardCharsets.ISO_8859_1);
 
-		for (String needle : _needles) {
-			if (classFileContent.contains(needle)) {
-				return true;
-			}
-		}
-
-		return false;
+		return _containsAny(classFileContent, _needles);
 	}
 
 	private boolean _isClassFileName(String name) {
@@ -731,6 +1589,48 @@ public class CryptoCallScanner {
 		}
 
 		return false;
+	}
+
+	private boolean _isCompatible(String ownerName, String declaringName) {
+		if (Objects.equals(ownerName, declaringName)) {
+			return true;
+		}
+
+		List<String> superTypeNames = _getSuperTypeNames(declaringName);
+
+		if (superTypeNames.contains(ownerName)) {
+			return true;
+		}
+
+		superTypeNames = _getSuperTypeNames(ownerName);
+
+		return superTypeNames.contains(declaringName);
+	}
+
+	private boolean _isComputation(MethodInsnNode methodInsnNode) {
+		if (!methodInsnNode.desc.endsWith(")Ljava/lang/String;")) {
+			return false;
+		}
+
+		if (Objects.equals(methodInsnNode.owner, "java/lang/String") ||
+			methodInsnNode.owner.endsWith("/StringUtil")) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean _isConcatenation(AbstractInsnNode abstractInsnNode) {
+		if (!(abstractInsnNode instanceof InvokeDynamicInsnNode)) {
+			return false;
+		}
+
+		InvokeDynamicInsnNode invokeDynamicInsnNode =
+			(InvokeDynamicInsnNode)abstractInsnNode;
+
+		return Objects.equals(
+			invokeDynamicInsnNode.name, "makeConcatWithConstants");
 	}
 
 	private boolean _isFIPSEnabled(AbstractInsnNode abstractInsnNode) {
@@ -749,14 +1649,44 @@ public class CryptoCallScanner {
 		return false;
 	}
 
+	private boolean _isFollowedFileName(String name) {
+		if (_isClassFileName(name) || name.endsWith(".jsp") ||
+			name.endsWith(".jspf")) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean _isKey(Type type) {
+		if ((type.getSort() == Type.OBJECT) &&
+			_keyClassNames.contains(type.getInternalName())) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	private boolean _isResolvable(String reference) {
 		int index = reference.indexOf(CharPool.POUND);
 
-		if (index == -1) {
+		if ((index == -1) || _followedReferences.contains(reference)) {
 			return true;
 		}
 
 		return _privateMethodKeys.contains(reference.substring(0, index));
+	}
+
+	private boolean _isScannedFileName(String name) {
+		if (_isClassFileName(name) ||
+			(name.endsWith(".xml") && name.contains("spring"))) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private boolean _isTracked(Type type) {
@@ -769,6 +1699,38 @@ public class CryptoCallScanner {
 		return false;
 	}
 
+	private void _recordConfigurationAttributes(ClassNode classNode) {
+		String pid = _getAnnotationValue(
+			_getAnnotationNodes(
+				classNode.invisibleAnnotations, classNode.visibleAnnotations),
+			_DESC_META_OCD, "id");
+
+		if (pid == null) {
+			return;
+		}
+
+		if (pid.isEmpty()) {
+			pid = _getKeyName(classNode.name);
+		}
+
+		for (MethodNode methodNode : classNode.methods) {
+			String attribute = _getAnnotationValue(
+				_getAnnotationNodes(
+					methodNode.invisibleAnnotations,
+					methodNode.visibleAnnotations),
+				_DESC_META_AD, "id");
+
+			if (Validator.isNull(attribute)) {
+				attribute = methodNode.name;
+			}
+
+			_configurationSettingKeys.put(
+				_getKeyName(classNode.name) + StringPool.PERIOD +
+					methodNode.name,
+				CryptoSettingUtil.toSettingKey(pid + ".config", attribute));
+		}
+	}
+
 	private Origin _resolve(Origin origin, Set<String> visitedReferences) {
 		Origin resolvedOrigin = new Origin();
 
@@ -777,11 +1739,13 @@ public class CryptoCallScanner {
 		resolvedOrigin.clearReferences();
 
 		for (String reference : origin.getReferences()) {
-			Origin referenceOrigin = _referenceOrigins.get(reference);
+			if (!visitedReferences.add(reference)) {
+				continue;
+			}
 
-			if ((referenceOrigin == null) || !_isResolvable(reference) ||
-				!visitedReferences.add(reference)) {
+			Origin referenceOrigin = _getReferenceOrigin(reference);
 
+			if (referenceOrigin == null) {
 				resolvedOrigin.addUnresolvedReason(
 					_getUnresolvedReason(reference));
 			}
@@ -789,6 +1753,36 @@ public class CryptoCallScanner {
 				resolvedOrigin.addAll(
 					_resolve(referenceOrigin, visitedReferences));
 			}
+		}
+
+		for (String reference : origin.getDerivedReferences()) {
+			if (!visitedReferences.add(reference)) {
+				continue;
+			}
+
+			Origin referenceOrigin = _getReferenceOrigin(reference);
+
+			if (referenceOrigin == null) {
+				resolvedOrigin.addUnresolvedReason(_REASON_COMPUTED);
+
+				continue;
+			}
+
+			Origin derivedOrigin = _resolve(referenceOrigin, visitedReferences);
+
+			if (derivedOrigin.getPropertyKeys(
+				).isEmpty()) {
+
+				resolvedOrigin.addUnresolvedReason(_REASON_COMPUTED);
+
+				continue;
+			}
+
+			for (String propertyKey : derivedOrigin.getPropertyKeys()) {
+				resolvedOrigin.addPropertyKey(propertyKey);
+			}
+
+			resolvedOrigin.setComputed(true);
 		}
 
 		return resolvedOrigin;
@@ -862,23 +1856,31 @@ public class CryptoCallScanner {
 		}
 	}
 
-	private void _scan(JarInputStream jarInputStream, String name)
-		throws IOException {
+	private void _scan(
+		String bundleSymbolicName, String featureName, byte[] bytes) {
 
-		Manifest manifest = jarInputStream.getManifest();
+		ClassReader classReader = new ClassReader(bytes);
 
-		String bundleSymbolicName = _getBundleSymbolicName(name, manifest);
-		String featureName = _getFeatureName(name, manifest);
+		List<String> superTypeNames = new ArrayList<>();
 
-		JarEntry jarEntry = null;
-
-		while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
-			if (!_isClassFileName(jarEntry.getName())) {
-				continue;
-			}
-
-			scan(bundleSymbolicName, featureName, jarInputStream);
+		if (classReader.getSuperName() != null) {
+			superTypeNames.add(classReader.getSuperName());
 		}
+
+		Collections.addAll(superTypeNames, classReader.getInterfaces());
+
+		_superTypeNames.put(classReader.getClassName(), superTypeNames);
+
+		if (!_hasCryptoReference(bytes)) {
+			return;
+		}
+
+		ClassNode classNode = new ClassNode();
+
+		classReader.accept(
+			classNode, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+
+		_scan(classNode, bundleSymbolicName, featureName);
 	}
 
 	private void _scanAssignments(
@@ -894,15 +1896,10 @@ public class CryptoCallScanner {
 			_privateMethodKeys.add(methodKey);
 		}
 
-		boolean returnValueTracked = false;
+		Type returnType = Type.getReturnType(methodNode.desc);
 
-		if (((methodNode.access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC)) !=
-				0) &&
-			(Type.getArgumentCount(methodNode.desc) == 0) &&
-			_isTracked(Type.getReturnType(methodNode.desc))) {
-
-			returnValueTracked = true;
-		}
+		boolean returnKeyTracked = _isKey(returnType);
+		boolean returnValueTracked = _isTracked(returnType);
 
 		InsnList insnList = methodNode.instructions;
 
@@ -916,14 +1913,37 @@ public class CryptoCallScanner {
 			if ((opcode == Opcodes.PUTFIELD) || (opcode == Opcodes.PUTSTATIC)) {
 				FieldInsnNode fieldInsnNode = (FieldInsnNode)abstractInsnNode;
 
-				if (Objects.equals(fieldInsnNode.owner, classNode.name) &&
-					_isTracked(Type.getType(fieldInsnNode.desc))) {
+				if (!Objects.equals(fieldInsnNode.owner, classNode.name)) {
+					continue;
+				}
 
+				Type type = Type.getType(fieldInsnNode.desc);
+
+				if (_isTracked(type)) {
 					_track(
 						_getFieldKey(fieldInsnNode),
 						_getArgumentOrigin(
 							frames, insnList, abstractInsnNode, 0, 1));
 				}
+				else if (_isKey(type)) {
+					_track(
+						_getFieldKey(fieldInsnNode) + _SUFFIX_KEY_ALGORITHM,
+						_getKeyAlgorithmOrigin(
+							frames, insnList,
+							_getArgument(
+								frames[insnList.indexOf(abstractInsnNode)], 0,
+								1),
+							new HashSet<>()));
+				}
+			}
+			else if ((opcode == Opcodes.ARETURN) && returnKeyTracked) {
+				_track(
+					methodKey + _SUFFIX_KEY_ALGORITHM,
+					_getKeyAlgorithmOrigin(
+						frames, insnList,
+						_getArgument(
+							frames[insnList.indexOf(abstractInsnNode)], 0, 1),
+						new HashSet<>()));
 			}
 			else if (((opcode == Opcodes.ARETURN) ||
 					  (opcode == Opcodes.IRETURN)) &&
@@ -944,86 +1964,205 @@ public class CryptoCallScanner {
 					continue;
 				}
 
-				Type[] argumentTypes = Type.getArgumentTypes(
-					methodInsnNode.desc);
+				_trackArguments(
+					frames, insnList, abstractInsnNode,
+					_getMethodKey(
+						methodInsnNode.owner, methodInsnNode.name,
+						methodInsnNode.desc),
+					Type.getArgumentTypes(methodInsnNode.desc), 0);
+			}
+			else if (abstractInsnNode instanceof InvokeDynamicInsnNode) {
+				InvokeDynamicInsnNode invokeDynamicInsnNode =
+					(InvokeDynamicInsnNode)abstractInsnNode;
 
-				for (int i = 0; i < argumentTypes.length; i++) {
-					if (!_isTracked(argumentTypes[i])) {
-						continue;
-					}
+				if ((invokeDynamicInsnNode.bsmArgs.length < 2) ||
+					!(invokeDynamicInsnNode.bsmArgs[1] instanceof Handle)) {
 
-					_track(
-						StringBundler.concat(
-							_getMethodKey(
-								methodInsnNode.owner, methodInsnNode.name,
-								methodInsnNode.desc),
-							StringPool.POUND, i),
-						_getArgumentOrigin(
-							frames, insnList, methodInsnNode, i,
-							argumentTypes.length));
+					continue;
 				}
+
+				Handle handle = (Handle)invokeDynamicInsnNode.bsmArgs[1];
+
+				if (!Objects.equals(handle.getOwner(), classNode.name)) {
+					continue;
+				}
+
+				int offset = 1;
+
+				if (handle.getTag() == Opcodes.H_INVOKESTATIC) {
+					offset = 0;
+				}
+
+				_trackArguments(
+					frames, insnList, abstractInsnNode,
+					_getMethodKey(
+						handle.getOwner(), handle.getName(), handle.getDesc()),
+					Type.getArgumentTypes(invokeDynamicInsnNode.desc), offset);
 			}
 		}
 	}
 
-	private CryptoCall _toCryptoCall(ScannedCryptoCall scannedCryptoCall) {
+	private void _scanSpringXML(byte[] bytes) {
+		Document document = null;
+
+		try {
+			DocumentBuilderFactory documentBuilderFactory =
+				SecureXMLFactoryProviderUtil.newDocumentBuilderFactory();
+
+			DocumentBuilder documentBuilder =
+				documentBuilderFactory.newDocumentBuilder();
+
+			document = documentBuilder.parse(new ByteArrayInputStream(bytes));
+		}
+		catch (IOException | ParserConfigurationException | SAXException
+					exception) {
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
+			return;
+		}
+
+		NodeList nodeList = document.getElementsByTagName("bean");
+
+		for (int i = 0; i < nodeList.getLength(); i++) {
+			Element element = (Element)nodeList.item(i);
+
+			String className = element.getAttribute("class");
+
+			if (Validator.isNull(className)) {
+				continue;
+			}
+
+			NodeList childNodeList = element.getChildNodes();
+
+			int index = 0;
+
+			for (int j = 0; j < childNodeList.getLength(); j++) {
+				Node childNode = childNodeList.item(j);
+
+				if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+					continue;
+				}
+
+				Element childElement = (Element)childNode;
+
+				String key = null;
+
+				if (Objects.equals(
+						childElement.getTagName(), "constructor-arg")) {
+
+					String indexString = childElement.getAttribute("index");
+
+					if (Validator.isNull(indexString)) {
+						indexString = String.valueOf(index);
+					}
+
+					index++;
+
+					key = StringBundler.concat(
+						className, ".<init>#", indexString);
+				}
+				else if (Objects.equals(
+							childElement.getTagName(), "property")) {
+
+					key = StringBundler.concat(
+						className, ".set",
+						StringUtil.upperCaseFirstLetter(
+							childElement.getAttribute("name")),
+						"#0");
+				}
+
+				String value = childElement.getAttribute("value");
+
+				if ((key == null) || Validator.isNull(value)) {
+					continue;
+				}
+
+				Origin origin = _springOrigins.computeIfAbsent(
+					key, curKey -> new Origin());
+
+				origin.addValue(value);
+			}
+		}
+	}
+
+	private List<CryptoCall> _toCryptoCalls(
+		ScannedCryptoCall scannedCryptoCall) {
+
 		CryptoCall cryptoCall = scannedCryptoCall.getCryptoCall();
 
 		Origin algorithmOrigin = _resolve(
 			scannedCryptoCall.getAlgorithmOrigin(), new HashSet<>());
-
-		Set<String> unresolvedReasons = algorithmOrigin.getUnresolvedReasons();
-
-		if (!unresolvedReasons.isEmpty()) {
-			cryptoCall.setUnresolvedReason(
-				StringUtil.merge(unresolvedReasons, ", "));
-
-			return cryptoCall;
-		}
-
 		Origin keySizeOrigin = _resolve(
 			scannedCryptoCall.getKeySizeOrigin(), new HashSet<>());
 
-		Set<String> propertyKeys = algorithmOrigin.getPropertyKeys();
-		SortedSet<String> values = algorithmOrigin.getValues();
+		List<CryptoCall> cryptoCalls = new ArrayList<>();
 
-		if (values.isEmpty() && !propertyKeys.isEmpty()) {
-			List<String> configuredBy = new ArrayList<>(propertyKeys);
+		SortedSet<String> keySizes = keySizeOrigin.getValues();
 
-			configuredBy.addAll(keySizeOrigin.getPropertyKeys());
+		for (String value : algorithmOrigin.getValues()) {
+			CryptoCall valueCryptoCall = cryptoCall.copy();
 
-			cryptoCall.setConfiguredBy(configuredBy);
-
-			return cryptoCall;
-		}
-
-		if ((values.size() == 1) && propertyKeys.isEmpty()) {
-			cryptoCall.setAlgorithm(
+			valueCryptoCall.setAlgorithm(
 				CryptoProviderUtil.getAlgorithmName(
-					values.first(), cryptoCall.getJCAClassName()));
-
-			SortedSet<String> keySizes = keySizeOrigin.getValues();
+					value, cryptoCall.getJCAClassName()));
 
 			if (keySizeOrigin.isConstant() && (keySizes.size() == 1)) {
-				cryptoCall.setKeySize(GetterUtil.getInteger(keySizes.first()));
+				valueCryptoCall.setKeySize(
+					GetterUtil.getInteger(keySizes.first()));
 			}
 
-			return cryptoCall;
+			cryptoCalls.add(valueCryptoCall);
 		}
 
-		Set<String> candidates = new TreeSet<>(values);
+		Set<String> propertyKeys = algorithmOrigin.getPropertyKeys();
 
-		candidates.addAll(propertyKeys);
+		if (!propertyKeys.isEmpty()) {
+			CryptoCall configurableCryptoCall = cryptoCall.copy();
 
-		if (candidates.isEmpty()) {
-			cryptoCall.setUnresolvedReason("a value the code never sets");
+			List<String> configuredBy = new ArrayList<>(propertyKeys);
+
+			configuredBy.sort(
+				Comparator.comparing(
+					propertyKey -> propertyKey.indexOf(CharPool.AT) != -1));
+
+			for (String propertyKey : keySizeOrigin.getPropertyKeys()) {
+				if (configuredBy.contains(propertyKey)) {
+					continue;
+				}
+
+				configuredBy.add(propertyKey);
+			}
+
+			configurableCryptoCall.setConfiguredBy(configuredBy);
+
+			cryptoCalls.add(configurableCryptoCall);
 		}
-		else {
-			cryptoCall.setUnresolvedReason(
-				"one of several values: " + StringUtil.merge(candidates, ", "));
+
+		Set<String> unresolvedReasons = new TreeSet<>(
+			algorithmOrigin.getUnresolvedReasons());
+
+		if (unresolvedReasons.isEmpty() && cryptoCalls.isEmpty()) {
+			if (algorithmOrigin.isComputed()) {
+				unresolvedReasons.add("a value the code computes");
+			}
+			else {
+				unresolvedReasons.add("a value the code never sets");
+			}
 		}
 
-		return cryptoCall;
+		if (!unresolvedReasons.isEmpty()) {
+			CryptoCall unresolvedCryptoCall = cryptoCall.copy();
+
+			unresolvedCryptoCall.setUnresolvedReason(
+				StringUtil.merge(unresolvedReasons, ", "));
+
+			cryptoCalls.add(unresolvedCryptoCall);
+		}
+
+		return cryptoCalls;
 	}
 
 	private void _track(String reference, Origin origin) {
@@ -1037,11 +2176,110 @@ public class CryptoCallScanner {
 		}
 	}
 
+	private void _trackArguments(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		AbstractInsnNode abstractInsnNode, String methodKey,
+		Type[] argumentTypes, int offset) {
+
+		for (int i = offset; i < argumentTypes.length; i++) {
+			String reference = methodKey + StringPool.POUND + (i - offset);
+
+			if (_isTracked(argumentTypes[i])) {
+				_track(
+					reference,
+					_getArgumentOrigin(
+						frames, insnList, abstractInsnNode, i,
+						argumentTypes.length));
+			}
+			else if (_isKey(argumentTypes[i])) {
+				_track(
+					reference + _SUFFIX_KEY_ALGORITHM,
+					_getKeyAlgorithmOrigin(
+						frames, insnList,
+						_getArgument(
+							frames[insnList.indexOf(abstractInsnNode)], i,
+							argumentTypes.length),
+						new HashSet<>()));
+			}
+		}
+	}
+
+	private void _visit(
+			File file, Predicate<String> predicate, EntryVisitor entryVisitor)
+		throws IOException {
+
+		String fileName = file.getName();
+
+		if (fileName.endsWith(".lpkg")) {
+			try (ZipFile zipFile = new ZipFile(file)) {
+				for (ZipEntry zipEntry : Collections.list(zipFile.entries())) {
+					String name = zipEntry.getName();
+
+					if (!name.endsWith(".jar")) {
+						continue;
+					}
+
+					try (JarInputStream jarInputStream = new JarInputStream(
+							zipFile.getInputStream(zipEntry))) {
+
+						_visit(jarInputStream, name, predicate, entryVisitor);
+					}
+				}
+			}
+
+			return;
+		}
+
+		try (JarInputStream jarInputStream = new JarInputStream(
+				new FileInputStream(file))) {
+
+			_visit(jarInputStream, fileName, predicate, entryVisitor);
+		}
+	}
+
+	private void _visit(
+			JarInputStream jarInputStream, String name,
+			Predicate<String> predicate, EntryVisitor entryVisitor)
+		throws IOException {
+
+		Manifest manifest = jarInputStream.getManifest();
+
+		String bundleSymbolicName = _getBundleSymbolicName(name, manifest);
+		String featureName = _getFeatureName(name, manifest);
+
+		JarEntry jarEntry = null;
+
+		while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
+			if (!predicate.test(jarEntry.getName())) {
+				continue;
+			}
+
+			entryVisitor.visit(
+				bundleSymbolicName, featureName, jarEntry.getName(),
+				jarInputStream.readAllBytes());
+		}
+	}
+
 	private static final String _CLASS_NAME_DIGESTER_UTIL =
 		"com/liferay/portal/kernel/util/DigesterUtil";
 
 	private static final String _CLASS_NAME_SECRET_KEY_SPEC =
 		"javax/crypto/spec/SecretKeySpec";
+
+	private static final String _DESC_META_AD =
+		"LaQute/bnd/annotation/metatype/Meta$AD;";
+
+	private static final String _DESC_META_OCD =
+		"LaQute/bnd/annotation/metatype/Meta$OCD;";
+
+	private static final int _FOLLOW_PASS_COUNT = 10;
+
+	private static final String _REASON_COMPUTED = "a value the code computes";
+
+	private static final String _SUFFIX_KEY_ALGORITHM = "@algorithm";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		CryptoCallScanner.class);
 
 	private static final Map<String, CryptoFunction> _cipherCryptoFunctions =
 		HashMapBuilder.put(
@@ -1117,6 +2355,12 @@ public class CryptoCallScanner {
 			"javax/net/ssl/TrustManagerFactory.getDefaultAlgorithm",
 			"ssl.TrustManagerFactory.algorithm"
 		).build();
+	private static final Pattern _jspLiteralPattern = Pattern.compile(
+		"^\"([^\"\\\\]*)\"$");
+	private static final Set<String> _keyClassNames = SetUtil.fromArray(
+		"java/security/Key", "java/security/PrivateKey",
+		"java/security/PublicKey", "javax/crypto/SecretKey",
+		_CLASS_NAME_SECRET_KEY_SPEC);
 	private static final Map<String, RelatedCryptoMaterialType>
 		_keyFactoryRelatedCryptoMaterialTypes = HashMapBuilder.put(
 			"generatePrivate", RelatedCryptoMaterialType.PRIVATE_KEY
@@ -1161,19 +2405,33 @@ public class CryptoCallScanner {
 			"java/lang/String.trim", StringUtil::trim
 		).build();
 
+	private final Map<String, String> _configurationSettingKeys =
+		new HashMap<>();
+	private final List<File> _files = new ArrayList<>();
 	private final boolean _fipsEnabled;
+	private final Set<String> _followedReferences = new HashSet<>();
 	private final Set<String> _privateMethodKeys = new HashSet<>();
 	private final Map<String, Origin> _referenceOrigins = new HashMap<>();
+	private final List<byte[]> _scannedClassBytes = new ArrayList<>();
 	private final List<ScannedCryptoCall> _scannedCryptoCalls =
 		new ArrayList<>();
+	private final Map<String, Origin> _springOrigins = new HashMap<>();
+	private final Map<String, List<String>> _subtypeNames = new HashMap<>();
+	private final Map<String, List<String>> _superTypeNames = new HashMap<>();
 
 	private static class Origin {
 
 		public void addAll(Origin origin) {
+			_computed = _computed || origin._computed;
+			_derivedReferences.addAll(origin._derivedReferences);
 			_propertyKeys.addAll(origin._propertyKeys);
 			_references.addAll(origin._references);
 			_unresolvedReasons.addAll(origin._unresolvedReasons);
 			_values.addAll(origin._values);
+		}
+
+		public void addDerivedReference(String reference) {
+			_derivedReferences.add(reference);
 		}
 
 		public void addPropertyKey(String propertyKey) {
@@ -1193,7 +2451,16 @@ public class CryptoCallScanner {
 		}
 
 		public void clearReferences() {
+			_derivedReferences.clear();
 			_references.clear();
+		}
+
+		public void clearValues() {
+			_values.clear();
+		}
+
+		public Set<String> getDerivedReferences() {
+			return _derivedReferences;
 		}
 
 		public Set<String> getPropertyKeys() {
@@ -1212,14 +2479,23 @@ public class CryptoCallScanner {
 			return _values;
 		}
 
+		public boolean isComputed() {
+			return _computed;
+		}
+
 		public boolean isConstant() {
-			if (_propertyKeys.isEmpty() && _references.isEmpty() &&
+			if (!_computed && _derivedReferences.isEmpty() &&
+				_propertyKeys.isEmpty() && _references.isEmpty() &&
 				_unresolvedReasons.isEmpty()) {
 
 				return true;
 			}
 
 			return false;
+		}
+
+		public void setComputed(boolean computed) {
+			_computed = computed;
 		}
 
 		public void transformValues(Function<String, String> function) {
@@ -1234,6 +2510,8 @@ public class CryptoCallScanner {
 			_values.addAll(values);
 		}
 
+		private boolean _computed;
+		private final Set<String> _derivedReferences = new TreeSet<>();
 		private final Set<String> _propertyKeys = new TreeSet<>();
 		private final Set<String> _references = new TreeSet<>();
 		private final Set<String> _unresolvedReasons = new TreeSet<>();
@@ -1347,6 +2625,15 @@ public class CryptoCallScanner {
 		private final Origin _algorithmOrigin;
 		private final CryptoCall _cryptoCall;
 		private final Origin _keySizeOrigin;
+
+	}
+
+	private interface EntryVisitor {
+
+		public void visit(
+				String bundleSymbolicName, String featureName, String name,
+				byte[] bytes)
+			throws IOException;
 
 	}
 

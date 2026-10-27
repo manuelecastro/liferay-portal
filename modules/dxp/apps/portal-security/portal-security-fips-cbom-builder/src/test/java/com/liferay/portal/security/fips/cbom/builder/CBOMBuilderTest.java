@@ -10,9 +10,11 @@ import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
+import com.liferay.portal.security.xml.SecureXMLFactoryProviderImpl;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.File;
@@ -58,6 +60,12 @@ public class CBOMBuilderTest {
 		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
 
 		jsonFactoryUtil.setJSONFactory(new JSONFactoryImpl());
+
+		SecureXMLFactoryProviderUtil secureXMLFactoryProviderUtil =
+			new SecureXMLFactoryProviderUtil();
+
+		secureXMLFactoryProviderUtil.setSecureXMLFactoryProvider(
+			new SecureXMLFactoryProviderImpl());
 	}
 
 	@Test
@@ -110,7 +118,7 @@ public class CBOMBuilderTest {
 		JSONArray componentsJSONArray = jsonObject.getJSONArray("components");
 
 		List<String> bomRefs = new ArrayList<>();
-		Map<String, String> descriptions = new HashMap<>();
+		Map<String, String> evidences = new HashMap<>();
 		Set<String> moduleBOMRefs = new TreeSet<>();
 
 		for (int i = 0; i < componentsJSONArray.length(); i++) {
@@ -119,8 +127,7 @@ public class CBOMBuilderTest {
 			String bomRef = componentJSONObject.getString("bom-ref");
 
 			bomRefs.add(bomRef);
-			descriptions.put(
-				bomRef, componentJSONObject.getString("description"));
+			evidences.put(bomRef, componentJSONObject.getString("evidence"));
 
 			if (!bomRef.startsWith("module:")) {
 				continue;
@@ -142,15 +149,11 @@ public class CBOMBuilderTest {
 		Assert.assertTrue(bomRefs.contains("setting:auth.mac.algorithm"));
 		Assert.assertFalse(moduleBOMRefs.isEmpty());
 
-		String description = descriptions.get(
-			"crypto:MessageDigest:com.liferay.portal.cache.key." +
-				"MessageDigestCacheKeyGenerator");
+		String evidence = evidences.get("crypto:MessageDigest:SHA-1");
 
 		Assert.assertTrue(
-			description.contains(
-				"parameter 1 of the constructor of " +
-					"com.liferay.portal.cache.key." +
-						"MessageDigestCacheKeyGenerator"));
+			evidence.contains(
+				"com.liferay.portal.cache.key.MessageDigestCacheKeyGenerator"));
 
 		JSONArray dependenciesJSONArray = jsonObject.getJSONArray(
 			"dependencies");

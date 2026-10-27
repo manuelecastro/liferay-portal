@@ -231,7 +231,7 @@ public class CryptoAssetComponentUtil {
 		if (cryptoCall.isConfigurable()) {
 			List<String> configuredBy = cryptoCall.getConfiguredBy();
 
-			return configuredBy.get(0);
+			return CryptoSettingUtil.getName(configuredBy.get(0));
 		}
 
 		if (cryptoCall.getAlgorithm() == null) {
