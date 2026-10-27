@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -32,7 +33,6 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
@@ -119,24 +119,10 @@ public class CryptoCallScanner {
 			return;
 		}
 
-		try (JarFile jarFile = new JarFile(file)) {
-			Manifest manifest = jarFile.getManifest();
+		try (JarInputStream jarInputStream = new JarInputStream(
+				new FileInputStream(file))) {
 
-			String bundleSymbolicName = _getBundleSymbolicName(
-				fileName, manifest);
-			String featureName = _getFeatureName(fileName, manifest);
-
-			for (JarEntry jarEntry : Collections.list(jarFile.entries())) {
-				if (!_isClassFileName(jarEntry.getName())) {
-					continue;
-				}
-
-				try (InputStream inputStream = jarFile.getInputStream(
-						jarEntry)) {
-
-					scan(bundleSymbolicName, featureName, inputStream);
-				}
-			}
+			_scan(jarInputStream, fileName);
 		}
 	}
 
