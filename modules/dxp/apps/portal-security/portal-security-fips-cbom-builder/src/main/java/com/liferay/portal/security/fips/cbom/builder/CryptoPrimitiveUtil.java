@@ -17,11 +17,6 @@ import java.util.Set;
 import org.cyclonedx.model.component.crypto.enums.Primitive;
 
 /**
- * Gives the CycloneDX primitive of a crypto use, from the JCA class it calls
- * and the algorithm's name. A use whose algorithm a setting chooses only has a
- * primitive when the JCA class fixes it, such as hash for
- * <code>MessageDigest</code>.
- *
  * @author Manuele Castro
  */
 public class CryptoPrimitiveUtil {

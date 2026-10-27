@@ -65,18 +65,6 @@ import org.objectweb.asm.tree.analysis.SourceInterpreter;
 import org.objectweb.asm.tree.analysis.SourceValue;
 
 /**
- * Finds the crypto calls in the bytecode of Liferay's classes: the
- * <code>getInstance</code> methods of the JCA and JSSE factories,
- * <code>new SecretKeySpec</code>, and <code>DigesterUtil</code>. For each call
- * it reads the algorithm when the bytecode fixes it, as a constant the code
- * passes, one side of a <code>PropsValues.FIPS_ENABLED</code> test, or what a
- * field, a private method's parameter or a private or static method without
- * parameters holds, such as <code>DigesterUtil</code>'s default. It also reads
- * the properties that choose the algorithm when the code reads one, and
- * whether the code builds public or private keys with a
- * <code>KeyFactory</code>. Calls inside <code>DigesterUtil</code> count for the
- * classes that call it, and a nested class counts toward its outer class.
- *
  * @author Manuele Castro
  */
 public class CryptoCallScanner {

@@ -20,16 +20,6 @@ import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.component.data.ComponentData;
 
 /**
- * Gives the components that a CBOM's crypto assets relate to, and the
- * dependency graph between them, the way CycloneDX's guide to CBOM models
- * them. Each module whose classes use crypto is a library, named by its
- * <code>Bundle-Name</code>, that depends on the assets its classes use. Each
- * JCA provider that answers an asset is a library that provides it. Each
- * setting that chooses an algorithm is a configuration data component that
- * says which file the setting lives in, but never its value, because an
- * installation can change it. The assets the setting chooses depend on it.
- * Every component is in the graph, with no dependencies when it has none.
- *
  * @author Manuele Castro
  */
 public class CryptoDependencyUtil {

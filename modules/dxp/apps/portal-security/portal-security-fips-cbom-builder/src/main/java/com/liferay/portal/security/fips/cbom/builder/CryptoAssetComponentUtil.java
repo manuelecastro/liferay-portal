@@ -38,18 +38,6 @@ import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 import org.cyclonedx.model.component.evidence.Occurrence;
 
 /**
- * Turns the crypto calls into CycloneDX 1.6 <code>cryptographic-asset</code>
- * components, typed the way CycloneDX's guide to CBOM types them: an
- * algorithm, related crypto material for keys and key stores, or a protocol
- * for an SSL context. Uses of the same JCA class and algorithm share one
- * component, which lists every class that uses it and takes the name
- * CycloneDX's cryptography definitions give the algorithm. Uses whose
- * algorithm a setting chooses share one component per JCA class and setting,
- * which is named after the setting. A call whose algorithm the scan cannot
- * read gets a component of its own, named after its JCA class, whose
- * description says where the algorithm comes from. A key points at the
- * algorithm its class uses it with, when there is exactly one.
- *
  * @author Manuele Castro
  */
 public class CryptoAssetComponentUtil {

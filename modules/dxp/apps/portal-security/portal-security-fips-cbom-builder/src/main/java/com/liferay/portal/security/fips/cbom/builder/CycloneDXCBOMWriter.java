@@ -36,17 +36,6 @@ import org.cyclonedx.model.Metadata;
 import org.cyclonedx.model.Property;
 
 /**
- * Writes the CycloneDX 1.6 document around the components and their
- * dependency graph. The output is reproducible: <code>version</code> is always
- * <code>1</code>, there is no timestamp, and the serial number is derived from
- * the product version and the configuration, so two builds of the same source
- * give the same file. The file declares the lifecycle phase
- * <code>post-build</code>, because it is built from the bundle's JARs rather
- * than observed in a running installation. The CycloneDX library stamps the
- * current time into new metadata, so the writer removes it. The library also
- * writes only the <code>dependsOn</code> half of the graph, so the writer adds
- * <code>provides</code> to the JSON the library generates.
- *
  * @author Manuele Castro
  */
 public class CycloneDXCBOMWriter {

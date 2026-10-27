@@ -14,12 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Gives an algorithm the name that CycloneDX's cryptography definitions give
- * its variant, such as <code>RSA-PKCS1-1.5-SHA-256</code> for the JCA's
- * <code>SHA256withRSA</code> and <code>HMAC-SHA-512</code> for
- * <code>HmacSHA512</code>. A name the definitions have no pattern for stays as
- * the JCA names it.
- *
  * @author Manuele Castro
  */
 public class CryptoAlgorithmNameUtil {

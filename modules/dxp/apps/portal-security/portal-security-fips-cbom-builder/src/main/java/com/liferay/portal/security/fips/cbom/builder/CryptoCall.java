@@ -15,10 +15,6 @@ import org.cyclonedx.model.component.crypto.enums.Primitive;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 /**
- * Describes one crypto call that the scan finds in a class's bytecode: the JCA
- * class it calls, the module the class ships in, and the algorithm or the
- * settings that choose it, when the bytecode shows them.
- *
  * @author Manuele Castro
  */
 public class CryptoCall {

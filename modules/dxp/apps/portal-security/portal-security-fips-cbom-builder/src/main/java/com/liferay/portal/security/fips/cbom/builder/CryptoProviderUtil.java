@@ -34,11 +34,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
 /**
- * Asks the JVM which JCA provider answers an algorithm, the same way the
- * portal's own calls to <code>getInstance</code> do, and under which name the
- * provider knows the algorithm. A provider resolves an alias to its standard
- * name: <code>Signature</code> <code>DSA</code> is <code>SHA1withDSA</code>.
- *
  * @author Manuele Castro
  */
 public class CryptoProviderUtil {

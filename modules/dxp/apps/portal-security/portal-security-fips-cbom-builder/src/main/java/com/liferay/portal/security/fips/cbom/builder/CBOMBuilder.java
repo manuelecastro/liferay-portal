@@ -27,15 +27,6 @@ import java.util.TreeSet;
 import org.cyclonedx.model.Component;
 
 /**
- * Builds the CBOM of one reference configuration from the bytecode of the JARs
- * the bundle ships. The CBOM holds the crypto assets, the modules that use
- * them, the providers that answer them and the settings that choose them, and
- * the dependency graph between them. A call whose algorithm the scan cannot
- * read is in the CBOM too, with where its algorithm comes from, and the build
- * lists it. The build runs it in a JVM that is set up as that configuration,
- * so the providers it reports are the ones that the configuration's JVM
- * resolves.
- *
  * @author Manuele Castro
  */
 public class CBOMBuilder {
