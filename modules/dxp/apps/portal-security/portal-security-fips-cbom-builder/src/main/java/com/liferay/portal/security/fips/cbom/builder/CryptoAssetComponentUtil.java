@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -98,15 +99,6 @@ public class CryptoAssetComponentUtil {
 			cryptoCallsMap.entrySet(),
 			entry -> _toComponent(
 				entry.getKey(), entry.getValue(), cryptoCalls));
-	}
-
-	private static void _addProperty(
-		String name, Map<String, Set<String>> propertiesMap, String value) {
-
-		Set<String> values = propertiesMap.computeIfAbsent(
-			"liferay:cbom:" + name, key -> new TreeSet<>());
-
-		values.add(value);
 	}
 
 	private static AlgorithmProperties _getAlgorithmProperties(
@@ -261,25 +253,6 @@ public class CryptoAssetComponentUtil {
 		return CryptoAlgorithmNameUtil.getName(
 			cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName(),
 			cryptoCall.getKeySize());
-	}
-
-	private static List<Property> _getProperties(List<CryptoCall> cryptoCalls) {
-		List<Property> properties = new ArrayList<>();
-
-		Map<String, Set<String>> propertiesMap = new TreeMap<>();
-
-		for (CryptoCall cryptoCall : cryptoCalls) {
-			_addProperty(
-				"jca-class", propertiesMap, cryptoCall.getJCAClassName());
-		}
-
-		for (Map.Entry<String, Set<String>> entry : propertiesMap.entrySet()) {
-			for (String value : entry.getValue()) {
-				properties.add(new Property(entry.getKey(), value));
-			}
-		}
-
-		return properties;
 	}
 
 	private static ProtocolProperties _getProtocolProperties(
@@ -500,7 +473,10 @@ public class CryptoAssetComponentUtil {
 		component.setDescription(_getDescription(bomRefCryptoCalls));
 		component.setEvidence(_getEvidence(bomRefCryptoCalls));
 		component.setName(_getName(cryptoCall));
-		component.setProperties(_getProperties(bomRefCryptoCalls));
+		component.setProperties(
+			Collections.singletonList(
+				new Property(
+					"liferay:cbom:jca-class", cryptoCall.getJCAClassName())));
 		component.setType(Component.Type.CRYPTOGRAPHIC_ASSET);
 
 		return component;
