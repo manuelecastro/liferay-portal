@@ -109,6 +109,9 @@ public class CBOMBuilder {
 		Map<String, String> properties = new TreeMap<>();
 
 		if (fipsEnabled) {
+			cryptoCalls = FIPSModeLimitUtil.limit(
+				cryptoCalls, cryptoCallScanner.getLimitedSettings());
+
 			Provider provider = FIPSModeValidator.fetchProvider();
 
 			properties.put(

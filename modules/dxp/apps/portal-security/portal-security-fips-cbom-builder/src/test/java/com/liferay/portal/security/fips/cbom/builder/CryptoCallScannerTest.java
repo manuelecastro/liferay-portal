@@ -17,6 +17,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -49,6 +50,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -94,6 +96,23 @@ public class CryptoCallScannerTest {
 
 		secureXMLFactoryProviderUtil.setSecureXMLFactoryProvider(
 			new SecureXMLFactoryProviderImpl());
+	}
+
+	@Test
+	public void testGetLimitedSettings() throws Exception {
+		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner(true);
+
+		cryptoCallScanner.scan(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			new ByteArrayInputStream(_read(LimitTestClass.class)));
+
+		Assert.assertEquals(
+			HashMapBuilder.<String, Set<String>>put(
+				"test.algorithm", Collections.singleton("algorithm")
+			).put(
+				"test.key.algorithm", Collections.singleton("key")
+			).build(),
+			cryptoCallScanner.getLimitedSettings());
 	}
 
 	@Test
@@ -456,6 +475,17 @@ public class CryptoCallScannerTest {
 
 		private Key _getKey() {
 			return new SecretKeySpec(new byte[16], "Blowfish");
+		}
+
+	}
+
+	public static class LimitTestClass {
+
+		public void validate() {
+			FIPSModeValidator.validateAlgorithm(
+				PropsUtil.get("test.algorithm"));
+			FIPSModeValidator.validateKey(
+				PropsUtil.get("test.key.algorithm"), 128);
 		}
 
 	}

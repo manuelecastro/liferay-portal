@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -114,6 +115,25 @@ public class CryptoCallScanner {
 		}
 
 		return cryptoCalls;
+	}
+
+	public Map<String, Set<String>> getLimitedSettings() throws IOException {
+		_follow();
+
+		Map<String, Set<String>> limitedSettings = new TreeMap<>();
+
+		for (LimitSink limitSink : _limitSinks) {
+			Origin origin = _resolve(limitSink.getOrigin(), new HashSet<>());
+
+			for (String propertyKey : origin.getPropertyKeys()) {
+				Set<String> kinds = limitedSettings.computeIfAbsent(
+					propertyKey, key -> new TreeSet<>());
+
+				kinds.add(limitSink.getKind());
+			}
+		}
+
+		return limitedSettings;
 	}
 
 	public void scan(File file) throws IOException {
@@ -338,6 +358,11 @@ public class CryptoCallScanner {
 				_collectReferences(
 					scannedCryptoCall.getKeySizeOrigin(), references,
 					new HashSet<>());
+			}
+
+			for (LimitSink limitSink : _limitSinks) {
+				_collectReferences(
+					limitSink.getOrigin(), references, new HashSet<>());
 			}
 
 			references.removeAll(_followedReferences);
@@ -1967,6 +1992,20 @@ public class CryptoCallScanner {
 						_addVerifiedJWSCryptoCalls(
 							bundleSymbolicName, className, featureName);
 					}
+					else if (_fipsEnabled &&
+							 Objects.equals(
+								 methodInsnNode.owner,
+								 _CLASS_NAME_FIPS_MODE_VALIDATOR) &&
+							 _limitKinds.containsKey(methodInsnNode.name)) {
+
+						_limitSinks.add(
+							new LimitSink(
+								_limitKinds.get(methodInsnNode.name),
+								_getArgumentOrigin(
+									frames, insnList, methodInsnNode, 0,
+									Type.getArgumentCount(
+										methodInsnNode.desc))));
+					}
 				}
 			}
 
@@ -2284,6 +2323,11 @@ public class CryptoCallScanner {
 
 			configurableCryptoCall.setConfiguredBy(configuredBy);
 
+			if (keySizeOrigin.isConstant() && (keySizes.size() == 1)) {
+				configurableCryptoCall.setKeySize(
+					GetterUtil.getInteger(keySizes.first()));
+			}
+
 			cryptoCalls.add(configurableCryptoCall);
 		}
 
@@ -2596,6 +2640,15 @@ public class CryptoCallScanner {
 				"Signature",
 				Arrays.asList(CryptoFunction.SIGN, CryptoFunction.VERIFY)
 			).build();
+	private static final Map<String, String> _limitKinds = HashMapBuilder.put(
+		"_validatePasswordsEncryptionAlgorithm", "pbkdf2"
+	).put(
+		"isNotAllowedAlgorithm", "algorithm"
+	).put(
+		"validateAlgorithm", "algorithm"
+	).put(
+		"validateKey", "key"
+	).build();
 	private static final List<String> _needles = Arrays.asList(
 		_CLASS_NAME_DEFAULT_SECURITY_CONFIGURATION_BOOTSTRAP,
 		_CLASS_NAME_DIGESTER_UTIL, _CLASS_NAME_FIPS_MODE_VALIDATOR,
@@ -2720,6 +2773,7 @@ public class CryptoCallScanner {
 	private final List<File> _files = new ArrayList<>();
 	private final boolean _fipsEnabled;
 	private final Set<String> _followedReferences = new HashSet<>();
+	private final List<LimitSink> _limitSinks = new ArrayList<>();
 	private final Set<String> _privateMethodKeys = new HashSet<>();
 	private final Map<String, Origin> _referenceOrigins = new HashMap<>();
 	private final List<byte[]> _scannedClassBytes = new ArrayList<>();
@@ -2760,6 +2814,26 @@ public class CryptoCallScanner {
 		private final String _curve;
 		private final String _jcaClassName;
 		private final int _keySize;
+
+	}
+
+	private static class LimitSink {
+
+		public LimitSink(String kind, Origin origin) {
+			_kind = kind;
+			_origin = origin;
+		}
+
+		public String getKind() {
+			return _kind;
+		}
+
+		public Origin getOrigin() {
+			return _origin;
+		}
+
+		private final String _kind;
+		private final Origin _origin;
 
 	}
 
