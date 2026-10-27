@@ -175,24 +175,6 @@ public class CryptoCallScanner {
 		return analyzer.analyze(classNode.name, methodNode);
 	}
 
-	private boolean _contains(byte[] bytes, byte[] needleBytes) {
-		for (int i = 0; i <= (bytes.length - needleBytes.length); i++) {
-			int j = 0;
-
-			while ((j < needleBytes.length) &&
-				   (bytes[i + j] == needleBytes[j])) {
-
-				j++;
-			}
-
-			if (j == needleBytes.length) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
 	private void _foldFIPSEnabled(InsnList insnList) {
 		for (AbstractInsnNode abstractInsnNode : insnList.toArray()) {
 			if (!_isFIPSEnabled(abstractInsnNode)) {
@@ -753,8 +735,11 @@ public class CryptoCallScanner {
 	}
 
 	private boolean _hasCryptoReference(byte[] bytes) {
-		for (byte[] needleBytes : _needles) {
-			if (_contains(bytes, needleBytes)) {
+		String classFileContent = new String(
+			bytes, StandardCharsets.ISO_8859_1);
+
+		for (String needle : _needles) {
+			if (classFileContent.contains(needle)) {
 				return true;
 			}
 		}
@@ -1176,12 +1161,9 @@ public class CryptoCallScanner {
 		).put(
 			"javax/crypto/KeyGenerator", "init"
 		).build();
-	private static final List<byte[]> _needles = Arrays.asList(
-		_CLASS_NAME_DIGESTER_UTIL.getBytes(StandardCharsets.UTF_8),
-		"/PropsUtil".getBytes(StandardCharsets.UTF_8),
-		"java/security/".getBytes(StandardCharsets.UTF_8),
-		"javax/crypto/".getBytes(StandardCharsets.UTF_8),
-		"javax/net/ssl/".getBytes(StandardCharsets.UTF_8));
+	private static final List<String> _needles = Arrays.asList(
+		_CLASS_NAME_DIGESTER_UTIL, "/PropsUtil", "java/security/",
+		"javax/crypto/", "javax/net/ssl/");
 	private static final Map<String, Function<String, String>>
 		_stringFunctions = HashMapBuilder.<String, Function<String, String>>put(
 			"com/liferay/petra/string/StringUtil.toLowerCase",
