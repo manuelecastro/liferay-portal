@@ -9336,6 +9336,12 @@ information. Make sure to commit in all format-javadoc results.
 		</trycatch>
 	</target>
 
+	<target name="modules-integration-cbom-postgresql163">
+		<ant antfile="build.xml" inheritAll="false" target="build-cbom" />
+
+		<run-modules-integration-test database.type="postgresql" database.version="16.3" />
+	</target>
+
 	<target name="modules-integration-db-partition-copy-mysql">
 		<run-modules-integration-test
 			database.partition.copy="true"
