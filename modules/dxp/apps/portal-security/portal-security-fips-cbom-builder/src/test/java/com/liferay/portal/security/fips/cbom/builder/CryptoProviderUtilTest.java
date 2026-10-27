@@ -116,13 +116,13 @@ public class CryptoProviderUtilTest {
 
 		try {
 			CryptoProviderUtil.getProviderName(
-				RandomTestUtil.randomString(), "SecureRandom");
+				RandomTestUtil.randomString(), "AlgorithmParameters");
 
 			Assert.fail();
 		}
 		catch (IllegalArgumentException illegalArgumentException) {
 			Assert.assertEquals(
-				"Unsupported JCA class SecureRandom",
+				"Unsupported JCA class AlgorithmParameters",
 				illegalArgumentException.getMessage());
 		}
 	}
@@ -133,7 +133,7 @@ public class CryptoProviderUtilTest {
 		Assert.assertTrue(
 			CryptoProviderUtil.isSupportedJCAClassName("MessageDigest"));
 		Assert.assertFalse(
-			CryptoProviderUtil.isSupportedJCAClassName("SecureRandom"));
+			CryptoProviderUtil.isSupportedJCAClassName("AlgorithmParameters"));
 		Assert.assertFalse(CryptoProviderUtil.isSupportedJCAClassName(null));
 	}
 

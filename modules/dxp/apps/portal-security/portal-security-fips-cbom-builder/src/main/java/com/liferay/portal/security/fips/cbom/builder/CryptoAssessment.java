@@ -164,6 +164,17 @@ public class CryptoAssessment {
 		return _getText(jsonNode, "value");
 	}
 
+	public String getRandomNumberGenerationNote() {
+		if (_moduleJsonNode == null) {
+			return StringPool.BLANK;
+		}
+
+		JsonNode rngJsonNode = _moduleJsonNode.get("rng");
+
+		return _getText(rngJsonNode, "entropy") + StringPool.SPACE +
+			_getText(rngJsonNode, "healthTests");
+	}
+
 	public List<String> getVendorAffirmedMethods() {
 		if (_moduleJsonNode == null) {
 			return Collections.emptyList();

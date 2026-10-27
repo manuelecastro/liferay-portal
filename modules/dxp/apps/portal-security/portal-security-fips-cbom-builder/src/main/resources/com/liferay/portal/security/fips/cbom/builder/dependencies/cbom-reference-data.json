@@ -94,6 +94,11 @@
 			},
 			"name": "BC-FJA (Bouncy Castle FIPS Java API)",
 			"providerName": "BCFIPS",
+			"rng": {
+				"entropy": "The module passively receives at least 128 bits of entropy from the source the JVM is configured with, per FIPS 140-3 IG 9.3.A scenario 1b.",
+				"healthTests": "The module checks the JVM's entropy source with the Repetition Count Test and the Adaptive Proportion Test of SP 800-90B Section 4.4, with C values 4 and 13 and H 8.0 unless org.bouncycastle.entropy.factors sets others.",
+				"source": "https://csrc.nist.gov/CSRC/media/projects/cryptographic-module-validation-program/documents/security-policies/140sp4943.pdf, BC-FJA (Bouncy Castle FIPS Java API) Non-Proprietary FIPS 140-3 Security Policy, 18 July 2025: Sections 6.1, 6.4 and 9.1, and Table 13"
+			},
 			"securityPolicy": {
 				"approved": [
 					"*:AES",

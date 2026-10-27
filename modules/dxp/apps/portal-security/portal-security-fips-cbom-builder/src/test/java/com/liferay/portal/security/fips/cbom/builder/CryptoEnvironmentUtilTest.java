@@ -55,7 +55,7 @@ public class CryptoEnvironmentUtilTest {
 	public void testGetCryptoCalls() throws Exception {
 		List<CryptoCall> cryptoCalls = Arrays.asList(
 			_createCryptoCall(
-				RandomTestUtil.randomString(), "com.liferay.test.TLSClass",
+				"com.liferay.portal.kernel", "com.liferay.test.TLSClass",
 				"SSLContext"),
 			_createCryptoCall(
 				RandomTestUtil.randomString(), "com.liferay.test.JGroupsClass",
@@ -67,12 +67,15 @@ public class CryptoEnvironmentUtilTest {
 					"control, cluster.link.channel.properties.transport.0]",
 				"SSLContext configured by [jdk.tls.client.protocols@system " +
 					"properties, https.protocols@system properties, " +
-						"jdk.tls.disabledAlgorithms@java.security]"),
+						"jdk.tls.disabledAlgorithms@java.security]",
+				"SecureRandom configured by [java.security.egd@system " +
+					"properties, securerandom.source@java.security]"),
 			_getDescriptions(
-				CryptoEnvironmentUtil.getCryptoCalls(cryptoCalls, false)));
+				CryptoEnvironmentUtil.getCryptoCalls(
+					CryptoAssessment.load(null, null), cryptoCalls, false)));
 
 		List<CryptoCall> fipsCryptoCalls = CryptoEnvironmentUtil.getCryptoCalls(
-			cryptoCalls, true);
+			CryptoAssessment.load(null, null), cryptoCalls, true);
 
 		List<String> descriptions = _getDescriptions(fipsCryptoCalls);
 

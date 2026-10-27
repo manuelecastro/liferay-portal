@@ -100,6 +100,8 @@ public class CryptoPrimitiveUtil {
 		).put(
 			"MessageDigest", Primitive.HASH
 		).put(
+			"SecureRandom", Primitive.DRBG
+		).put(
 			"Signature", Primitive.SIGNATURE
 		).put(
 			"SSLContext", Primitive.OTHER

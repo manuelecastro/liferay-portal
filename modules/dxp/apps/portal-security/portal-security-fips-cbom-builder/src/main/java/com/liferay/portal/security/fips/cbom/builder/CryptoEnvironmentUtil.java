@@ -11,6 +11,8 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.security.Security;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 
@@ -88,9 +92,11 @@ public class CryptoEnvironmentUtil {
 	}
 
 	public static List<CryptoCall> getCryptoCalls(
-		List<CryptoCall> cryptoCalls, boolean fipsEnabled) {
+		CryptoAssessment cryptoAssessment, List<CryptoCall> cryptoCalls,
+		boolean fipsEnabled) {
 
 		CryptoCall clusterCryptoCall = null;
+		CryptoCall kernelCryptoCall = null;
 		Map<String, CryptoCall> tlsCryptoCalls = new TreeMap<>();
 
 		for (CryptoCall cryptoCall : cryptoCalls) {
@@ -98,6 +104,14 @@ public class CryptoEnvironmentUtil {
 
 			if ((clusterCryptoCall == null) && className.contains("JGroups")) {
 				clusterCryptoCall = cryptoCall;
+			}
+
+			if ((kernelCryptoCall == null) &&
+				Objects.equals(
+					cryptoCall.getBundleSymbolicName(),
+					"com.liferay.portal.kernel")) {
+
+				kernelCryptoCall = cryptoCall;
 			}
 
 			if (!Objects.equals(cryptoCall.getJCAClassName(), "SSLContext")) {
@@ -146,6 +160,12 @@ public class CryptoEnvironmentUtil {
 							CryptoFunction.DECRYPT, CryptoFunction.ENCRYPT),
 						"Cipher", clusterCryptoCall, _NOTE_CLUSTER));
 			}
+		}
+
+		if (kernelCryptoCall != null) {
+			environmentCryptoCalls.add(
+				_createRandomCryptoCall(
+					cryptoAssessment, fipsEnabled, kernelCryptoCall));
 		}
 
 		return environmentCryptoCalls;
@@ -266,6 +286,59 @@ public class CryptoEnvironmentUtil {
 		return cryptoCall;
 	}
 
+	private static CryptoCall _createRandomCryptoCall(
+		CryptoAssessment cryptoAssessment, boolean fipsEnabled,
+		CryptoCall kernelCryptoCall) {
+
+		List<String> settings = Arrays.asList(
+			CryptoSettingUtil.toSettingKey(
+				"system properties", "java.security.egd"),
+			CryptoSettingUtil.toSettingKey(
+				"java.security", "securerandom.source"));
+
+		if (!fipsEnabled) {
+			return _createConfigurableCryptoCall(
+				_CLASS_NAME_SECURE_RANDOM_UTIL, settings,
+				Collections.singletonList(CryptoFunction.GENERATE),
+				"SecureRandom", kernelCryptoCall, _NOTE_RANDOM);
+		}
+
+		CryptoCall cryptoCall = _createCryptoCall(
+			_getDefaultDRBG(), _CLASS_NAME_SECURE_RANDOM_UTIL,
+			Collections.singletonList(CryptoFunction.GENERATE), "SecureRandom",
+			0, kernelCryptoCall,
+			StringBundler.concat(
+				cryptoAssessment.getRandomNumberGenerationNote(),
+				" In the reference configuration, securerandom.source is ",
+				Security.getProperty("securerandom.source"),
+				", and the operator provides the entropy. Live status: POST ",
+				_PATH_FIPS_HEALTH_VERIFICATIONS,
+				", as a Crypto Officer in FIPS mode, runs the module's ",
+				"self-tests and returns the FIPS application state."));
+
+		cryptoCall.setSettings(settings);
+
+		return cryptoCall;
+	}
+
+	private static String _getDefaultDRBG() {
+		String providerConfiguration = GetterUtil.getString(
+			Security.getProperty("security.provider.1"));
+
+		Matcher matcher = _defaultDRBGPattern.matcher(providerConfiguration);
+
+		if (!matcher.find()) {
+			return "DRBG";
+		}
+
+		String digestName = matcher.group(1);
+
+		return "Hash_DRBG-SHA-" + digestName.substring(3);
+	}
+
+	private static final String _CLASS_NAME_SECURE_RANDOM_UTIL =
+		"com.liferay.portal.kernel.security.SecureRandomUtil";
+
 	private static final String _NOTE_CIPHER_SUITE =
 		"An algorithm of the TLS cipher suites that FIPS mode allows.";
 
@@ -278,9 +351,20 @@ public class CryptoEnvironmentUtil {
 		"provider when the channel names one. FIPS mode requires it of a ",
 		"channel that encrypts, when cluster.link.enabled is on.");
 
+	private static final String _NOTE_RANDOM = StringBundler.concat(
+		"With FIPS mode off, the JDK and the operating system choose the ",
+		"random number generator and its entropy source, and the CBOM states ",
+		"no health status.");
+
 	private static final String _NOTE_TLS = StringBundler.concat(
 		"With FIPS mode off, nothing in DXP limits the TLS versions or cipher ",
 		"suites. The JVM's settings choose them, so the CBOM claims no ",
 		"exclusions.");
+
+	private static final String _PATH_FIPS_HEALTH_VERIFICATIONS =
+		"/o/fips/v1.0/fips-health-verifications";
+
+	private static final Pattern _defaultDRBGPattern = Pattern.compile(
+		"DEFRND\\[(SHA[0-9]+)\\]");
 
 }
