@@ -39,7 +39,7 @@ public class CryptoDependencyUtil {
 
 		for (CryptoCall cryptoCall : cryptoCalls) {
 			componentsMap.computeIfAbsent(
-				_getModuleBOMRef(cryptoCall),
+				"module:" + cryptoCall.getBundleSymbolicName(),
 				bomRef -> _toLibraryComponent(
 					bomRef, cryptoCall.getFeatureName()));
 
@@ -80,7 +80,8 @@ public class CryptoDependencyUtil {
 			}
 
 			Set<String> moduleDependsOn = dependsOnMap.computeIfAbsent(
-				_getModuleBOMRef(cryptoCall), key -> new TreeSet<>());
+				"module:" + cryptoCall.getBundleSymbolicName(),
+				key -> new TreeSet<>());
 
 			moduleDependsOn.add(bomRef);
 
@@ -134,16 +135,6 @@ public class CryptoDependencyUtil {
 
 		return CryptoProviderUtil.fetchProviderName(
 			cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName());
-	}
-
-	private static String _getModuleBOMRef(CryptoCall cryptoCall) {
-		String bundleSymbolicName = cryptoCall.getBundleSymbolicName();
-
-		if (bundleSymbolicName == null) {
-			bundleSymbolicName = cryptoCall.getFeatureName();
-		}
-
-		return "module:" + bundleSymbolicName;
 	}
 
 	private static Component _toDataComponent(

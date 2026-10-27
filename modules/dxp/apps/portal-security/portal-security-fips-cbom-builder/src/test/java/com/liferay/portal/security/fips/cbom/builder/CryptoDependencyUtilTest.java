@@ -66,9 +66,9 @@ public class CryptoDependencyUtilTest {
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
 				_toLibraryJSONObject(
-					"module:Liferay Test Three", "Liferay Test Three"),
-				_toLibraryJSONObject(
 					"module:com.liferay.test.one", "Liferay Test One"),
+				_toLibraryJSONObject(
+					"module:com.liferay.test.three", "Liferay Test Three"),
 				_toLibraryJSONObject(
 					"module:com.liferay.test.two", "Liferay Test Two"),
 				_toLibraryJSONObject("provider:SUN", "SUN"),
@@ -92,10 +92,10 @@ public class CryptoDependencyUtilTest {
 				"crypto:MessageDigest:SHA-256 []",
 				"crypto:MessageDigest:com.liferay.test.Class5 []",
 				"crypto:SecretKeySpec:AES []",
-				"module:Liferay Test Three [crypto:MessageDigest:MD5]",
 				"module:com.liferay.test.one [crypto:MessageDigest:SHA-256, " +
 					"crypto:MessageDigest:com.liferay.test.Class5, " +
 						"crypto:SecretKeySpec:AES]",
+				"module:com.liferay.test.three [crypto:MessageDigest:MD5]",
 				"module:com.liferay.test.two [crypto:Cipher:test.algorithm, " +
 					"crypto:KeyStore:keystore.type]",
 				"provider:SUN []", "setting:keystore.type []",
@@ -182,8 +182,8 @@ public class CryptoDependencyUtilTest {
 			Collections.singletonList("keystore.type"), "Liferay Test Two",
 			"KeyStore"),
 		_createCryptoCall(
-			"MD5", null, RandomTestUtil.randomString(), Collections.emptyList(),
-			"Liferay Test Three", "MessageDigest"),
+			"MD5", "com.liferay.test.three", RandomTestUtil.randomString(),
+			Collections.emptyList(), "Liferay Test Three", "MessageDigest"),
 		_createCryptoCall(
 			null, "com.liferay.test.one", "com.liferay.test.Class5",
 			Collections.emptyList(), "Liferay Test One", "MessageDigest"));
