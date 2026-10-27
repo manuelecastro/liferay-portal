@@ -27,9 +27,9 @@ public class CryptoPrimitiveUtilTest {
 	@Test
 	public void testGetPrimitive() {
 		_testGetPrimitive(Primitive.AE, "AES/GCM/NoPadding", "Cipher");
+		_testGetPrimitive(Primitive.BLOCK_CIPHER, "AES", "SecretKeySpec");
 		_testGetPrimitive(
 			Primitive.BLOCK_CIPHER, "AES/CBC/PKCS5Padding", "Cipher");
-		_testGetPrimitive(Primitive.BLOCK_CIPHER, "AES", "SecretKeySpec");
 		_testGetPrimitive(Primitive.HASH, null, "MessageDigest");
 		_testGetPrimitive(
 			Primitive.KDF, "PBKDF2WithHmacSHA256", "SecretKeyFactory");

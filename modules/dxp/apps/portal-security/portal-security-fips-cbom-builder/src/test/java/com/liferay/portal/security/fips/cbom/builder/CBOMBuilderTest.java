@@ -135,14 +135,11 @@ public class CBOMBuilderTest {
 
 		Assert.assertEquals(sortedBOMRefs, bomRefs);
 
+		Assert.assertTrue(bomRefs.contains("crypto:MessageDigest:MD5"));
 		Assert.assertTrue(
-			bomRefs.toString(), bomRefs.contains("crypto:MessageDigest:MD5"));
-		Assert.assertTrue(
-			bomRefs.toString(),
 			bomRefs.contains("crypto:MessageDigest:auth.mac.algorithm"));
-		Assert.assertTrue(bomRefs.toString(), bomRefs.contains("provider:SUN"));
-		Assert.assertTrue(
-			bomRefs.toString(), bomRefs.contains("setting:auth.mac.algorithm"));
+		Assert.assertTrue(bomRefs.contains("provider:SUN"));
+		Assert.assertTrue(bomRefs.contains("setting:auth.mac.algorithm"));
 		Assert.assertFalse(moduleBOMRefs.isEmpty());
 
 		String description = descriptions.get(
@@ -150,7 +147,6 @@ public class CBOMBuilderTest {
 				"MessageDigestCacheKeyGenerator");
 
 		Assert.assertTrue(
-			description,
 			description.contains(
 				"parameter 1 of the constructor of " +
 					"com.liferay.portal.cache.key." +
@@ -173,8 +169,7 @@ public class CBOMBuilderTest {
 			List<String> dependsOn = JSONUtil.toStringList(
 				dependencyJSONObject.getJSONArray("dependsOn"));
 
-			Assert.assertTrue(
-				dependsOn.toString(), bomRefs.containsAll(dependsOn));
+			Assert.assertTrue(bomRefs.containsAll(dependsOn));
 
 			if (moduleBOMRefs.contains(ref)) {
 				moduleDependsOn.addAll(dependsOn);
@@ -183,8 +178,7 @@ public class CBOMBuilderTest {
 			List<String> provides = JSONUtil.toStringList(
 				dependencyJSONObject.getJSONArray("provides"));
 
-			Assert.assertTrue(
-				provides.toString(), bomRefs.containsAll(provides));
+			Assert.assertTrue(bomRefs.containsAll(provides));
 		}
 
 		Assert.assertEquals(bomRefs, refs);
@@ -194,7 +188,7 @@ public class CBOMBuilderTest {
 				continue;
 			}
 
-			Assert.assertTrue(bomRef, moduleDependsOn.contains(bomRef));
+			Assert.assertTrue(moduleDependsOn.contains(bomRef));
 		}
 	}
 
