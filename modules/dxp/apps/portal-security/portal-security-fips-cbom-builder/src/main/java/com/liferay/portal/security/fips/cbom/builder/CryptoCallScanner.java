@@ -1044,7 +1044,8 @@ public class CryptoCallScanner {
 			String algorithm = algorithms.get(0);
 
 			cryptoCall.setAlgorithm(
-				_algorithmAliases.getOrDefault(algorithm, algorithm));
+				CryptoProviderUtil.getAlgorithmName(
+					algorithm, cryptoCall.getJCAClassName()));
 
 			List<String> keySizes = new ArrayList<>(keySizeOrigin.getValues());
 
@@ -1092,10 +1093,6 @@ public class CryptoCallScanner {
 			"com.liferay.portal.kernel.util.DigesterUtil._getDefaultAlgorithm" +
 				"()Ljava/lang/String;";
 
-	private static final Map<String, String> _algorithmAliases =
-		HashMapBuilder.put(
-			"SHA", "SHA-1"
-		).build();
 	private static final Map<String, CryptoFunction> _cipherCryptoFunctions =
 		HashMapBuilder.put(
 			"1", CryptoFunction.ENCRYPT

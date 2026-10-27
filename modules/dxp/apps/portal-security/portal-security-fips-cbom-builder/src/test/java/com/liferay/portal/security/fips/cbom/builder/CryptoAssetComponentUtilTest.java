@@ -107,7 +107,7 @@ public class CryptoAssetComponentUtilTest {
 					"MessageDigest"),
 				cipherConfigurableCryptoCall, keyFactoryCryptoCall,
 				_createCryptoCall(
-					"DSA", "com.liferay.test.Class3",
+					"SHA1withDSA", "com.liferay.test.Class3",
 					Collections.singletonList(CryptoFunction.VERIFY),
 					"Signature"),
 				_createCryptoCall(
@@ -118,7 +118,7 @@ public class CryptoAssetComponentUtilTest {
 					Collections.singletonList(CryptoFunction.OTHER),
 					"SecretKeySpec"),
 				_createCryptoCall(
-					"pkcs12", "com.liferay.test.Class7",
+					"PKCS12", "com.liferay.test.Class7",
 					Collections.singletonList(CryptoFunction.OTHER),
 					"KeyStore"),
 				_createCryptoCall(

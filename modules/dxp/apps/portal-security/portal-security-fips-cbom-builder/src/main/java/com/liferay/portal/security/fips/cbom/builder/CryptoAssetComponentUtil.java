@@ -32,7 +32,6 @@ import org.cyclonedx.model.component.crypto.enums.AssetType;
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.Mode;
 import org.cyclonedx.model.component.crypto.enums.Padding;
-import org.cyclonedx.model.component.crypto.enums.Primitive;
 import org.cyclonedx.model.component.crypto.enums.ProtocolType;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 import org.cyclonedx.model.component.evidence.Occurrence;
@@ -75,9 +74,7 @@ public class CryptoAssetComponentUtil {
 			return sb.toString();
 		}
 
-		sb.append(
-			CryptoProviderUtil.getAlgorithmName(
-				cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName()));
+		sb.append(cryptoCall.getAlgorithm());
 
 		if (cryptoCall.getKeySize() > 0) {
 			sb.append(StringPool.COLON);
@@ -117,11 +114,11 @@ public class CryptoAssetComponentUtil {
 
 		AlgorithmProperties algorithmProperties = new AlgorithmProperties();
 
+		CryptoCall cryptoCall = cryptoCalls.get(0);
+
 		algorithmProperties.setCryptoFunctions(
 			_getCryptoFunctions(cryptoCalls));
-		algorithmProperties.setPrimitive(_getPrimitive(cryptoCalls));
-
-		CryptoCall cryptoCall = cryptoCalls.get(0);
+		algorithmProperties.setPrimitive(cryptoCall.getPrimitive());
 
 		if (cryptoCall.getAlgorithm() == null) {
 			return algorithmProperties;
@@ -262,21 +259,8 @@ public class CryptoAssetComponentUtil {
 		}
 
 		return CryptoAlgorithmNameUtil.getName(
-			CryptoProviderUtil.getAlgorithmName(
-				cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName()),
-			cryptoCall.getJCAClassName(), cryptoCall.getKeySize());
-	}
-
-	private static Primitive _getPrimitive(List<CryptoCall> cryptoCalls) {
-		CryptoCall firstCryptoCall = cryptoCalls.get(0);
-
-		for (CryptoCall cryptoCall : cryptoCalls) {
-			if (cryptoCall.getPrimitive() != firstCryptoCall.getPrimitive()) {
-				return Primitive.UNKNOWN;
-			}
-		}
-
-		return firstCryptoCall.getPrimitive();
+			cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName(),
+			cryptoCall.getKeySize());
 	}
 
 	private static List<Property> _getProperties(List<CryptoCall> cryptoCalls) {
@@ -309,8 +293,7 @@ public class CryptoAssetComponentUtil {
 			return protocolProperties;
 		}
 
-		String algorithm = CryptoProviderUtil.getAlgorithmName(
-			cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName());
+		String algorithm = cryptoCall.getAlgorithm();
 
 		if (algorithm.equals("TLS")) {
 			protocolProperties.setType(ProtocolType.TLS);
@@ -338,8 +321,7 @@ public class CryptoAssetComponentUtil {
 		if (Objects.equals(keyCryptoCall.getJCAClassName(), "KeyStore")) {
 			if (keyCryptoCall.getAlgorithm() != null) {
 				relatedCryptoMaterialProperties.setFormat(
-					CryptoProviderUtil.getAlgorithmName(
-						keyCryptoCall.getAlgorithm(), "KeyStore"));
+					keyCryptoCall.getAlgorithm());
 			}
 
 			relatedCryptoMaterialProperties.setType(
@@ -385,12 +367,9 @@ public class CryptoAssetComponentUtil {
 			return true;
 		}
 
-		String algorithm = StringUtil.toUpperCase(
-			CryptoProviderUtil.getAlgorithmName(
-				cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName()));
+		String algorithm = StringUtil.toUpperCase(cryptoCall.getAlgorithm());
 		String keyAlgorithm = StringUtil.toUpperCase(
-			CryptoProviderUtil.getAlgorithmName(
-				keyCryptoCall.getAlgorithm(), keyCryptoCall.getJCAClassName()));
+			keyCryptoCall.getAlgorithm());
 
 		String jcaClassName = cryptoCall.getJCAClassName();
 
