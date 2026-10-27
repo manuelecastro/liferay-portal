@@ -62,7 +62,7 @@ public class CryptoCall {
 	}
 
 	public Primitive getPrimitive() {
-		return CryptoPrimitiveUtil.getPrimitive(_algorithm, _jcaClassName);
+		return CryptoAlgorithmUtil.getPrimitive(_algorithm, _jcaClassName);
 	}
 
 	public List<RelatedCryptoMaterialType> getRelatedCryptoMaterialTypes() {

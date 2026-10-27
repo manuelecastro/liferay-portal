@@ -8,6 +8,8 @@ package com.liferay.portal.security.fips.cbom.builder;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import org.cyclonedx.model.component.crypto.enums.Primitive;
+
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -16,7 +18,7 @@ import org.junit.Test;
 /**
  * @author Manuele Castro
  */
-public class CryptoAlgorithmNameUtilTest {
+public class CryptoAlgorithmUtilTest {
 
 	@ClassRule
 	@Rule
@@ -65,13 +67,48 @@ public class CryptoAlgorithmNameUtilTest {
 		_testGetName(algorithm, algorithm, "Signature", 0);
 	}
 
+	@Test
+	public void testGetPrimitive() {
+		_testGetPrimitive(Primitive.AE, "AES/GCM/NoPadding", "Cipher");
+		_testGetPrimitive(Primitive.AE, "ChaCha20-Poly1305", "Cipher");
+		_testGetPrimitive(Primitive.BLOCK_CIPHER, "AES", "SecretKeySpec");
+		_testGetPrimitive(
+			Primitive.BLOCK_CIPHER, "AES/CBC/PKCS5Padding", "Cipher");
+		_testGetPrimitive(
+			Primitive.BLOCK_CIPHER, "ARIA/CBC/NoPadding", "Cipher");
+		_testGetPrimitive(Primitive.BLOCK_CIPHER, "DESede", "KeyGenerator");
+		_testGetPrimitive(Primitive.HASH, null, "MessageDigest");
+		_testGetPrimitive(
+			Primitive.KDF, "PBKDF2WithHmacSHA256", "SecretKeyFactory");
+		_testGetPrimitive(Primitive.KEY_AGREE, "X25519", "KeyPairGenerator");
+		_testGetPrimitive(Primitive.MAC, "HmacSHA256", "KeyGenerator");
+		_testGetPrimitive(Primitive.OTHER, "PKCS12", "KeyStore");
+		_testGetPrimitive(
+			Primitive.PKE, "RSA/ECB/OAEPWithSHA-256AndMGF1Padding", "Cipher");
+		_testGetPrimitive(Primitive.SIGNATURE, "Ed25519", "KeyPairGenerator");
+		_testGetPrimitive(
+			Primitive.SIGNATURE, "RSASSA-PSS", "KeyPairGenerator");
+		_testGetPrimitive(Primitive.SIGNATURE, "SHA256withRSA", "Signature");
+		_testGetPrimitive(Primitive.STREAM_CIPHER, "ChaCha20", "Cipher");
+		_testGetPrimitive(Primitive.UNKNOWN, "RSA", "KeyPairGenerator");
+		_testGetPrimitive(Primitive.UNKNOWN, null, "Cipher");
+	}
+
 	private void _testGetName(
 		String algorithm, String expectedName, String jcaClassName,
 		int keySize) {
 
 		Assert.assertEquals(
 			expectedName,
-			CryptoAlgorithmNameUtil.getName(algorithm, jcaClassName, keySize));
+			CryptoAlgorithmUtil.getName(algorithm, jcaClassName, keySize));
+	}
+
+	private void _testGetPrimitive(
+		Primitive expectedPrimitive, String algorithm, String jcaClassName) {
+
+		Assert.assertEquals(
+			expectedPrimitive,
+			CryptoAlgorithmUtil.getPrimitive(algorithm, jcaClassName));
 	}
 
 }

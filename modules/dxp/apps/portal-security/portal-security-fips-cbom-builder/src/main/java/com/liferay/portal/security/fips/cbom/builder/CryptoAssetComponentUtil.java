@@ -238,7 +238,7 @@ public class CryptoAssetComponentUtil {
 			return cryptoCall.getJCAClassName();
 		}
 
-		return CryptoAlgorithmNameUtil.getName(
+		return CryptoAlgorithmUtil.getName(
 			cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName(),
 			cryptoCall.getKeySize());
 	}

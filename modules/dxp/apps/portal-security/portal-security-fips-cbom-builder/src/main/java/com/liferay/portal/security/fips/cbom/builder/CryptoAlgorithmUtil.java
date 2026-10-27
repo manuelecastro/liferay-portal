@@ -8,15 +8,19 @@ package com.liferay.portal.security.fips.cbom.builder;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+
+import org.cyclonedx.model.component.crypto.enums.Primitive;
 
 /**
  * @author Manuele Castro
  */
-public class CryptoAlgorithmNameUtil {
+public class CryptoAlgorithmUtil {
 
 	public static String getName(
 		String algorithm, String jcaClassName, int keySize) {
@@ -36,6 +40,66 @@ public class CryptoAlgorithmNameUtil {
 		}
 
 		return name;
+	}
+
+	public static Primitive getPrimitive(
+		String algorithm, String jcaClassName) {
+
+		Primitive primitive = _jcaClassPrimitives.get(jcaClassName);
+
+		if (primitive != null) {
+			return primitive;
+		}
+
+		if (algorithm == null) {
+			return Primitive.UNKNOWN;
+		}
+
+		String[] algorithmParts = StringUtil.split(
+			StringUtil.toUpperCase(algorithm), CharPool.SLASH);
+
+		String name = algorithmParts[0];
+
+		if (name.startsWith("HMAC")) {
+			return Primitive.MAC;
+		}
+
+		if (name.startsWith("PBE") || name.startsWith("PBKDF2")) {
+			return Primitive.KDF;
+		}
+
+		if (name.startsWith("AES")) {
+			name = "AES";
+		}
+
+		primitive = _cipherPrimitives.get(
+			_cipherNames.getOrDefault(name, name));
+
+		if ((primitive == Primitive.BLOCK_CIPHER) &&
+			Objects.equals(jcaClassName, "Cipher") &&
+			(algorithmParts.length > 1) &&
+			_aeModeNames.contains(algorithmParts[1])) {
+
+			return Primitive.AE;
+		}
+
+		if (primitive != null) {
+			return primitive;
+		}
+
+		if (name.equals("RSA") && Objects.equals(jcaClassName, "Cipher")) {
+			return Primitive.PKE;
+		}
+
+		if (_keyAgreementNames.containsKey(name)) {
+			return Primitive.KEY_AGREE;
+		}
+
+		if (_signatureNames.containsKey(name)) {
+			return Primitive.SIGNATURE;
+		}
+
+		return Primitive.UNKNOWN;
 	}
 
 	private static String _getCipherName(String algorithm) {
@@ -144,6 +208,8 @@ public class CryptoAlgorithmNameUtil {
 		return prefix + StringPool.DASH + digestName;
 	}
 
+	private static final Set<String> _aeModeNames = SetUtil.fromArray(
+		"CCM", "GCM");
 	private static final Map<String, String> _cipherNames = HashMapBuilder.put(
 		"AES", "AES"
 	).put(
@@ -165,6 +231,30 @@ public class CryptoAlgorithmNameUtil {
 	).put(
 		"TRIPLEDES", "3DES"
 	).build();
+	private static final Map<String, Primitive> _cipherPrimitives =
+		HashMapBuilder.put(
+			"3DES", Primitive.BLOCK_CIPHER
+		).put(
+			"AES", Primitive.BLOCK_CIPHER
+		).put(
+			"ARIA", Primitive.BLOCK_CIPHER
+		).put(
+			"Blowfish", Primitive.BLOCK_CIPHER
+		).put(
+			"CAMELLIA", Primitive.BLOCK_CIPHER
+		).put(
+			"ChaCha20", Primitive.STREAM_CIPHER
+		).put(
+			"ChaCha20-Poly1305", Primitive.AE
+		).put(
+			"DES", Primitive.BLOCK_CIPHER
+		).put(
+			"RC2", Primitive.BLOCK_CIPHER
+		).put(
+			"RC4", Primitive.STREAM_CIPHER
+		).put(
+			"SM4", Primitive.BLOCK_CIPHER
+		).build();
 	private static final Map<String, String> _digestNames = HashMapBuilder.put(
 		"MD2", "MD2"
 	).put(
@@ -210,6 +300,24 @@ public class CryptoAlgorithmNameUtil {
 	).put(
 		"SHA512/256", "SHA-512/256"
 	).build();
+	private static final Map<String, Primitive> _jcaClassPrimitives =
+		HashMapBuilder.put(
+			"KeyAgreement", Primitive.KEY_AGREE
+		).put(
+			"KeyManagerFactory", Primitive.OTHER
+		).put(
+			"KeyStore", Primitive.OTHER
+		).put(
+			"Mac", Primitive.MAC
+		).put(
+			"MessageDigest", Primitive.HASH
+		).put(
+			"Signature", Primitive.SIGNATURE
+		).put(
+			"SSLContext", Primitive.OTHER
+		).put(
+			"TrustManagerFactory", Primitive.OTHER
+		).build();
 	private static final Map<String, String> _keyAgreementNames =
 		HashMapBuilder.put(
 			"DH", "FFDH"
@@ -221,12 +329,20 @@ public class CryptoAlgorithmNameUtil {
 			"X448", "x448"
 		).put(
 			"X25519", "x25519"
+		).put(
+			"XDH", "XDH"
 		).build();
 	private static final Map<String, String> _signatureNames =
 		HashMapBuilder.put(
+			"DSA", "DSA"
+		).put(
+			"ECDSA", "ECDSA"
+		).put(
 			"ED448", "Ed448"
 		).put(
 			"ED25519", "Ed25519"
+		).put(
+			"EDDSA", "EdDSA"
 		).put(
 			"RSASSA-PSS", "RSA-PSS"
 		).build();
