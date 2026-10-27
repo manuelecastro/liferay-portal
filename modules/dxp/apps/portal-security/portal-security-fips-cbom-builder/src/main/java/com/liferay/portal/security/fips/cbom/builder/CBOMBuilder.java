@@ -49,7 +49,8 @@ public class CBOMBuilder {
 
 	public static String build(
 			String configurationName, CryptoAssessment cryptoAssessment,
-			List<CryptoCall> cryptoCalls, Map<String, String> properties)
+			List<CryptoCall> cryptoCalls, Map<String, String> properties,
+			int version)
 		throws Exception {
 
 		List<Component> components = new ArrayList<>(
@@ -72,7 +73,7 @@ public class CBOMBuilder {
 			components, configurationName,
 			CryptoDependencyUtil.toDependencies(cryptoCalls),
 			ReleaseInfo.getName(), ReleaseInfo.getVersionDisplayName(),
-			properties, CryptoDependencyUtil.toProvides(cryptoCalls));
+			properties, CryptoDependencyUtil.toProvides(cryptoCalls), version);
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -184,7 +185,8 @@ public class CBOMBuilder {
 
 		String cbomJSON = build(
 			configurationDir.getName(), cryptoAssessment, cryptoCalls,
-			properties);
+			properties,
+			GetterUtil.getInteger(System.getProperty("cbom.version"), 1));
 
 		List<String> schemaMessages = CycloneDXCBOMWriter.validate(cbomJSON);
 

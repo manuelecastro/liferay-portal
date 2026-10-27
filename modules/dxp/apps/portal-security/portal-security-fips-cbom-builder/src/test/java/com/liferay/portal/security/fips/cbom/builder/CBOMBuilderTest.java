@@ -83,16 +83,17 @@ public class CBOMBuilderTest {
 		String configurationName = RandomTestUtil.randomString();
 
 		CryptoAssessment cryptoAssessment = CryptoAssessment.load(null, null);
+		int version = RandomTestUtil.randomInt();
 
 		String cbomJSON = CBOMBuilder.build(
 			configurationName, cryptoAssessment, cryptoCalls,
-			Collections.emptyMap());
+			Collections.emptyMap(), version);
 
 		Assert.assertEquals(
 			cbomJSON,
 			CBOMBuilder.build(
 				configurationName, cryptoAssessment, cryptoCalls,
-				Collections.emptyMap()));
+				Collections.emptyMap(), version));
 
 		JsonParser jsonParser = new JsonParser();
 

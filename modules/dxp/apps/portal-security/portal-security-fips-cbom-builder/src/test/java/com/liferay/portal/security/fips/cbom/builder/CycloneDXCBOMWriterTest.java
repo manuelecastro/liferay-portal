@@ -57,7 +57,7 @@ public class CycloneDXCBOMWriterTest {
 					Collections.emptyList(), RandomTestUtil.randomString(),
 					Collections.emptyList(), RandomTestUtil.randomString(),
 					RandomTestUtil.randomString(), Collections.emptyMap(),
-					Collections.emptyMap())));
+					Collections.emptyMap(), RandomTestUtil.randomInt())));
 
 		List<String> messages = CycloneDXCBOMWriter.validate(
 			JSONUtil.put(
@@ -110,19 +110,20 @@ public class CycloneDXCBOMWriterTest {
 		String fipsProvider = RandomTestUtil.randomString();
 		String productName = RandomTestUtil.randomString();
 		String productVersion = RandomTestUtil.randomString();
+		int version = RandomTestUtil.randomInt();
 
 		Map<String, String> properties = Collections.singletonMap(
 			"liferay:cbom:fips-provider", fipsProvider);
 
 		String json = CycloneDXCBOMWriter.write(
 			components, configurationName, dependencies, productName,
-			productVersion, properties, provides);
+			productVersion, properties, provides, version);
 
 		Assert.assertEquals(
 			json,
 			CycloneDXCBOMWriter.write(
 				components, configurationName, dependencies, productName,
-				productVersion, properties, provides));
+				productVersion, properties, provides, version));
 
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(json);
 
@@ -194,7 +195,7 @@ public class CycloneDXCBOMWriterTest {
 			).put(
 				"specVersion", "1.6"
 			).put(
-				"version", 1
+				"version", version
 			).toString(),
 			json, JSONCompareMode.STRICT);
 
@@ -202,12 +203,12 @@ public class CycloneDXCBOMWriterTest {
 			json,
 			CycloneDXCBOMWriter.write(
 				components, RandomTestUtil.randomString(), dependencies,
-				productName, productVersion, properties, provides));
+				productName, productVersion, properties, provides, version));
 		Assert.assertNotEquals(
 			json,
 			CycloneDXCBOMWriter.write(
 				components, configurationName, dependencies, productName,
-				RandomTestUtil.randomString(), properties, provides));
+				RandomTestUtil.randomString(), properties, provides, version));
 	}
 
 }

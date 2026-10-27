@@ -57,7 +57,7 @@ public class CycloneDXCBOMWriter {
 			List<Component> components, String configurationName,
 			List<Dependency> dependencies, String productName,
 			String productVersion, Map<String, String> properties,
-			Map<String, Set<String>> provides)
+			Map<String, Set<String>> provides, int version)
 		throws Exception {
 
 		Bom bom = new Bom();
@@ -69,7 +69,7 @@ public class CycloneDXCBOMWriter {
 				configurationName, productName, productVersion, properties));
 		bom.setSerialNumber(
 			_getSerialNumber(configurationName, productVersion));
-		bom.setVersion(1);
+		bom.setVersion(version);
 
 		BomJsonGenerator bomJsonGenerator = BomGeneratorFactory.createJson(
 			_VERSION, bom);

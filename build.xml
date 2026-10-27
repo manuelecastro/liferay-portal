@@ -368,6 +368,7 @@ testray.build.type=EE Development (@{to.branch.name})</echo>
 			<then>
 				<gradle-execute dir="${project.dir}/modules" task=":dxp:apps:portal-security:portal-security-fips-cbom-builder:buildCBOM">
 					<arg if:set="cbom.release" value="-Pcbom.release=${cbom.release}" />
+					<arg if:set="cbom.version" value="-Pcbom.version=${cbom.version}" />
 				</gradle-execute>
 			</then>
 		</if>
