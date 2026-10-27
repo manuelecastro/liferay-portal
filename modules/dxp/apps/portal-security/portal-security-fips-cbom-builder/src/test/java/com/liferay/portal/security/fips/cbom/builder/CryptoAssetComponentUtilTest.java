@@ -95,6 +95,7 @@ public class CryptoAssetComponentUtilTest {
 			"parameter 1 of com.liferay.test.Class9.digest");
 
 		List<Component> components = CryptoAssetComponentUtil.toComponents(
+			null,
 			Arrays.asList(
 				_createCryptoCall(
 					"SHA-256", "com.liferay.test.Class4",

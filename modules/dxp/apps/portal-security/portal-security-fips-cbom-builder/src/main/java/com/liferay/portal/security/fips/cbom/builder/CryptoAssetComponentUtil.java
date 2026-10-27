@@ -78,7 +78,9 @@ public class CryptoAssetComponentUtil {
 		return sb.toString();
 	}
 
-	public static List<Component> toComponents(List<CryptoCall> cryptoCalls) {
+	public static List<Component> toComponents(
+		CryptoAssessment cryptoAssessment, List<CryptoCall> cryptoCalls) {
+
 		Map<String, List<CryptoCall>> cryptoCallsMap = new TreeMap<>();
 
 		for (CryptoCall cryptoCall : cryptoCalls) {
@@ -91,7 +93,49 @@ public class CryptoAssetComponentUtil {
 		return TransformUtil.transform(
 			cryptoCallsMap.entrySet(),
 			entry -> _toComponent(
-				entry.getKey(), entry.getValue(), cryptoCalls));
+				entry.getKey(), entry.getValue(), cryptoAssessment,
+				cryptoCalls));
+	}
+
+	private static void _assess(
+		Component component, CryptoAssessment cryptoAssessment,
+		CryptoCall cryptoCall) {
+
+		String providerName = CryptoProviderUtil.fetchProviderName(
+			cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName());
+
+		String fipsApprovalStatus = cryptoAssessment.getFIPSApprovalStatus(
+			cryptoCall.getJCAClassName(), component.getName(), providerName);
+
+		Map<String, String> properties = new TreeMap<>();
+
+		for (Property property : component.getProperties()) {
+			properties.put(property.getName(), property.getValue());
+		}
+
+		properties.put("liferay:cbom:fips-approval-status", fipsApprovalStatus);
+
+		if (cryptoAssessment.isFIPSModuleProvider(providerName)) {
+			properties.putAll(cryptoAssessment.getModuleProperties());
+		}
+
+		component.setProperties(
+			TransformUtil.transform(
+				properties.entrySet(),
+				entry -> new Property(entry.getKey(), entry.getValue())));
+
+		CryptoProperties cryptoProperties = component.getCryptoProperties();
+
+		AlgorithmProperties algorithmProperties =
+			cryptoProperties.getAlgorithmProperties();
+
+		if (algorithmProperties == null) {
+			return;
+		}
+
+		algorithmProperties.setCertificationLevel(
+			Collections.singletonList(
+				cryptoAssessment.getCertificationLevel(fipsApprovalStatus)));
 	}
 
 	private static AlgorithmProperties _getAlgorithmProperties(
@@ -470,7 +514,7 @@ public class CryptoAssetComponentUtil {
 
 	private static Component _toComponent(
 		String bomRef, List<CryptoCall> bomRefCryptoCalls,
-		List<CryptoCall> cryptoCalls) {
+		CryptoAssessment cryptoAssessment, List<CryptoCall> cryptoCalls) {
 
 		Component component = new Component();
 		CryptoProperties cryptoProperties = new CryptoProperties();
@@ -503,6 +547,10 @@ public class CryptoAssetComponentUtil {
 		component.setName(_getName(cryptoCall));
 		component.setProperties(_getProperties(bomRefCryptoCalls));
 		component.setType(Component.Type.CRYPTOGRAPHIC_ASSET);
+
+		if ((cryptoAssessment != null) && (cryptoCall.getAlgorithm() != null)) {
+			_assess(component, cryptoAssessment, cryptoCall);
+		}
 
 		return component;
 	}

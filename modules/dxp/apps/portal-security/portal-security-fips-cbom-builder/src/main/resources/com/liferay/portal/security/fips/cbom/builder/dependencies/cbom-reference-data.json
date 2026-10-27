@@ -1,0 +1,112 @@
+{
+	"modules": [
+		{
+			"certificate": {
+				"level": "fips140-3-l1",
+				"number": "4943",
+				"source": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4943, retrieved 2026-10-27",
+				"standard": "FIPS 140-3",
+				"status": "Active",
+				"sunsetDate": "2030-01-16",
+				"validationDates": [
+					"2025-01-17",
+					"2025-11-14"
+				]
+			},
+			"name": "BC-FJA (Bouncy Castle FIPS Java API)",
+			"providerName": "BCFIPS",
+			"securityPolicy": {
+				"approved": [
+					"*:AES",
+					"*:HMAC-SHA-1",
+					"*:HMAC-SHA-224",
+					"*:HMAC-SHA-256",
+					"*:HMAC-SHA-384",
+					"*:HMAC-SHA-512",
+					"*:HMAC-SHA-512/224",
+					"*:HMAC-SHA-512/256",
+					"*:HMAC-SHA3-224",
+					"*:HMAC-SHA3-256",
+					"*:HMAC-SHA3-384",
+					"*:HMAC-SHA3-512",
+					"Cipher:RSA-OAEP",
+					"KeyAgreement:ECDH",
+					"KeyAgreement:FFDH",
+					"KeyFactory:DSA",
+					"KeyFactory:EC",
+					"KeyFactory:Ed25519",
+					"KeyFactory:Ed448",
+					"KeyFactory:RSA",
+					"KeyPairGenerator:DSA",
+					"KeyPairGenerator:EC",
+					"KeyPairGenerator:Ed25519",
+					"KeyPairGenerator:Ed448",
+					"KeyPairGenerator:RSA",
+					"MessageDigest:SHA-1",
+					"MessageDigest:SHA-224",
+					"MessageDigest:SHA-256",
+					"MessageDigest:SHA-384",
+					"MessageDigest:SHA-512",
+					"MessageDigest:SHA-512/224",
+					"MessageDigest:SHA-512/256",
+					"MessageDigest:SHA3-224",
+					"MessageDigest:SHA3-256",
+					"MessageDigest:SHA3-384",
+					"MessageDigest:SHA3-512",
+					"SecretKeyFactory:PBKDF2",
+					"SecureRandom:CTR_DRBG",
+					"SecureRandom:HMAC_DRBG",
+					"SecureRandom:Hash_DRBG",
+					"Signature:DSA",
+					"Signature:ECDSA",
+					"Signature:Ed25519",
+					"Signature:Ed448",
+					"Signature:LMS",
+					"Signature:RSA-PKCS1-1.5",
+					"Signature:RSA-PSS"
+				],
+				"nonApprovedAllowed": [
+				],
+				"nonApprovedAllowedNoSecurityClaimed": [
+					"MessageDigest:MD5 within TLS 1.0 and 1.1"
+				],
+				"nonApprovedNotAllowed": [
+					"*:3DES",
+					"*:Blowfish",
+					"*:CAST5",
+					"*:Camellia",
+					"*:ChaCha20",
+					"*:ChaCha20-Poly1305",
+					"*:DES",
+					"*:HMAC-MD5",
+					"*:HMAC-RIPEMD160",
+					"*:IDEA",
+					"*:RC2",
+					"*:RC4",
+					"*:SEED",
+					"*:Serpent",
+					"*:Twofish",
+					"Cipher:RSA-PKCS1-1.5",
+					"KeyAgreement:x25519",
+					"KeyAgreement:x448",
+					"MessageDigest:MD5",
+					"MessageDigest:RIPEMD160",
+					"MessageDigest:TIGER",
+					"MessageDigest:WHIRLPOOL"
+				],
+				"notes": "Table 6 also names EdDSA (Ed25519 and Ed448), which Table 4 lists as approved under CAVP certificate A4270; this file follows Table 4 until AppSec confirms.",
+				"source": "https://csrc.nist.gov/CSRC/media/projects/cryptographic-module-validation-program/documents/security-policies/140sp4943.pdf, BC-FJA (Bouncy Castle FIPS Java API) Non-Proprietary FIPS 140-3 Security Policy, 18 July 2025: Table 4 (approved and vendor-affirmed), Table 5 (non-approved, allowed with no security claimed), Table 6 (non-approved, not allowed)",
+				"vendorAffirmed": [
+					"KeyGenerator:*"
+				],
+				"vendorAffirmedMethods": [
+					"CKG using output from the DRBG (SP 800-133, Section 4), per FIPS 140-3 IG D.H"
+				]
+			},
+			"versions": [
+				"2.1.1"
+			]
+		}
+	],
+	"schemaVersion": "1.0"
+}

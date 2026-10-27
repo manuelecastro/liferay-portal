@@ -5,6 +5,7 @@
 
 package com.liferay.portal.security.fips.cbom.builder;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
@@ -13,6 +14,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.xml.SecureXMLFactoryProviderImpl;
 
 import java.io.File;
@@ -24,6 +26,7 @@ import java.nio.file.Files;
 import java.security.Provider;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +36,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.cyclonedx.model.Component;
+import org.cyclonedx.model.ExternalReference;
+import org.cyclonedx.model.Property;
 
 /**
  * @author Manuele Castro
@@ -40,14 +45,23 @@ import org.cyclonedx.model.Component;
 public class CBOMBuilder {
 
 	public static String build(
-			String configurationName, List<CryptoCall> cryptoCalls,
-			Map<String, String> properties)
+			String configurationName, CryptoAssessment cryptoAssessment,
+			List<CryptoCall> cryptoCalls, Map<String, String> properties)
 		throws Exception {
 
 		List<Component> components = new ArrayList<>(
-			CryptoAssetComponentUtil.toComponents(cryptoCalls));
+			CryptoAssetComponentUtil.toComponents(
+				cryptoAssessment, cryptoCalls));
 
-		components.addAll(CryptoDependencyUtil.toComponents(cryptoCalls));
+		for (Component component :
+				CryptoDependencyUtil.toComponents(cryptoCalls)) {
+
+			if (cryptoAssessment.isFIPSModuleProvider(component.getName())) {
+				_setModule(component, cryptoAssessment);
+			}
+
+			components.add(component);
+		}
 
 		components.sort(Comparator.comparing(Component::getBomRef));
 
@@ -106,6 +120,7 @@ public class CBOMBuilder {
 
 		List<CryptoCall> cryptoCalls = cryptoCallScanner.getCryptoCalls();
 
+		CryptoAssessment cryptoAssessment = CryptoAssessment.load(null, null);
 		Map<String, String> properties = new TreeMap<>();
 
 		if (fipsEnabled) {
@@ -114,10 +129,27 @@ public class CBOMBuilder {
 
 			Provider provider = FIPSModeValidator.fetchProvider();
 
+			String providerVersion = CryptoProviderUtil.fetchProviderVersion(
+				provider.getName());
+
+			cryptoAssessment = CryptoAssessment.load(
+				provider.getName(), providerVersion);
+
+			if (!cryptoAssessment.hasFIPSModule()) {
+				String message = StringBundler.concat(
+					"The CBOM reference data has no FIPS module for ",
+					provider.getName(), StringPool.SPACE, providerVersion);
+
+				if (GetterUtil.getBoolean(System.getProperty("cbom.release"))) {
+					throw new IllegalStateException(message);
+				}
+
+				System.out.println("WARNING: " + message);
+			}
+
 			properties.put(
 				"liferay:cbom:fips-provider",
-				provider.getName() + StringPool.SPACE +
-					provider.getVersionStr());
+				provider.getName() + StringPool.SPACE + providerVersion);
 		}
 
 		Set<String> messages = new TreeSet<>();
@@ -140,7 +172,8 @@ public class CBOMBuilder {
 		}
 
 		String cbomJSON = build(
-			configurationDir.getName(), cryptoCalls, properties);
+			configurationDir.getName(), cryptoAssessment, cryptoCalls,
+			properties);
 
 		File file = new File(args[1]);
 
@@ -199,6 +232,35 @@ public class CBOMBuilder {
 		try (FileInputStream fileInputStream = new FileInputStream(file)) {
 			return PropertiesUtil.load(fileInputStream, StringPool.UTF8);
 		}
+	}
+
+	private static void _setModule(
+		Component component, CryptoAssessment cryptoAssessment) {
+
+		Map<String, String> properties = new TreeMap<>(
+			cryptoAssessment.getModuleProperties());
+
+		List<String> vendorAffirmedMethods =
+			cryptoAssessment.getVendorAffirmedMethods();
+
+		if (!vendorAffirmedMethods.isEmpty()) {
+			properties.put(
+				"liferay:cbom:vendor-affirmed-methods",
+				StringUtil.merge(vendorAffirmedMethods, "; "));
+		}
+
+		component.setProperties(
+			TransformUtil.transform(
+				properties.entrySet(),
+				entry -> new Property(entry.getKey(), entry.getValue())));
+
+		ExternalReference externalReference = new ExternalReference();
+
+		externalReference.setType(ExternalReference.Type.CERTIFICATION_REPORT);
+		externalReference.setUrl(cryptoAssessment.fetchCertificateURL());
+
+		component.setExternalReferences(
+			Collections.singletonList(externalReference));
 	}
 
 }

@@ -81,13 +81,17 @@ public class CBOMBuilderTest {
 
 		String configurationName = RandomTestUtil.randomString();
 
+		CryptoAssessment cryptoAssessment = CryptoAssessment.load(null, null);
+
 		String cbomJSON = CBOMBuilder.build(
-			configurationName, cryptoCalls, Collections.emptyMap());
+			configurationName, cryptoAssessment, cryptoCalls,
+			Collections.emptyMap());
 
 		Assert.assertEquals(
 			cbomJSON,
 			CBOMBuilder.build(
-				configurationName, cryptoCalls, Collections.emptyMap()));
+				configurationName, cryptoAssessment, cryptoCalls,
+				Collections.emptyMap()));
 
 		JsonParser jsonParser = new JsonParser();
 
@@ -125,6 +129,7 @@ public class CBOMBuilderTest {
 		List<String> bomRefs = new ArrayList<>();
 		Map<String, String> evidences = new HashMap<>();
 		Set<String> moduleBOMRefs = new TreeSet<>();
+		Map<String, String> properties = new HashMap<>();
 
 		for (int i = 0; i < componentsJSONArray.length(); i++) {
 			componentJSONObject = componentsJSONArray.getJSONObject(i);
@@ -133,6 +138,7 @@ public class CBOMBuilderTest {
 
 			bomRefs.add(bomRef);
 			evidences.put(bomRef, componentJSONObject.getString("evidence"));
+			properties.put(bomRef, componentJSONObject.getString("properties"));
 
 			if (!bomRef.startsWith("module:")) {
 				continue;
@@ -155,6 +161,11 @@ public class CBOMBuilderTest {
 		Assert.assertFalse(moduleBOMRefs.isEmpty());
 
 		String evidence = evidences.get("crypto:MessageDigest:SHA-1");
+
+		String sha256Properties = properties.get(
+			"crypto:MessageDigest:SHA-256");
+
+		Assert.assertTrue(sha256Properties.contains("PROVIDER_NOT_VALIDATED"));
 
 		Assert.assertTrue(
 			evidence.contains(
