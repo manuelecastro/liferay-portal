@@ -1,5 +1,6 @@
 task buildCBOM
 task copyCBOMConfigurations(type: Sync)
+task reviewCBOM(type: JavaExec)
 
 configurations {
 	cbomBCFIPS {
@@ -76,4 +77,11 @@ dependencies {
 
 deploy {
 	enabled = false
+}
+
+reviewCBOM {
+	args cbomDir, project.findProperty("cbom.previous.dir") ?: ""
+	classpath = sourceSets.main.runtimeClasspath + configurations.compileClasspath + configurations.portal
+	jvmArgs "--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED"
+	mainClass = "com.liferay.portal.security.fips.cbom.builder.CBOMReviewer"
 }

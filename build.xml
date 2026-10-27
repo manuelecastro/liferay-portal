@@ -1093,6 +1093,17 @@ This target has been renamed to "snapshot-bundle". Please call "snapshot-bundle"
 		<ant dir="util-taglib" inheritAll="false" target="restore-latest-artifact-version" />
 	</target>
 
+	<target name="review-cbom">
+		<if>
+			<available file="${project.dir}/modules/dxp/apps/portal-security/portal-security-fips-cbom-builder" type="dir" />
+			<then>
+				<gradle-execute dir="${project.dir}/modules" task=":dxp:apps:portal-security:portal-security-fips-cbom-builder:reviewCBOM">
+					<arg value="-Pcbom.previous.dir=${cbom.previous.dir}" />
+				</gradle-execute>
+			</then>
+		</if>
+	</target>
+
 	<target name="setup-libs">
 		<setup-libs />
 	</target>
