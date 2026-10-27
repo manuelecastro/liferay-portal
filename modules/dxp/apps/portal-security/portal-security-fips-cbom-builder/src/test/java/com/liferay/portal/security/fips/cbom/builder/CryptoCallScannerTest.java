@@ -11,6 +11,7 @@ import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -72,6 +73,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+
 /**
  * @author Manuele Castro
  */
@@ -124,6 +129,22 @@ public class CryptoCallScannerTest {
 		_testScan(
 			InterfaceTestClass.class, false, "MessageDigest SHA-512 [digest]");
 		_testScan(
+			JWSTestClass.class, false,
+			"Signature unresolved: the algorithm in the header of each JSON " +
+				"Web Token, which the token's issuer chooses [verify]");
+		_testScan(
+			JWSTestClass.class, true, "Signature Ed25519 [verify]",
+			"Signature Ed448 [verify]",
+			"Signature SHA256withECDSA [verify] P-256",
+			"Signature SHA256withRSA [verify]",
+			"Signature SHA256withRSAandMGF1 [verify]",
+			"Signature SHA384withECDSA [verify] P-384",
+			"Signature SHA384withRSA [verify]",
+			"Signature SHA384withRSAandMGF1 [verify]",
+			"Signature SHA512withECDSA [verify] P-521",
+			"Signature SHA512withRSA [verify]",
+			"Signature SHA512withRSAandMGF1 [verify]");
+		_testScan(
 			KeyFactoryTestClass.class, false,
 			"KeyFactory RSA [other] [private-key]",
 			"KeyFactory RSA [other] [public-key]");
@@ -172,6 +193,21 @@ public class CryptoCallScannerTest {
 			TrustManagerFactoryTestClass.class, false,
 			"TrustManagerFactory configured by " +
 				"[ssl.TrustManagerFactory.algorithm] [other]");
+
+		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner(false);
+
+		cryptoCallScanner.scan(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			new ByteArrayInputStream(_getOpenSAMLTestClassBytes()));
+
+		List<String> descriptions = TransformUtil.transform(
+			cryptoCallScanner.getCryptoCalls(), this::_getDescription);
+
+		Assert.assertEquals(descriptions.toString(), 26, descriptions.size());
+		Assert.assertFalse(
+			descriptions.contains("Signature SHA1withRSA [sign, verify]"));
+		Assert.assertTrue(
+			descriptions.contains("Signature SHA256withRSA [sign, verify]"));
 	}
 
 	@Test
@@ -364,6 +400,14 @@ public class CryptoCallScannerTest {
 
 	}
 
+	public static class JWSTestClass {
+
+		public void verify(String algorithm) {
+			FIPSModeValidator.validateJWSAlgorithm(algorithm);
+		}
+
+	}
+
 	public static class KeyFactoryTestClass {
 
 		public PrivateKey getPrivateKey(byte[] bytes) throws Exception {
@@ -544,7 +588,7 @@ public class CryptoCallScannerTest {
 	}
 
 	private String _getDescription(CryptoCall cryptoCall) {
-		StringBundler sb = new StringBundler(10);
+		StringBundler sb = new StringBundler(12);
 
 		sb.append(cryptoCall.getJCAClassName());
 		sb.append(StringPool.SPACE);
@@ -572,6 +616,11 @@ public class CryptoCallScannerTest {
 			sb.append(String.valueOf(cryptoCall.getKeySize()));
 		}
 
+		if (cryptoCall.getCurve() != null) {
+			sb.append(StringPool.SPACE);
+			sb.append(cryptoCall.getCurve());
+		}
+
 		if (ListUtil.isNotEmpty(cryptoCall.getRelatedCryptoMaterialTypes())) {
 			sb.append(StringPool.SPACE);
 			sb.append(
@@ -582,6 +631,36 @@ public class CryptoCallScannerTest {
 		}
 
 		return sb.toString();
+	}
+
+	private byte[] _getOpenSAMLTestClassBytes() {
+		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+
+		classWriter.visit(
+			Opcodes.V21, Opcodes.ACC_PUBLIC,
+			"com/liferay/test/OpenSAMLTestClass", null, "java/lang/Object",
+			null);
+
+		MethodVisitor methodVisitor = classWriter.visitMethod(
+			Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "configure",
+			"()Ljava/lang/Object;", null, null);
+
+		methodVisitor.visitCode();
+		methodVisitor.visitLdcInsn(
+			"http://www.w3.org/2000/09/xmldsig#rsa-sha1");
+		methodVisitor.visitInsn(Opcodes.POP);
+		methodVisitor.visitMethodInsn(
+			Opcodes.INVOKESTATIC,
+			"org/opensaml/xmlsec/config/DefaultSecurityConfigurationBootstrap",
+			"buildDefaultSignatureSigningConfiguration", "()Ljava/lang/Object;",
+			false);
+		methodVisitor.visitInsn(Opcodes.ARETURN);
+		methodVisitor.visitMaxs(0, 0);
+		methodVisitor.visitEnd();
+
+		classWriter.visitEnd();
+
+		return classWriter.toByteArray();
 	}
 
 	private byte[] _read(Class<?> clazz) throws Exception {

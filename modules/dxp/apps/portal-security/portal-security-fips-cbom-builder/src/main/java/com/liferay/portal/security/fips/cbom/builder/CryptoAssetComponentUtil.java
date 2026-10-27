@@ -43,7 +43,7 @@ import org.cyclonedx.model.component.evidence.Occurrence;
 public class CryptoAssetComponentUtil {
 
 	public static String getBOMRef(CryptoCall cryptoCall) {
-		StringBundler sb = new StringBundler(6);
+		StringBundler sb = new StringBundler(8);
 
 		sb.append("crypto:");
 		sb.append(cryptoCall.getJCAClassName());
@@ -68,6 +68,11 @@ public class CryptoAssetComponentUtil {
 		if (cryptoCall.getKeySize() > 0) {
 			sb.append(StringPool.COLON);
 			sb.append(cryptoCall.getKeySize());
+		}
+
+		if (cryptoCall.getCurve() != null) {
+			sb.append(StringPool.COLON);
+			sb.append(cryptoCall.getCurve());
 		}
 
 		return sb.toString();
@@ -102,6 +107,10 @@ public class CryptoAssetComponentUtil {
 
 		if (cryptoCall.getAlgorithm() == null) {
 			return algorithmProperties;
+		}
+
+		if (cryptoCall.getCurve() != null) {
+			algorithmProperties.setCurve(cryptoCall.getCurve());
 		}
 
 		if (cryptoCall.getKeySize() > 0) {
@@ -175,9 +184,14 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static String _getDescription(List<CryptoCall> cryptoCalls) {
+		Set<String> descriptions = new TreeSet<>();
 		Set<String> unresolvedReasons = new TreeSet<>();
 
 		for (CryptoCall cryptoCall : cryptoCalls) {
+			if (cryptoCall.getNote() != null) {
+				descriptions.add(cryptoCall.getNote());
+			}
+
 			if (cryptoCall.isResolved()) {
 				continue;
 			}
@@ -185,13 +199,19 @@ public class CryptoAssetComponentUtil {
 			unresolvedReasons.add(cryptoCall.getUnresolvedReason());
 		}
 
-		if (unresolvedReasons.isEmpty()) {
+		if (!unresolvedReasons.isEmpty()) {
+			descriptions.add(
+				StringBundler.concat(
+					"The scan cannot read the algorithm, which comes from ",
+					StringUtil.merge(unresolvedReasons, ", "),
+					StringPool.PERIOD));
+		}
+
+		if (descriptions.isEmpty()) {
 			return null;
 		}
 
-		return StringBundler.concat(
-			"The scan cannot read the algorithm, which comes from ",
-			StringUtil.merge(unresolvedReasons, ", "), StringPool.PERIOD);
+		return StringUtil.merge(descriptions, StringPool.SPACE);
 	}
 
 	private static Evidence _getEvidence(List<CryptoCall> cryptoCalls) {
@@ -239,8 +259,37 @@ public class CryptoAssetComponentUtil {
 		}
 
 		return CryptoAlgorithmNameUtil.getName(
-			cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName(),
-			cryptoCall.getKeySize());
+			cryptoCall.getAlgorithm(), cryptoCall.getCurve(),
+			cryptoCall.getJCAClassName(), cryptoCall.getKeySize());
+	}
+
+	private static List<Property> _getProperties(List<CryptoCall> cryptoCalls) {
+		CryptoCall cryptoCall = cryptoCalls.get(0);
+
+		List<Property> properties = new ArrayList<>();
+
+		properties.add(
+			new Property(
+				"liferay:cbom:jca-class", cryptoCall.getJCAClassName()));
+
+		Set<String> libraries = new TreeSet<>();
+
+		for (CryptoCall curCryptoCall : cryptoCalls) {
+			if (curCryptoCall.getLibrary() == null) {
+				continue;
+			}
+
+			libraries.add(curCryptoCall.getLibrary());
+		}
+
+		if (!libraries.isEmpty()) {
+			properties.add(
+				new Property(
+					"liferay:cbom:library",
+					StringUtil.merge(libraries, StringPool.COMMA_AND_SPACE)));
+		}
+
+		return properties;
 	}
 
 	private static ProtocolProperties _getProtocolProperties(
@@ -452,10 +501,7 @@ public class CryptoAssetComponentUtil {
 		component.setDescription(_getDescription(bomRefCryptoCalls));
 		component.setEvidence(_getEvidence(bomRefCryptoCalls));
 		component.setName(_getName(cryptoCall));
-		component.setProperties(
-			Collections.singletonList(
-				new Property(
-					"liferay:cbom:jca-class", cryptoCall.getJCAClassName())));
+		component.setProperties(_getProperties(bomRefCryptoCalls));
 		component.setType(Component.Type.CRYPTOGRAPHIC_ASSET);
 
 		return component;

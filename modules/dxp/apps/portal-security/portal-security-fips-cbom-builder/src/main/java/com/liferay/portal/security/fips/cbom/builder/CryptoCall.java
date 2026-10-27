@@ -36,7 +36,10 @@ public class CryptoCall {
 		cryptoCall.setAlgorithm(_algorithm);
 		cryptoCall.setConfiguredBy(_configuredBy);
 		cryptoCall.setCryptoFunctions(_cryptoFunctions);
+		cryptoCall.setCurve(_curve);
 		cryptoCall.setKeySize(_keySize);
+		cryptoCall.setLibrary(_library);
+		cryptoCall.setNote(_note);
 		cryptoCall.setRelatedCryptoMaterialTypes(_relatedCryptoMaterialTypes);
 		cryptoCall.setUnresolvedReason(_unresolvedReason);
 
@@ -63,6 +66,10 @@ public class CryptoCall {
 		return _cryptoFunctions;
 	}
 
+	public String getCurve() {
+		return _curve;
+	}
+
 	public String getFeatureName() {
 		return _featureName;
 	}
@@ -73,6 +80,14 @@ public class CryptoCall {
 
 	public int getKeySize() {
 		return _keySize;
+	}
+
+	public String getLibrary() {
+		return _library;
+	}
+
+	public String getNote() {
+		return _note;
 	}
 
 	public Primitive getPrimitive() {
@@ -111,8 +126,20 @@ public class CryptoCall {
 		_cryptoFunctions = cryptoFunctions;
 	}
 
+	public void setCurve(String curve) {
+		_curve = curve;
+	}
+
 	public void setKeySize(int keySize) {
 		_keySize = keySize;
+	}
+
+	public void setLibrary(String library) {
+		_library = library;
+	}
+
+	public void setNote(String note) {
+		_note = note;
 	}
 
 	public void setRelatedCryptoMaterialTypes(
@@ -130,9 +157,12 @@ public class CryptoCall {
 	private final String _className;
 	private List<String> _configuredBy = Collections.emptyList();
 	private List<CryptoFunction> _cryptoFunctions = Collections.emptyList();
+	private String _curve;
 	private final String _featureName;
 	private final String _jcaClassName;
 	private int _keySize;
+	private String _library;
+	private String _note;
 	private List<RelatedCryptoMaterialType> _relatedCryptoMaterialTypes =
 		Collections.emptyList();
 	private String _unresolvedReason;

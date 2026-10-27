@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.TreeMapBuilder;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.ByteArrayInputStream;
@@ -140,6 +141,104 @@ public class CryptoCallScanner {
 		_scannedClassBytes.add(bytes);
 
 		_scan(bundleSymbolicName, featureName, bytes);
+	}
+
+	private void _addLibraryCryptoCall(
+		String algorithm, String bundleSymbolicName, String className,
+		List<CryptoFunction> cryptoFunctions, String curve, String featureName,
+		String jcaClassName, int keySize, String library, String note,
+		String unresolvedReason) {
+
+		CryptoCall cryptoCall = new CryptoCall(
+			bundleSymbolicName, className, featureName, jcaClassName);
+
+		cryptoCall.setCryptoFunctions(cryptoFunctions);
+		cryptoCall.setCurve(curve);
+		cryptoCall.setLibrary(library);
+		cryptoCall.setNote(note);
+
+		Origin algorithmOrigin = new Origin();
+
+		if (algorithm != null) {
+			algorithmOrigin.addValue(algorithm);
+		}
+
+		if (unresolvedReason != null) {
+			algorithmOrigin.addUnresolvedReason(unresolvedReason);
+		}
+
+		Origin keySizeOrigin = new Origin();
+
+		if (keySize > 0) {
+			keySizeOrigin.addValue(String.valueOf(keySize));
+		}
+
+		_scannedCryptoCalls.add(
+			new ScannedCryptoCall(algorithmOrigin, cryptoCall, keySizeOrigin));
+	}
+
+	private void _addOpenSAMLCryptoCalls(
+		String bundleSymbolicName, String className, Set<String> excludedURIs,
+		String featureName) {
+
+		for (Map.Entry<String, LibraryAlgorithm> entry :
+				_openSAMLAlgorithms.entrySet()) {
+
+			if (excludedURIs.contains(entry.getKey())) {
+				continue;
+			}
+
+			LibraryAlgorithm libraryAlgorithm = entry.getValue();
+
+			CryptoFunction cryptoFunction = _cryptoFunctions.get(
+				libraryAlgorithm.getJCAClassName());
+
+			_addLibraryCryptoCall(
+				libraryAlgorithm.getAlgorithm(), bundleSymbolicName, className,
+				_libraryCryptoFunctions.getOrDefault(
+					libraryAlgorithm.getJCAClassName(),
+					Collections.singletonList(cryptoFunction)),
+				null, featureName, libraryAlgorithm.getJCAClassName(),
+				libraryAlgorithm.getKeySize(), "OpenSAML",
+				StringBundler.concat(
+					"One of OpenSAML's default algorithms, ", entry.getKey(),
+					". The blacklisted.algorithms setting of the SAML ",
+					"configuration can exclude it."),
+				null);
+		}
+	}
+
+	private void _addVerifiedJWSCryptoCalls(
+		String bundleSymbolicName, String className, String featureName) {
+
+		if (!_fipsEnabled) {
+			_addLibraryCryptoCall(
+				null, bundleSymbolicName, className,
+				Collections.singletonList(CryptoFunction.VERIFY), null,
+				featureName, "Signature", 0, "nimbus-jose-jwt", null,
+				"the algorithm in the header of each JSON Web Token, which " +
+					"the token's issuer chooses");
+
+			return;
+		}
+
+		for (String jwsAlgorithm : FIPSModeLimitUtil.getJWSAlgorithms()) {
+			for (LibraryAlgorithm libraryAlgorithm :
+					_jwsAlgorithms.getOrDefault(
+						jwsAlgorithm, Collections.emptyList())) {
+
+				_addLibraryCryptoCall(
+					libraryAlgorithm.getAlgorithm(), bundleSymbolicName,
+					className, Collections.singletonList(CryptoFunction.VERIFY),
+					libraryAlgorithm.getCurve(), featureName,
+					libraryAlgorithm.getJCAClassName(), 0, "nimbus-jose-jwt",
+					StringBundler.concat(
+						"The JWS algorithm ", jwsAlgorithm,
+						", which FIPS mode allows for the tokens this module ",
+						"verifies"),
+					null);
+			}
+		}
 	}
 
 	private Frame<SourceValue>[] _analyze(
@@ -1793,6 +1892,9 @@ public class CryptoCallScanner {
 
 		String className = _getClassName(classNode.name);
 
+		Set<String> excludedOpenSAMLURIs = new TreeSet<>();
+		boolean openSAML = false;
+
 		for (MethodNode methodNode : classNode.methods) {
 			if (methodNode.instructions.size() == 0) {
 				continue;
@@ -1830,6 +1932,44 @@ public class CryptoCallScanner {
 
 			InsnList insnList = methodNode.instructions;
 
+			for (AbstractInsnNode abstractInsnNode : insnList) {
+				if (frames[insnList.indexOf(abstractInsnNode)] == null) {
+					continue;
+				}
+
+				if (abstractInsnNode instanceof LdcInsnNode) {
+					LdcInsnNode ldcInsnNode = (LdcInsnNode)abstractInsnNode;
+
+					if (_openSAMLAlgorithms.containsKey(
+							String.valueOf(ldcInsnNode.cst))) {
+
+						excludedOpenSAMLURIs.add(
+							String.valueOf(ldcInsnNode.cst));
+					}
+				}
+				else if (abstractInsnNode instanceof MethodInsnNode) {
+					MethodInsnNode methodInsnNode =
+						(MethodInsnNode)abstractInsnNode;
+
+					if (Objects.equals(
+							methodInsnNode.owner,
+							_CLASS_NAME_DEFAULT_SECURITY_CONFIGURATION_BOOTSTRAP) &&
+						methodInsnNode.name.startsWith("buildDefault")) {
+
+						openSAML = true;
+					}
+					else if (Objects.equals(
+								methodInsnNode.owner,
+								_CLASS_NAME_FIPS_MODE_VALIDATOR) &&
+							 Objects.equals(
+								 methodInsnNode.name, "validateJWSAlgorithm")) {
+
+						_addVerifiedJWSCryptoCalls(
+							bundleSymbolicName, className, featureName);
+					}
+				}
+			}
+
 			for (MethodInsnNode methodInsnNode : methodInsnNodes) {
 				if (frames[insnList.indexOf(methodInsnNode)] == null) {
 					continue;
@@ -1853,6 +1993,12 @@ public class CryptoCallScanner {
 						cryptoCall,
 						_getKeySizeOrigin(frames, insnList, methodInsnNode)));
 			}
+		}
+
+		if (openSAML) {
+			_addOpenSAMLCryptoCalls(
+				bundleSymbolicName, className, excludedOpenSAMLURIs,
+				featureName);
 		}
 	}
 
@@ -2260,8 +2406,15 @@ public class CryptoCallScanner {
 		}
 	}
 
+	private static final String
+		_CLASS_NAME_DEFAULT_SECURITY_CONFIGURATION_BOOTSTRAP =
+			"org/opensaml/xmlsec/config/DefaultSecurityConfigurationBootstrap";
+
 	private static final String _CLASS_NAME_DIGESTER_UTIL =
 		"com/liferay/portal/kernel/util/DigesterUtil";
+
+	private static final String _CLASS_NAME_FIPS_MODE_VALIDATOR =
+		"com/liferay/portal/kernel/security/fips/FIPSModeValidator";
 
 	private static final String _CLASS_NAME_SECRET_KEY_SPEC =
 		"javax/crypto/spec/SecretKeySpec";
@@ -2357,6 +2510,67 @@ public class CryptoCallScanner {
 		).build();
 	private static final Pattern _jspLiteralPattern = Pattern.compile(
 		"^\"([^\"\\\\]*)\"$");
+	private static final Map<String, List<LibraryAlgorithm>> _jwsAlgorithms =
+		HashMapBuilder.<String, List<LibraryAlgorithm>>put(
+			"EdDSA",
+			Arrays.asList(
+				new LibraryAlgorithm("Ed25519", null, "Signature", 0),
+				new LibraryAlgorithm("Ed448", null, "Signature", 0))
+		).put(
+			"ES256",
+			Collections.singletonList(
+				new LibraryAlgorithm(
+					"SHA256withECDSA", "P-256", "Signature", 0))
+		).put(
+			"ES384",
+			Collections.singletonList(
+				new LibraryAlgorithm(
+					"SHA384withECDSA", "P-384", "Signature", 0))
+		).put(
+			"ES512",
+			Collections.singletonList(
+				new LibraryAlgorithm(
+					"SHA512withECDSA", "P-521", "Signature", 0))
+		).put(
+			"HS256",
+			Collections.singletonList(
+				new LibraryAlgorithm("HmacSHA256", null, "Mac", 0))
+		).put(
+			"HS384",
+			Collections.singletonList(
+				new LibraryAlgorithm("HmacSHA384", null, "Mac", 0))
+		).put(
+			"HS512",
+			Collections.singletonList(
+				new LibraryAlgorithm("HmacSHA512", null, "Mac", 0))
+		).put(
+			"PS256",
+			Collections.singletonList(
+				new LibraryAlgorithm(
+					"SHA256withRSAandMGF1", null, "Signature", 0))
+		).put(
+			"PS384",
+			Collections.singletonList(
+				new LibraryAlgorithm(
+					"SHA384withRSAandMGF1", null, "Signature", 0))
+		).put(
+			"PS512",
+			Collections.singletonList(
+				new LibraryAlgorithm(
+					"SHA512withRSAandMGF1", null, "Signature", 0))
+		).put(
+			"RS256",
+			Collections.singletonList(
+				new LibraryAlgorithm("SHA256withRSA", null, "Signature", 0))
+		).put(
+			"RS384",
+			Collections.singletonList(
+				new LibraryAlgorithm("SHA384withRSA", null, "Signature", 0))
+		).put(
+			"RS512",
+			Collections.singletonList(
+				new LibraryAlgorithm("SHA512withRSA", null, "Signature", 0))
+		).build();
 	private static final Set<String> _keyClassNames = SetUtil.fromArray(
 		"java/security/Key", "java/security/PrivateKey",
 		"java/security/PublicKey", "javax/crypto/SecretKey",
@@ -2373,9 +2587,105 @@ public class CryptoCallScanner {
 		).put(
 			"javax/crypto/KeyGenerator", "init"
 		).build();
+	private static final Map<String, List<CryptoFunction>>
+		_libraryCryptoFunctions =
+			HashMapBuilder.<String, List<CryptoFunction>>put(
+				"Cipher",
+				Arrays.asList(CryptoFunction.DECRYPT, CryptoFunction.ENCRYPT)
+			).put(
+				"Signature",
+				Arrays.asList(CryptoFunction.SIGN, CryptoFunction.VERIFY)
+			).build();
 	private static final List<String> _needles = Arrays.asList(
-		_CLASS_NAME_DIGESTER_UTIL, "/PropsUtil", "java/security/",
+		_CLASS_NAME_DEFAULT_SECURITY_CONFIGURATION_BOOTSTRAP,
+		_CLASS_NAME_DIGESTER_UTIL, _CLASS_NAME_FIPS_MODE_VALIDATOR,
+		"/PropsUtil", "com/nimbusds/jose/JWSAlgorithm", "java/security/",
 		"javax/crypto/", "javax/net/ssl/");
+	private static final Map<String, LibraryAlgorithm> _openSAMLAlgorithms =
+		TreeMapBuilder.<String, LibraryAlgorithm>put(
+			"http://www.w3.org/2000/09/xmldsig#dsa-sha1",
+			new LibraryAlgorithm("SHA1withDSA", null, "Signature", 0)
+		).put(
+			"http://www.w3.org/2000/09/xmldsig#hmac-sha1",
+			new LibraryAlgorithm("HmacSHA1", null, "Mac", 0)
+		).put(
+			"http://www.w3.org/2000/09/xmldsig#rsa-sha1",
+			new LibraryAlgorithm("SHA1withRSA", null, "Signature", 0)
+		).put(
+			"http://www.w3.org/2000/09/xmldsig#sha1",
+			new LibraryAlgorithm("SHA-1", null, "MessageDigest", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha1",
+			new LibraryAlgorithm("SHA1withECDSA", null, "Signature", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256",
+			new LibraryAlgorithm("SHA256withECDSA", null, "Signature", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha384",
+			new LibraryAlgorithm("SHA384withECDSA", null, "Signature", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512",
+			new LibraryAlgorithm("SHA512withECDSA", null, "Signature", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmldsig-more#hmac-sha256",
+			new LibraryAlgorithm("HmacSHA256", null, "Mac", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmldsig-more#hmac-sha384",
+			new LibraryAlgorithm("HmacSHA384", null, "Mac", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmldsig-more#hmac-sha512",
+			new LibraryAlgorithm("HmacSHA512", null, "Mac", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+			new LibraryAlgorithm("SHA256withRSA", null, "Signature", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmldsig-more#rsa-sha384",
+			new LibraryAlgorithm("SHA384withRSA", null, "Signature", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmldsig-more#rsa-sha512",
+			new LibraryAlgorithm("SHA512withRSA", null, "Signature", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmldsig-more#sha384",
+			new LibraryAlgorithm("SHA-384", null, "MessageDigest", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#aes128-cbc",
+			new LibraryAlgorithm("AES/CBC/ISO10126Padding", null, "Cipher", 128)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#aes192-cbc",
+			new LibraryAlgorithm("AES/CBC/ISO10126Padding", null, "Cipher", 192)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+			new LibraryAlgorithm("AES/CBC/ISO10126Padding", null, "Cipher", 256)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#kw-aes128",
+			new LibraryAlgorithm("AESWrap", null, "Cipher", 128)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#kw-aes192",
+			new LibraryAlgorithm("AESWrap", null, "Cipher", 192)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#kw-aes256",
+			new LibraryAlgorithm("AESWrap", null, "Cipher", 256)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#kw-tripledes",
+			new LibraryAlgorithm("DESedeWrap", null, "Cipher", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#rsa-1_5",
+			new LibraryAlgorithm("RSA/ECB/PKCS1Padding", null, "Cipher", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p",
+			new LibraryAlgorithm(
+				"RSA/ECB/OAEPWithSHA-1AndMGF1Padding", null, "Cipher", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#sha256",
+			new LibraryAlgorithm("SHA-256", null, "MessageDigest", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#sha512",
+			new LibraryAlgorithm("SHA-512", null, "MessageDigest", 0)
+		).put(
+			"http://www.w3.org/2001/04/xmlenc#tripledes-cbc",
+			new LibraryAlgorithm(
+				"DESede/CBC/ISO10126Padding", null, "Cipher", 0)
+		).build();
 	private static final Map<String, Function<String, String>>
 		_stringFunctions = HashMapBuilder.<String, Function<String, String>>put(
 			"com/liferay/petra/string/StringUtil.toLowerCase",
@@ -2418,6 +2728,40 @@ public class CryptoCallScanner {
 	private final Map<String, Origin> _springOrigins = new HashMap<>();
 	private final Map<String, List<String>> _subtypeNames = new HashMap<>();
 	private final Map<String, List<String>> _superTypeNames = new HashMap<>();
+
+	private static class LibraryAlgorithm {
+
+		public LibraryAlgorithm(
+			String algorithm, String curve, String jcaClassName, int keySize) {
+
+			_algorithm = algorithm;
+			_curve = curve;
+			_jcaClassName = jcaClassName;
+			_keySize = keySize;
+		}
+
+		public String getAlgorithm() {
+			return _algorithm;
+		}
+
+		public String getCurve() {
+			return _curve;
+		}
+
+		public String getJCAClassName() {
+			return _jcaClassName;
+		}
+
+		public int getKeySize() {
+			return _keySize;
+		}
+
+		private final String _algorithm;
+		private final String _curve;
+		private final String _jcaClassName;
+		private final int _keySize;
+
+	}
 
 	private static class Origin {
 

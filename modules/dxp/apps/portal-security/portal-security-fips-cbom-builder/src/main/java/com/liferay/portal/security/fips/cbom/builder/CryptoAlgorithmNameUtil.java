@@ -6,6 +6,7 @@
 package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -19,9 +20,23 @@ import java.util.Objects;
 public class CryptoAlgorithmNameUtil {
 
 	public static String getName(
-		String algorithm, String jcaClassName, int keySize) {
+		String algorithm, String curve, String jcaClassName, int keySize) {
 
 		String name = _getName(algorithm, jcaClassName);
+
+		if ((curve != null) &&
+			(name.startsWith("ECDSA") || name.startsWith("ECDH"))) {
+
+			int index = name.indexOf(CharPool.DASH);
+
+			if (index == -1) {
+				return name + StringPool.DASH + curve;
+			}
+
+			return StringBundler.concat(
+				name.substring(0, index), StringPool.DASH, curve,
+				name.substring(index));
+		}
 
 		if (keySize <= 0) {
 			return name;
@@ -83,6 +98,17 @@ public class CryptoAlgorithmNameUtil {
 
 		if (Objects.equals(jcaClassName, "Signature")) {
 			return _getSignatureName(algorithm, upperCaseAlgorithm);
+		}
+
+		if (Objects.equals(jcaClassName, "SecretKeyFactory") &&
+			upperCaseAlgorithm.startsWith("PBKDF2WITHHMAC")) {
+
+			String digestName = _digestNames.get(
+				upperCaseAlgorithm.substring(14));
+
+			if (digestName != null) {
+				return "PBKDF2-" + digestName;
+			}
 		}
 
 		if (upperCaseAlgorithm.startsWith("HMAC")) {
@@ -147,6 +173,8 @@ public class CryptoAlgorithmNameUtil {
 	private static final Map<String, String> _cipherNames = HashMapBuilder.put(
 		"AES", "AES"
 	).put(
+		"AESWRAP", "AES-KW"
+	).put(
 		"ARCFOUR", "RC4"
 	).put(
 		"BLOWFISH", "Blowfish"
@@ -158,6 +186,8 @@ public class CryptoAlgorithmNameUtil {
 		"DES", "DES"
 	).put(
 		"DESEDE", "3DES"
+	).put(
+		"DESEDEWRAP", "3DES-KW"
 	).put(
 		"RC4", "RC4"
 	).put(
@@ -239,6 +269,8 @@ public class CryptoAlgorithmNameUtil {
 			"RSA", "RSA-PKCS1-1.5"
 		).put(
 			"RSA/PSS", "RSA-PSS"
+		).put(
+			"RSAANDMGF1", "RSA-PSS"
 		).build();
 
 }
