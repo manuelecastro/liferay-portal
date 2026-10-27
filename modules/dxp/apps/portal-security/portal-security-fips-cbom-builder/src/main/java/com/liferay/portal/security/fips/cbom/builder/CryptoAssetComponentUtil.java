@@ -114,9 +114,27 @@ public class CryptoAssetComponentUtil {
 		}
 
 		properties.put("liferay:cbom:fips-approval-status", fipsApprovalStatus);
+		properties.put(
+			"liferay:cbom:pqc-readiness", cryptoAssessment.getPQCReadiness());
 
 		if (cryptoAssessment.isFIPSModuleProvider(providerName)) {
 			properties.putAll(cryptoAssessment.getModuleProperties());
+		}
+
+		String curveUse = _getCurveUse(component.getName());
+
+		if (curveUse != null) {
+			String curve = _getCurve(component.getName(), cryptoCall);
+
+			properties.put(
+				"liferay:cbom:sp800-186-curve-status",
+				cryptoAssessment.getCurveStatus(curve));
+
+			if ((curve != null) &&
+				!cryptoAssessment.isNISTApprovedCurve(curve, curveUse)) {
+
+				properties.put("liferay:cbom:non-nist-approved-curve", "true");
+			}
 		}
 
 		component.setProperties(
@@ -136,6 +154,9 @@ public class CryptoAssetComponentUtil {
 		algorithmProperties.setCertificationLevel(
 			Collections.singletonList(
 				cryptoAssessment.getCertificationLevel(fipsApprovalStatus)));
+		algorithmProperties.setNistQuantumSecurityLevel(
+			cryptoAssessment.fetchNISTQuantumSecurityLevel(
+				component.getName()));
 	}
 
 	private static AlgorithmProperties _getAlgorithmProperties(
@@ -225,6 +246,38 @@ public class CryptoAssetComponentUtil {
 		}
 
 		return new ArrayList<>(cryptoFunctions);
+	}
+
+	private static String _getCurve(String name, CryptoCall cryptoCall) {
+		if (cryptoCall.getCurve() != null) {
+			return cryptoCall.getCurve();
+		}
+
+		return _curves.get(name);
+	}
+
+	private static String _getCurveUse(String name) {
+		if (name.startsWith("ECDH")) {
+			return "ECDH";
+		}
+
+		if (name.startsWith("ECDSA")) {
+			return "ECDSA";
+		}
+
+		if (name.equals("EC") || name.startsWith("EC-")) {
+			return "EC";
+		}
+
+		if (name.equals("Ed25519") || name.equals("Ed448")) {
+			return "EdDSA";
+		}
+
+		if (name.equals("x25519") || name.equals("x448")) {
+			return "XDH";
+		}
+
+		return null;
 	}
 
 	private static String _getDescription(List<CryptoCall> cryptoCalls) {
@@ -565,6 +618,15 @@ public class CryptoAssetComponentUtil {
 		).put(
 			"SSLContext", AssetType.PROTOCOL
 		).build();
+	private static final Map<String, String> _curves = HashMapBuilder.put(
+		"Ed448", "Edwards448"
+	).put(
+		"Ed25519", "Edwards25519"
+	).put(
+		"x448", "Curve448"
+	).put(
+		"x25519", "Curve25519"
+	).build();
 	private static final Set<String> _keyAlgorithmJCAClassNames =
 		SetUtil.fromArray("Cipher", "KeyAgreement", "Mac", "Signature");
 

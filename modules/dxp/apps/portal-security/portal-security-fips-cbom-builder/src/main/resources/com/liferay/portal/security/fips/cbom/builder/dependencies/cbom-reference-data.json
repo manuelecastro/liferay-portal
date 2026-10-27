@@ -1,4 +1,83 @@
 {
+	"curves": [
+		{
+			"names": [
+				"P-224",
+				"P-256",
+				"P-384",
+				"P-521"
+			],
+			"source": "NIST SP 800-186 (February 2023), Table 2: allowed for ECDSA and EC key establishment",
+			"status": "approved-for-ecdsa-and-ec-key-establishment",
+			"uses": [
+				"EC",
+				"ECDH",
+				"ECDSA"
+			]
+		},
+		{
+			"names": [
+				"Edwards25519",
+				"Edwards448"
+			],
+			"source": "NIST SP 800-186 (February 2023), Table 2: allowed for EdDSA",
+			"status": "approved-for-eddsa",
+			"uses": [
+				"EdDSA"
+			]
+		},
+		{
+			"names": [
+				"Curve25519",
+				"Curve448",
+				"E448",
+				"W-25519",
+				"W-448"
+			],
+			"source": "NIST SP 800-186 (February 2023), Table 2: \"Not to be used for ECDSA or EdDSA directly\"",
+			"status": "not-for-direct-use",
+			"uses": [
+			]
+		},
+		{
+			"names": [
+				"brainpoolP224r1",
+				"brainpoolP256r1",
+				"brainpoolP320r1",
+				"brainpoolP384r1",
+				"brainpoolP512r1"
+			],
+			"source": "NIST SP 800-186 (February 2023), Executive Summary: allowed for interoperability only",
+			"status": "interoperability-only",
+			"uses": [
+			]
+		},
+		{
+			"names": [
+				"secp256k1"
+			],
+			"source": "NIST SP 800-186 (February 2023), Executive Summary: allowed for blockchain-related applications only",
+			"status": "blockchain-only",
+			"uses": [
+			]
+		},
+		{
+			"names": [
+				"B-233",
+				"B-283",
+				"B-409",
+				"B-571",
+				"K-233",
+				"K-283",
+				"K-409",
+				"K-571"
+			],
+			"source": "NIST SP 800-186 (February 2023), Executive Summary and Table 2: deprecated",
+			"status": "deprecated",
+			"uses": [
+			]
+		}
+	],
 	"modules": [
 		{
 			"certificate": {
@@ -106,6 +185,49 @@
 			"versions": [
 				"2.1.1"
 			]
+		}
+	],
+	"pqcReadiness": {
+		"source": "Not set until AppSec decides the PQC classification policy (LPD-93640 refinement, D7)",
+		"value": "UNKNOWN"
+	},
+	"quantumSecurityLevels": [
+		{
+			"families": [
+				"DSA",
+				"EC",
+				"ECDH",
+				"ECDSA",
+				"Ed25519",
+				"Ed448",
+				"FFDH",
+				"RSA",
+				"x25519",
+				"x448"
+			],
+			"level": 0,
+			"source": "OWASP CycloneDX Authoritative Guide to CBOM, second edition (2025-10-21): the examples of an RSA signature, ECDH and X25519 have nistQuantumSecurityLevel 0"
+		},
+		{
+			"families": [
+				"AES-128"
+			],
+			"level": 1,
+			"source": "OWASP CycloneDX Authoritative Guide to CBOM, second edition (2025-10-21): the example of AES-128-GCM has nistQuantumSecurityLevel 1"
+		},
+		{
+			"families": [
+				"AES-192"
+			],
+			"level": 3,
+			"source": "NIST PQC security categories: category 3 is as hard as a key search on AES-192"
+		},
+		{
+			"families": [
+				"AES-256"
+			],
+			"level": 5,
+			"source": "NIST PQC security categories: category 5 is as hard as a key search on AES-256"
 		}
 	],
 	"schemaVersion": "1.0"

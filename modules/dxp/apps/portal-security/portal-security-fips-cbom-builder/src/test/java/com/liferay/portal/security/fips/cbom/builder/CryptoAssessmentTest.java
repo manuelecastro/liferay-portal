@@ -5,6 +5,7 @@
 
 package com.liferay.portal.security.fips.cbom.builder;
 
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -28,6 +29,30 @@ public class CryptoAssessmentTest {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Test
+	public void testFetchNISTQuantumSecurityLevel() throws Exception {
+		CryptoAssessment cryptoAssessment = CryptoAssessment.load(null, null);
+
+		Assert.assertEquals(
+			Integer.valueOf(0),
+			cryptoAssessment.fetchNISTQuantumSecurityLevel(
+				"ECDSA-P-256-SHA-256"));
+		Assert.assertEquals(
+			Integer.valueOf(0),
+			cryptoAssessment.fetchNISTQuantumSecurityLevel(
+				"RSA-PKCS1-1.5-SHA-256"));
+		Assert.assertEquals(
+			Integer.valueOf(1),
+			cryptoAssessment.fetchNISTQuantumSecurityLevel("AES-128-GCM"));
+		Assert.assertEquals(
+			Integer.valueOf(5),
+			cryptoAssessment.fetchNISTQuantumSecurityLevel("AES-256"));
+		Assert.assertNull(
+			cryptoAssessment.fetchNISTQuantumSecurityLevel("AES-GCM"));
+		Assert.assertNull(
+			cryptoAssessment.fetchNISTQuantumSecurityLevel("HMAC-SHA-256"));
+	}
+
+	@Test
 	public void testGetCertificationLevel() throws Exception {
 		CryptoAssessment cryptoAssessment = CryptoAssessment.load(
 			"BCFIPS", "2.1.1");
@@ -47,6 +72,27 @@ public class CryptoAssessmentTest {
 		Assert.assertEquals(
 			CertificationLevel.NONE,
 			cryptoAssessment.getCertificationLevel("APPROVED"));
+	}
+
+	@Test
+	public void testGetCurveStatus() throws Exception {
+		CryptoAssessment cryptoAssessment = CryptoAssessment.load(null, null);
+
+		Assert.assertEquals(
+			"approved-for-ecdsa-and-ec-key-establishment",
+			cryptoAssessment.getCurveStatus("P-256"));
+		Assert.assertEquals(
+			"approved-for-eddsa",
+			cryptoAssessment.getCurveStatus("Edwards25519"));
+		Assert.assertEquals(
+			"blockchain-only", cryptoAssessment.getCurveStatus("secp256k1"));
+		Assert.assertEquals(
+			"not-for-direct-use",
+			cryptoAssessment.getCurveStatus("Curve25519"));
+		Assert.assertEquals(
+			"not-listed",
+			cryptoAssessment.getCurveStatus(RandomTestUtil.randomString()));
+		Assert.assertEquals("unknown", cryptoAssessment.getCurveStatus(null));
 	}
 
 	@Test
@@ -125,6 +171,22 @@ public class CryptoAssessmentTest {
 				"CKG using output from the DRBG (SP 800-133, Section 4), per " +
 					"FIPS 140-3 IG D.H"),
 			cryptoAssessment.getVendorAffirmedMethods());
+	}
+
+	@Test
+	public void testIsNISTApprovedCurve() throws Exception {
+		CryptoAssessment cryptoAssessment = CryptoAssessment.load(null, null);
+
+		Assert.assertTrue(
+			cryptoAssessment.isNISTApprovedCurve("Edwards448", "EdDSA"));
+		Assert.assertTrue(
+			cryptoAssessment.isNISTApprovedCurve("P-384", "ECDH"));
+		Assert.assertFalse(
+			cryptoAssessment.isNISTApprovedCurve("Curve25519", "XDH"));
+		Assert.assertFalse(
+			cryptoAssessment.isNISTApprovedCurve("P-256", "EdDSA"));
+		Assert.assertFalse(
+			cryptoAssessment.isNISTApprovedCurve("secp256k1", "ECDSA"));
 	}
 
 }

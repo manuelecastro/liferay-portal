@@ -68,6 +68,20 @@ public class CryptoAssessment {
 		return source.substring(0, source.indexOf(CharPool.COMMA));
 	}
 
+	public Integer fetchNISTQuantumSecurityLevel(String name) {
+		for (JsonNode jsonNode :
+				_referenceDataJsonNode.get("quantumSecurityLevels")) {
+
+			for (JsonNode familyJsonNode : jsonNode.get("families")) {
+				if (_isFamily(familyJsonNode.asText(), name)) {
+					return _getInt(jsonNode, "level");
+				}
+			}
+		}
+
+		return null;
+	}
+
 	public CertificationLevel getCertificationLevel(String fipsApprovalStatus) {
 		if ((_moduleJsonNode == null) ||
 			(!Objects.equals(fipsApprovalStatus, "APPROVED") &&
@@ -80,6 +94,22 @@ public class CryptoAssessment {
 
 		return CertificationLevel.fromString(
 			_getText(certificateJsonNode, "level"));
+	}
+
+	public String getCurveStatus(String curve) {
+		if (curve == null) {
+			return "unknown";
+		}
+
+		for (JsonNode jsonNode : _referenceDataJsonNode.get("curves")) {
+			if (!_contains(jsonNode.get("names"), curve)) {
+				continue;
+			}
+
+			return _getText(jsonNode, "status");
+		}
+
+		return "not-listed";
 	}
 
 	public String getFIPSApprovalStatus(
@@ -128,6 +158,12 @@ public class CryptoAssessment {
 		).build();
 	}
 
+	public String getPQCReadiness() {
+		JsonNode jsonNode = _referenceDataJsonNode.get("pqcReadiness");
+
+		return _getText(jsonNode, "value");
+	}
+
 	public List<String> getVendorAffirmedMethods() {
 		if (_moduleJsonNode == null) {
 			return Collections.emptyList();
@@ -165,6 +201,16 @@ public class CryptoAssessment {
 		return true;
 	}
 
+	public boolean isNISTApprovedCurve(String curve, String use) {
+		for (JsonNode jsonNode : _referenceDataJsonNode.get("curves")) {
+			if (_contains(jsonNode.get("names"), curve)) {
+				return _contains(jsonNode.get("uses"), use);
+			}
+		}
+
+		return false;
+	}
+
 	private boolean _contains(JsonNode jsonNode, String value) {
 		for (JsonNode elementJsonNode : jsonNode) {
 			if (Objects.equals(elementJsonNode.asText(), value)) {
@@ -192,6 +238,12 @@ public class CryptoAssessment {
 		}
 
 		return null;
+	}
+
+	private int _getInt(JsonNode jsonNode, String fieldName) {
+		JsonNode fieldJsonNode = jsonNode.get(fieldName);
+
+		return fieldJsonNode.asInt();
 	}
 
 	private String _getText(JsonNode jsonNode, String fieldName) {
