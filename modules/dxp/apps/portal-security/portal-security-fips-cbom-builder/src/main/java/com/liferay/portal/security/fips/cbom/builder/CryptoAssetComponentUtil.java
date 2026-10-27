@@ -54,7 +54,7 @@ import org.cyclonedx.model.component.evidence.Occurrence;
  */
 public class CryptoAssetComponentUtil {
 
-	public static String getBOMRef(CryptoCall cryptoCall) throws Exception {
+	public static String getBOMRef(CryptoCall cryptoCall) {
 		StringBundler sb = new StringBundler(6);
 
 		sb.append("crypto:");
@@ -87,9 +87,7 @@ public class CryptoAssetComponentUtil {
 		return sb.toString();
 	}
 
-	public static List<Component> toComponents(List<CryptoCall> cryptoCalls)
-		throws Exception {
-
+	public static List<Component> toComponents(List<CryptoCall> cryptoCalls) {
 		Map<String, List<CryptoCall>> cryptoCallsMap = new TreeMap<>();
 
 		for (CryptoCall cryptoCall : cryptoCalls) {
@@ -99,7 +97,7 @@ public class CryptoAssetComponentUtil {
 			bomRefCryptoCalls.add(cryptoCall);
 		}
 
-		return TransformUtil.unsafeTransform(
+		return TransformUtil.transform(
 			cryptoCallsMap.entrySet(),
 			entry -> _toComponent(
 				entry.getKey(), entry.getValue(), cryptoCalls));
@@ -143,8 +141,7 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static String _getAlgorithmRef(
-			List<CryptoCall> cryptoCalls, List<CryptoCall> keyCryptoCalls)
-		throws Exception {
+		List<CryptoCall> cryptoCalls, List<CryptoCall> keyCryptoCalls) {
 
 		TreeSet<String> algorithmRefs = new TreeSet<>();
 
@@ -253,7 +250,7 @@ public class CryptoAssetComponentUtil {
 		return Mode.OTHER;
 	}
 
-	private static String _getName(CryptoCall cryptoCall) throws Exception {
+	private static String _getName(CryptoCall cryptoCall) {
 		if (cryptoCall.isConfigurable()) {
 			List<String> configuredBy = cryptoCall.getConfiguredBy();
 
@@ -302,8 +299,7 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static ProtocolProperties _getProtocolProperties(
-			CryptoCall cryptoCall)
-		throws Exception {
+		CryptoCall cryptoCall) {
 
 		ProtocolProperties protocolProperties = new ProtocolProperties();
 
@@ -331,9 +327,8 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static RelatedCryptoMaterialProperties
-			_getRelatedCryptoMaterialProperties(
-				List<CryptoCall> cryptoCalls, List<CryptoCall> keyCryptoCalls)
-		throws Exception {
+		_getRelatedCryptoMaterialProperties(
+			List<CryptoCall> cryptoCalls, List<CryptoCall> keyCryptoCalls) {
 
 		RelatedCryptoMaterialProperties relatedCryptoMaterialProperties =
 			new RelatedCryptoMaterialProperties();
@@ -384,8 +379,7 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static boolean _isKeyAlgorithm(
-			CryptoCall cryptoCall, CryptoCall keyCryptoCall)
-		throws Exception {
+		CryptoCall cryptoCall, CryptoCall keyCryptoCall) {
 
 		if (keyCryptoCall.isConfigurable()) {
 			return true;
@@ -495,9 +489,8 @@ public class CryptoAssetComponentUtil {
 	}
 
 	private static Component _toComponent(
-			String bomRef, List<CryptoCall> bomRefCryptoCalls,
-			List<CryptoCall> cryptoCalls)
-		throws Exception {
+		String bomRef, List<CryptoCall> bomRefCryptoCalls,
+		List<CryptoCall> cryptoCalls) {
 
 		Component component = new Component();
 		CryptoProperties cryptoProperties = new CryptoProperties();

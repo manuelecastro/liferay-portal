@@ -44,8 +44,7 @@ import javax.net.ssl.TrustManagerFactory;
 public class CryptoProviderUtil {
 
 	public static String fetchProviderName(
-			String algorithm, String jcaClassName)
-		throws Exception {
+		String algorithm, String jcaClassName) {
 
 		if (!isSupportedJCAClassName(jcaClassName)) {
 			return null;
@@ -63,8 +62,8 @@ public class CryptoProviderUtil {
 		}
 	}
 
-	public static String getAlgorithmName(String algorithm, String jcaClassName)
-		throws Exception {
+	public static String getAlgorithmName(
+		String algorithm, String jcaClassName) {
 
 		if (!isSupportedJCAClassName(jcaClassName)) {
 			return algorithm;
@@ -103,7 +102,7 @@ public class CryptoProviderUtil {
 	}
 
 	public static String getProviderName(String algorithm, String jcaClassName)
-		throws Exception {
+		throws GeneralSecurityException {
 
 		Provider provider = _getProvider(algorithm, jcaClassName);
 
@@ -115,10 +114,10 @@ public class CryptoProviderUtil {
 	}
 
 	private static Provider _getProvider(String algorithm, String jcaClassName)
-		throws Exception {
+		throws GeneralSecurityException {
 
-		UnsafeFunction<String, Provider, Exception> unsafeFunction =
-			_providerUnsafeFunctions.get(jcaClassName);
+		UnsafeFunction<String, Provider, GeneralSecurityException>
+			unsafeFunction = _providerUnsafeFunctions.get(jcaClassName);
 
 		if (unsafeFunction == null) {
 			throw new IllegalArgumentException(
@@ -132,16 +131,18 @@ public class CryptoProviderUtil {
 		CryptoProviderUtil.class);
 
 	private static final Map
-		<String, UnsafeFunction<String, Provider, Exception>>
+		<String, UnsafeFunction<String, Provider, GeneralSecurityException>>
 			_providerUnsafeFunctions =
 				HashMapBuilder.
-					<String, UnsafeFunction<String, Provider, Exception>>put(
-						"Cipher",
-						algorithm -> {
-							Cipher cipher = Cipher.getInstance(algorithm);
+					<String,
+					 UnsafeFunction<String, Provider, GeneralSecurityException>>
+						put(
+							"Cipher",
+							algorithm -> {
+								Cipher cipher = Cipher.getInstance(algorithm);
 
-							return cipher.getProvider();
-						}
+								return cipher.getProvider();
+							}
 					).put(
 						"KeyAgreement",
 						algorithm -> {

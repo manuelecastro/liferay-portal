@@ -34,9 +34,7 @@ import org.cyclonedx.model.component.data.ComponentData;
  */
 public class CryptoDependencyUtil {
 
-	public static List<Component> toComponents(List<CryptoCall> cryptoCalls)
-		throws Exception {
-
+	public static List<Component> toComponents(List<CryptoCall> cryptoCalls) {
 		Map<String, Component> componentsMap = new TreeMap<>();
 
 		for (CryptoCall cryptoCall : cryptoCalls) {
@@ -63,8 +61,8 @@ public class CryptoDependencyUtil {
 		return new ArrayList<>(componentsMap.values());
 	}
 
-	public static List<Dependency> toDependencies(List<CryptoCall> cryptoCalls)
-		throws Exception {
+	public static List<Dependency> toDependencies(
+		List<CryptoCall> cryptoCalls) {
 
 		Map<String, Set<String>> dependsOnMap = new TreeMap<>();
 
@@ -109,8 +107,7 @@ public class CryptoDependencyUtil {
 	}
 
 	public static Map<String, Set<String>> toProvides(
-			List<CryptoCall> cryptoCalls)
-		throws Exception {
+		List<CryptoCall> cryptoCalls) {
 
 		Map<String, Set<String>> provides = new TreeMap<>();
 
@@ -130,9 +127,7 @@ public class CryptoDependencyUtil {
 		return provides;
 	}
 
-	private static String _fetchProviderName(CryptoCall cryptoCall)
-		throws Exception {
-
+	private static String _fetchProviderName(CryptoCall cryptoCall) {
 		if (cryptoCall.getAlgorithm() == null) {
 			return null;
 		}
