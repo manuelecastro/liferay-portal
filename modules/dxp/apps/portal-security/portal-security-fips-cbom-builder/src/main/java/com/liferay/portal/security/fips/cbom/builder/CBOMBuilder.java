@@ -7,9 +7,11 @@ package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.security.xml.SecureXMLFactoryProviderImpl;
 
@@ -19,11 +21,15 @@ import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
+import java.security.Provider;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.cyclonedx.model.Component;
@@ -34,7 +40,8 @@ import org.cyclonedx.model.Component;
 public class CBOMBuilder {
 
 	public static String build(
-			String configurationName, List<CryptoCall> cryptoCalls)
+			String configurationName, List<CryptoCall> cryptoCalls,
+			Map<String, String> properties)
 		throws Exception {
 
 		List<Component> components = new ArrayList<>(
@@ -48,35 +55,67 @@ public class CBOMBuilder {
 			components, configurationName,
 			CryptoDependencyUtil.toDependencies(cryptoCalls),
 			ReleaseInfo.getName(), ReleaseInfo.getVersionDisplayName(),
-			CryptoDependencyUtil.toProvides(cryptoCalls));
+			properties, CryptoDependencyUtil.toProvides(cryptoCalls));
 	}
 
 	public static void main(String[] args) throws Exception {
+		File configurationDir = new File(args[0]);
+
+		Properties portalExtProperties = _loadProperties(
+			new File(configurationDir, "portal-ext.properties"));
+
+		boolean fipsEnabled = GetterUtil.getBoolean(
+			portalExtProperties.getProperty("fips.enabled"));
+
+		if (fipsEnabled) {
+			for (String key : portalExtProperties.stringPropertyNames()) {
+				PropsUtil.set(key, portalExtProperties.getProperty(key));
+			}
+
+			try {
+				FIPSModeValidator.validate();
+			}
+			catch (SecurityException securityException) {
+				String message = StringBundler.concat(
+					"Unable to build the CBOM of ", configurationDir.getName(),
+					" because its configuration fails FIPS mode's startup ",
+					"checks: ", securityException.getMessage());
+
+				if (GetterUtil.getBoolean(System.getProperty("cbom.release"))) {
+					throw new IllegalStateException(message, securityException);
+				}
+
+				System.out.println("WARNING: " + message);
+
+				return;
+			}
+		}
+
 		SecureXMLFactoryProviderUtil secureXMLFactoryProviderUtil =
 			new SecureXMLFactoryProviderUtil();
 
 		secureXMLFactoryProviderUtil.setSecureXMLFactoryProvider(
 			new SecureXMLFactoryProviderImpl());
 
-		File configurationDir = new File(args[0]);
-
-		Properties portalExtProperties = _loadProperties(
-			new File(configurationDir, "portal-ext.properties"));
-
-		if (GetterUtil.getBoolean(
-				portalExtProperties.getProperty("fips.enabled"))) {
-
-			throw new UnsupportedOperationException(
-				"Unable to build the CBOM of a FIPS mode configuration");
-		}
-
-		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner(false);
+		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner(
+			fipsEnabled);
 
 		for (File file : _getFiles(new File(args[3]), new File(args[2]))) {
 			cryptoCallScanner.scan(file);
 		}
 
 		List<CryptoCall> cryptoCalls = cryptoCallScanner.getCryptoCalls();
+
+		Map<String, String> properties = new TreeMap<>();
+
+		if (fipsEnabled) {
+			Provider provider = FIPSModeValidator.fetchProvider();
+
+			properties.put(
+				"liferay:cbom:fips-provider",
+				provider.getName() + StringPool.SPACE +
+					provider.getVersionStr());
+		}
 
 		Set<String> messages = new TreeSet<>();
 
@@ -97,7 +136,8 @@ public class CBOMBuilder {
 			System.out.println(message);
 		}
 
-		String cbomJSON = build(configurationDir.getName(), cryptoCalls);
+		String cbomJSON = build(
+			configurationDir.getName(), cryptoCalls, properties);
 
 		File file = new File(args[1]);
 

@@ -78,18 +78,22 @@ public class CycloneDXCBOMWriterTest {
 			).build();
 
 		String configurationName = RandomTestUtil.randomString();
+		String fipsProvider = RandomTestUtil.randomString();
 		String productName = RandomTestUtil.randomString();
 		String productVersion = RandomTestUtil.randomString();
 
+		Map<String, String> properties = Collections.singletonMap(
+			"liferay:cbom:fips-provider", fipsProvider);
+
 		String json = CycloneDXCBOMWriter.write(
 			components, configurationName, dependencies, productName,
-			productVersion, provides);
+			productVersion, properties, provides);
 
 		Assert.assertEquals(
 			json,
 			CycloneDXCBOMWriter.write(
 				components, configurationName, dependencies, productName,
-				productVersion, provides));
+				productVersion, properties, provides));
 
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(json);
 
@@ -146,6 +150,11 @@ public class CycloneDXCBOMWriterTest {
 							"value", configurationName
 						),
 						JSONUtil.put(
+							"name", "liferay:cbom:fips-provider"
+						).put(
+							"value", fipsProvider
+						),
+						JSONUtil.put(
 							"name", "liferay:cbom:schema-version"
 						).put(
 							"value", "1.0"
@@ -164,12 +173,12 @@ public class CycloneDXCBOMWriterTest {
 			json,
 			CycloneDXCBOMWriter.write(
 				components, RandomTestUtil.randomString(), dependencies,
-				productName, productVersion, provides));
+				productName, productVersion, properties, provides));
 		Assert.assertNotEquals(
 			json,
 			CycloneDXCBOMWriter.write(
 				components, configurationName, dependencies, productName,
-				RandomTestUtil.randomString(), provides));
+				RandomTestUtil.randomString(), properties, provides));
 	}
 
 }

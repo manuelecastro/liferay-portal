@@ -41,7 +41,10 @@ public class CryptoProviderUtilTest {
 	public void testGetAlgorithmName() throws Exception {
 		Assert.assertEquals(
 			"AES/GCM/NoPadding",
-			CryptoProviderUtil.getAlgorithmName("aes/GCM/NoPadding", "Cipher"));
+			CryptoProviderUtil.getAlgorithmName("AES/GCM/NoPadding", "Cipher"));
+		Assert.assertEquals(
+			"HmacSHA256",
+			CryptoProviderUtil.getAlgorithmName("HmacSHA256", "Mac"));
 		Assert.assertEquals(
 			"SHA-1",
 			CryptoProviderUtil.getAlgorithmName("SHA", "MessageDigest"));

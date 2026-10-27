@@ -13,11 +13,12 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.TreeMapBuilder;
 
 import java.nio.charset.StandardCharsets;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,8 @@ public class CycloneDXCBOMWriter {
 	public static String write(
 			List<Component> components, String configurationName,
 			List<Dependency> dependencies, String productName,
-			String productVersion, Map<String, Set<String>> provides)
+			String productVersion, Map<String, String> properties,
+			Map<String, Set<String>> provides)
 		throws Exception {
 
 		Bom bom = new Bom();
@@ -51,7 +53,8 @@ public class CycloneDXCBOMWriter {
 		bom.setComponents(components);
 		bom.setDependencies(dependencies);
 		bom.setMetadata(
-			_getMetadata(configurationName, productName, productVersion));
+			_getMetadata(
+				configurationName, productName, productVersion, properties));
 		bom.setSerialNumber(
 			_getSerialNumber(configurationName, productVersion));
 		bom.setVersion(1);
@@ -97,7 +100,8 @@ public class CycloneDXCBOMWriter {
 	}
 
 	private static Metadata _getMetadata(
-		String configurationName, String productName, String productVersion) {
+		String configurationName, String productName, String productVersion,
+		Map<String, String> properties) {
 
 		Metadata metadata = new Metadata();
 
@@ -116,12 +120,20 @@ public class CycloneDXCBOMWriter {
 		lifecycles.setLifecycleChoice(
 			Collections.singletonList(lifecycleChoice));
 
+		Map<String, String> metadataProperties = TreeMapBuilder.put(
+			"liferay:cbom:configuration", configurationName
+		).put(
+			"liferay:cbom:schema-version", "1.0"
+		).putAll(
+			properties
+		).build();
+
 		metadata.setComponent(component);
 		metadata.setLifecycles(lifecycles);
 		metadata.setProperties(
-			Arrays.asList(
-				new Property("liferay:cbom:configuration", configurationName),
-				new Property("liferay:cbom:schema-version", "1.0")));
+			TransformUtil.transform(
+				metadataProperties.entrySet(),
+				entry -> new Property(entry.getKey(), entry.getValue())));
 		metadata.setTimestamp(null);
 
 		return metadata;

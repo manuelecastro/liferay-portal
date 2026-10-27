@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.security.xml.SecureXMLFactoryProviderImpl;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -28,6 +29,7 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,10 +81,13 @@ public class CBOMBuilderTest {
 
 		String configurationName = RandomTestUtil.randomString();
 
-		String cbomJSON = CBOMBuilder.build(configurationName, cryptoCalls);
+		String cbomJSON = CBOMBuilder.build(
+			configurationName, cryptoCalls, Collections.emptyMap());
 
 		Assert.assertEquals(
-			cbomJSON, CBOMBuilder.build(configurationName, cryptoCalls));
+			cbomJSON,
+			CBOMBuilder.build(
+				configurationName, cryptoCalls, Collections.emptyMap()));
 
 		JsonParser jsonParser = new JsonParser();
 
@@ -206,15 +211,33 @@ public class CBOMBuilderTest {
 			portalExtPropertiesFile.toPath(),
 			"fips.enabled=true".getBytes(StandardCharsets.UTF_8));
 
+		File file = new File(temporaryFolder.getRoot(), "bcfips.cdx.json");
+
+		String[] args = {configurationDir.getPath(), file.getPath()};
+
 		try {
-			CBOMBuilder.main(new String[] {configurationDir.getPath()});
+			CBOMBuilder.main(args);
+
+			Assert.assertFalse(file.exists());
+
+			System.setProperty("cbom.release", "true");
+
+			CBOMBuilder.main(args);
 
 			Assert.fail();
 		}
-		catch (UnsupportedOperationException unsupportedOperationException) {
-			Assert.assertEquals(
-				"Unable to build the CBOM of a FIPS mode configuration",
-				unsupportedOperationException.getMessage());
+		catch (IllegalStateException illegalStateException) {
+			String message = illegalStateException.getMessage();
+
+			Assert.assertTrue(
+				message.contains(
+					"The first security provider must be an allowed FIPS " +
+						"provider"));
+		}
+		finally {
+			System.clearProperty("cbom.release");
+
+			PropsUtil.set("fips.enabled", "false");
 		}
 	}
 

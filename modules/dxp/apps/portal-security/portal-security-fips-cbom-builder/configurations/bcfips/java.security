@@ -1,0 +1,18 @@
+security.provider.1=org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider C:DEFRND[SHA256];ENABLE{ALL};
+security.provider.2=org.bouncycastle.jsse.provider.BouncyCastleJsseProvider fips:BCFIPS
+security.provider.3=SUN
+security.provider.4=SunJCE
+security.provider.5=SunJGSS
+security.provider.6=SunSASL
+security.provider.7=XMLDSig
+security.provider.8=JdkLDAP
+security.provider.9=JdkSASL
+security.provider.10=SUN
+security.provider.11=SUN
+security.provider.12=SUN
+
+jdk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1, DTLSv1.0, RC4, DES, MD5withRSA, DH keySize < 1024, EC keySize < 224, 3DES_EDE_CBC, anon, NULL, ECDH, TLS_RSA_*
+keystore.type=PKCS12
+ocsp.enable=true
+ssl.KeyManagerFactory.algorithm=PKIX
+ssl.TrustManagerFactory.algorithm=PKIX

@@ -1,6 +1,12 @@
 task buildCBOM
 task copyCBOMConfigurations(type: Sync)
 
+configurations {
+	cbomBCFIPS {
+		transitive = false
+	}
+}
+
 File cbomDir = new File(liferay.liferayHome, "cbom")
 
 file("configurations").eachDir {
@@ -10,13 +16,32 @@ file("configurations").eachDir {
 
 	JavaExec buildCBOMConfigurationTask = tasks.create(name: "buildCBOM-${cbomConfigurationName}", type: JavaExec) {
 		args cbomConfigurationDir, new File(cbomDir, "${cbomConfigurationName}.cdx.json"), liferay.liferayHome, liferay.appServerPortalDir
-		classpath = sourceSets.main.runtimeClasspath + configurations.compileClasspath + configurations.portal
+		classpath = files(cbomConfigurationDir) + sourceSets.main.runtimeClasspath + configurations.compileClasspath + configurations.portal
 		dependsOn copyCBOMConfigurations
 		environment = System.getenv().findAll {
 			!it.key.startsWith("LIFERAY_")
 		}
 		jvmArgs "--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED"
 		mainClass = "com.liferay.portal.security.fips.cbom.builder.CBOMBuilder"
+		systemProperty "cbom.release", project.findProperty("cbom.release") ?: "false"
+
+		if (cbomConfigurationName == "bcfips") {
+			classpath += configurations.cbomBCFIPS
+		}
+
+		File javaSecurityFile = new File(cbomConfigurationDir, "java.security")
+
+		if (javaSecurityFile.exists()) {
+			systemProperty "java.security.properties", javaSecurityFile
+		}
+
+		File jvmOptionsFile = new File(cbomConfigurationDir, "jvm.options")
+
+		if (jvmOptionsFile.exists()) {
+			jvmArgs jvmOptionsFile.readLines().findAll {
+				!it.isEmpty() && !it.startsWith("#")
+			}
+		}
 	}
 
 	buildCBOM.dependsOn buildCBOMConfigurationTask
@@ -28,6 +53,9 @@ copyCBOMConfigurations {
 }
 
 dependencies {
+	cbomBCFIPS group: "org.bouncycastle", name: "bc-fips", version: "2.1.3"
+	cbomBCFIPS group: "org.bouncycastle", name: "bctls-fips", version: "2.1.25"
+	cbomBCFIPS group: "org.bouncycastle", name: "bcutil-fips", version: "2.1.8"
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
 	compileOnly project(":core:petra:petra-function")

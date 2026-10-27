@@ -11,6 +11,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -18,6 +19,7 @@ import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.Provider;
+import java.security.Security;
 import java.security.Signature;
 
 import java.util.Map;
@@ -57,6 +59,32 @@ public class CryptoProviderUtil {
 		}
 	}
 
+	public static String fetchProviderVersion(String providerName) {
+		Provider provider = Security.getProvider(providerName);
+
+		if (provider == null) {
+			return null;
+		}
+
+		Class<?> clazz = provider.getClass();
+
+		ClassLoader classLoader = clazz.getClassLoader();
+
+		if ((classLoader == null) ||
+			(classLoader == ClassLoader.getPlatformClassLoader())) {
+
+			return null;
+		}
+
+		Package pkg = clazz.getPackage();
+
+		if (pkg.getImplementationVersion() != null) {
+			return pkg.getImplementationVersion();
+		}
+
+		return provider.getVersionStr();
+	}
+
 	public static String getAlgorithmName(
 		String algorithm, String jcaClassName) {
 
@@ -85,7 +113,13 @@ public class CryptoProviderUtil {
 				return algorithm;
 			}
 
-			return service.getAlgorithm() + suffix;
+			String serviceAlgorithm = service.getAlgorithm();
+
+			if (StringUtil.equalsIgnoreCase(serviceAlgorithm, name)) {
+				return algorithm;
+			}
+
+			return _normalizeCase(serviceAlgorithm) + suffix;
 		}
 		catch (GeneralSecurityException generalSecurityException) {
 			if (_log.isDebugEnabled()) {
@@ -120,6 +154,20 @@ public class CryptoProviderUtil {
 		}
 
 		return unsafeFunction.apply(algorithm);
+	}
+
+	private static String _normalizeCase(String algorithm) {
+		if (!Objects.equals(algorithm, StringUtil.toUpperCase(algorithm))) {
+			return algorithm;
+		}
+
+		if (algorithm.startsWith("HMAC")) {
+			algorithm = "Hmac" + algorithm.substring(4);
+		}
+
+		return StringUtil.replace(
+			algorithm, new String[] {"AND", "WITH"},
+			new String[] {"and", "with"});
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

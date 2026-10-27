@@ -38,7 +38,16 @@ public class CryptoDependencyUtil {
 			if (providerName != null) {
 				componentsMap.computeIfAbsent(
 					"provider:" + providerName,
-					bomRef -> _toLibraryComponent(bomRef, providerName));
+					bomRef -> {
+						Component component = _toLibraryComponent(
+							bomRef, providerName);
+
+						component.setVersion(
+							CryptoProviderUtil.fetchProviderVersion(
+								providerName));
+
+						return component;
+					});
 			}
 
 			for (String propertyKey : cryptoCall.getConfiguredBy()) {
