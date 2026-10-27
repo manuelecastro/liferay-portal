@@ -344,16 +344,14 @@ public class CryptoAssetComponentUtil {
 		String keyAlgorithm = StringUtil.toUpperCase(
 			keyCryptoCall.getAlgorithm());
 
-		String jcaClassName = cryptoCall.getJCAClassName();
-
-		if (jcaClassName.equals("Cipher")) {
+		if (Objects.equals(cryptoCall.getJCAClassName(), "Cipher")) {
 			String[] transformationParts = StringUtil.split(
 				algorithm, CharPool.SLASH);
 
 			return transformationParts[0].equals(keyAlgorithm);
 		}
 
-		if (jcaClassName.equals("KeyAgreement")) {
+		if (Objects.equals(cryptoCall.getJCAClassName(), "KeyAgreement")) {
 			if (algorithm.equals(keyAlgorithm) ||
 				(algorithm.equals("ECDH") && keyAlgorithm.equals("EC"))) {
 
@@ -363,7 +361,7 @@ public class CryptoAssetComponentUtil {
 			return false;
 		}
 
-		if (jcaClassName.equals("Signature")) {
+		if (Objects.equals(cryptoCall.getJCAClassName(), "Signature")) {
 			if (algorithm.endsWith("WITH" + keyAlgorithm) ||
 				(algorithm.endsWith("WITHECDSA") &&
 				 keyAlgorithm.equals("EC"))) {
@@ -394,15 +392,8 @@ public class CryptoAssetComponentUtil {
 			return true;
 		}
 
-		List<String> configuredBy = cryptoCall.getConfiguredBy();
-
-		for (String propertyKey : keyCryptoCall.getConfiguredBy()) {
-			if (configuredBy.contains(propertyKey)) {
-				return true;
-			}
-		}
-
-		return false;
+		return !Collections.disjoint(
+			cryptoCall.getConfiguredBy(), keyCryptoCall.getConfiguredBy());
 	}
 
 	private static void _setCipherProperties(
