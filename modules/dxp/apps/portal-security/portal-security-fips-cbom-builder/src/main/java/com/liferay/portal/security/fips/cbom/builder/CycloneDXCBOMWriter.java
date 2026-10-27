@@ -51,8 +51,6 @@ import org.cyclonedx.model.Property;
  */
 public class CycloneDXCBOMWriter {
 
-	public static final String SCHEMA_VERSION = "1.0";
-
 	public static String write(
 			List<Component> components, String configurationName,
 			List<Dependency> dependencies, String productName,
@@ -134,7 +132,7 @@ public class CycloneDXCBOMWriter {
 		metadata.setProperties(
 			Arrays.asList(
 				new Property("liferay:cbom:configuration", configurationName),
-				new Property("liferay:cbom:schema-version", SCHEMA_VERSION)));
+				new Property("liferay:cbom:schema-version", "1.0")));
 		metadata.setTimestamp(null);
 
 		return metadata;

@@ -242,7 +242,9 @@ public class CryptoCallScanner {
 			Origin origin = new Origin();
 
 			origin.addReference(
-				_METHOD_KEY_DIGESTER_UTIL_GET_DEFAULT_ALGORITHM);
+				_getMethodKey(
+					_CLASS_NAME_DIGESTER_UTIL, "_getDefaultAlgorithm",
+					"()Ljava/lang/String;"));
 
 			return origin;
 		}
@@ -1087,11 +1089,6 @@ public class CryptoCallScanner {
 
 	private static final String _CLASS_NAME_SECRET_KEY_SPEC =
 		"javax/crypto/spec/SecretKeySpec";
-
-	private static final String
-		_METHOD_KEY_DIGESTER_UTIL_GET_DEFAULT_ALGORITHM =
-			"com.liferay.portal.kernel.util.DigesterUtil._getDefaultAlgorithm" +
-				"()Ljava/lang/String;";
 
 	private static final Map<String, CryptoFunction> _cipherCryptoFunctions =
 		HashMapBuilder.put(
