@@ -118,7 +118,8 @@ public class CryptoAlgorithmNameUtil {
 			paddingName.endsWith("ANDMGF1PADDING")) {
 
 			String digestName = _digestNames.get(
-				paddingName.substring(8, paddingName.length() - 14));
+				StringUtil.removeSubstrings(
+					paddingName, "OAEPWITH", "ANDMGF1PADDING"));
 
 			if (digestName != null) {
 				return "RSA-OAEP-" + digestName;

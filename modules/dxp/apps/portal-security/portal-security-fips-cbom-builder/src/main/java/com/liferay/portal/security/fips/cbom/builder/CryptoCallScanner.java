@@ -39,6 +39,8 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import javax.crypto.Cipher;
+
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
@@ -703,7 +705,7 @@ public class CryptoCallScanner {
 			if (methodName.endsWith(".<init>")) {
 				methodName =
 					"the constructor of " +
-						methodName.substring(0, methodName.length() - 7);
+						StringUtil.removeLast(methodName, ".<init>");
 			}
 
 			return StringBundler.concat(
@@ -1055,13 +1057,13 @@ public class CryptoCallScanner {
 
 	private static final Map<String, CryptoFunction> _cipherCryptoFunctions =
 		HashMapBuilder.put(
-			"1", CryptoFunction.ENCRYPT
+			String.valueOf(Cipher.DECRYPT_MODE), CryptoFunction.DECRYPT
 		).put(
-			"2", CryptoFunction.DECRYPT
+			String.valueOf(Cipher.ENCRYPT_MODE), CryptoFunction.ENCRYPT
 		).put(
-			"3", CryptoFunction.ENCRYPT
+			String.valueOf(Cipher.UNWRAP_MODE), CryptoFunction.DECRYPT
 		).put(
-			"4", CryptoFunction.DECRYPT
+			String.valueOf(Cipher.WRAP_MODE), CryptoFunction.ENCRYPT
 		).build();
 	private static final Map<String, CryptoFunction> _cryptoFunctions =
 		HashMapBuilder.put(
