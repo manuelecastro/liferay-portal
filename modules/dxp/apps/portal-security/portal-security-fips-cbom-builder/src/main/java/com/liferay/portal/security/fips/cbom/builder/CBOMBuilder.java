@@ -18,13 +18,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
-
-import org.cyclonedx.model.Component;
 
 /**
  * @author Manuele Castro
@@ -35,18 +32,9 @@ public class CBOMBuilder {
 			String configurationName, List<CryptoCall> cryptoCalls)
 		throws Exception {
 
-		List<Component> components = new ArrayList<>(
-			CryptoAssetComponentUtil.toComponents(cryptoCalls));
-
-		components.addAll(CryptoDependencyUtil.toComponents(cryptoCalls));
-
-		components.sort(Comparator.comparing(Component::getBomRef));
-
 		return CycloneDXCBOMWriter.write(
-			components, configurationName,
-			CryptoDependencyUtil.toDependencies(cryptoCalls),
-			ReleaseInfo.getName(), ReleaseInfo.getVersionDisplayName(),
-			CryptoDependencyUtil.toProvides(cryptoCalls));
+			configurationName, cryptoCalls, ReleaseInfo.getName(),
+			ReleaseInfo.getVersionDisplayName());
 	}
 
 	public static void main(String[] args) throws Exception {
