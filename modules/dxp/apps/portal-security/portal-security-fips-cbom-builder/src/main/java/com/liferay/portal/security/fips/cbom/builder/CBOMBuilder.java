@@ -6,12 +6,13 @@
 package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -40,16 +41,8 @@ import org.cyclonedx.model.Component;
 public class CBOMBuilder {
 
 	public static String build(
-			String configurationName, List<CryptoCall> cryptoCalls,
-			Properties portalExtProperties)
+			String configurationName, List<CryptoCall> cryptoCalls)
 		throws Exception {
-
-		if (GetterUtil.getBoolean(
-				portalExtProperties.getProperty("fips.enabled"))) {
-
-			throw new UnsupportedOperationException(
-				"Unable to build the CBOM of a FIPS mode configuration");
-		}
 
 		List<Component> components = new ArrayList<>(
 			CryptoAssetComponentUtil.toComponents(cryptoCalls));
@@ -69,12 +62,16 @@ public class CBOMBuilder {
 		File configurationDir = new File(args[0]);
 
 		Properties portalExtProperties = _loadProperties(
-			new FileInputStream(
-				new File(configurationDir, "portal-ext.properties")));
+			new File(configurationDir, "portal-ext.properties"));
 
-		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner(
-			GetterUtil.getBoolean(
-				portalExtProperties.getProperty("fips.enabled")));
+		if (GetterUtil.getBoolean(
+				portalExtProperties.getProperty("fips.enabled"))) {
+
+			throw new UnsupportedOperationException(
+				"Unable to build the CBOM of a FIPS mode configuration");
+		}
+
+		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner(false);
 
 		for (File file : _getFiles(new File(args[3]), new File(args[2]))) {
 			cryptoCallScanner.scan(file);
@@ -101,8 +98,7 @@ public class CBOMBuilder {
 			System.out.println(message);
 		}
 
-		String cbomJSON = build(
-			configurationDir.getName(), cryptoCalls, portalExtProperties);
+		String cbomJSON = build(configurationDir.getName(), cryptoCalls);
 
 		File file = new File(args[1]);
 
@@ -157,16 +153,10 @@ public class CBOMBuilder {
 		return files;
 	}
 
-	private static Properties _loadProperties(InputStream inputStream)
-		throws Exception {
-
-		Properties properties = new Properties();
-
-		try (InputStream propertiesInputStream = inputStream) {
-			properties.load(propertiesInputStream);
+	private static Properties _loadProperties(File file) throws Exception {
+		try (FileInputStream fileInputStream = new FileInputStream(file)) {
+			return PropertiesUtil.load(fileInputStream, StringPool.UTF8);
 		}
-
-		return properties;
 	}
 
 }

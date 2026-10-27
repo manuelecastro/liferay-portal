@@ -20,6 +20,7 @@ import java.io.File;
 import java.net.URL;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -41,6 +41,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Manuele Castro
@@ -69,15 +70,11 @@ public class CBOMBuilderTest {
 		List<CryptoCall> cryptoCalls = cryptoCallScanner.getCryptoCalls();
 
 		String configurationName = RandomTestUtil.randomString();
-		Properties portalExtProperties = new Properties();
 
-		String cbomJSON = CBOMBuilder.build(
-			configurationName, cryptoCalls, portalExtProperties);
+		String cbomJSON = CBOMBuilder.build(configurationName, cryptoCalls);
 
 		Assert.assertEquals(
-			cbomJSON,
-			CBOMBuilder.build(
-				configurationName, cryptoCalls, portalExtProperties));
+			cbomJSON, CBOMBuilder.build(configurationName, cryptoCalls));
 
 		JsonParser jsonParser = new JsonParser();
 
@@ -199,12 +196,21 @@ public class CBOMBuilderTest {
 
 			Assert.assertTrue(bomRef, moduleDependsOn.contains(bomRef));
 		}
+	}
 
-		portalExtProperties.setProperty("fips.enabled", "true");
+	@Test
+	public void testMain() throws Exception {
+		File configurationDir = temporaryFolder.newFolder();
+
+		File portalExtPropertiesFile = new File(
+			configurationDir, "portal-ext.properties");
+
+		Files.write(
+			portalExtPropertiesFile.toPath(),
+			"fips.enabled=true".getBytes(StandardCharsets.UTF_8));
 
 		try {
-			CBOMBuilder.build(
-				configurationName, cryptoCalls, portalExtProperties);
+			CBOMBuilder.main(new String[] {configurationDir.getPath()});
 
 			Assert.fail();
 		}
@@ -214,6 +220,9 @@ public class CBOMBuilderTest {
 				unsupportedOperationException.getMessage());
 		}
 	}
+
+	@Rule
+	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	private File _getJarFile(Class<?> clazz) throws Exception {
 		ProtectionDomain protectionDomain = clazz.getProtectionDomain();
