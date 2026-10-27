@@ -34,6 +34,7 @@ public class CryptoCall {
 			_bundleSymbolicName, _className, _featureName, _jcaClassName);
 
 		cryptoCall.setAlgorithm(_algorithm);
+		cryptoCall.setCipherSuites(_cipherSuites);
 		cryptoCall.setConfiguredBy(_configuredBy);
 		cryptoCall.setCryptoFunctions(_cryptoFunctions);
 		cryptoCall.setCurve(_curve);
@@ -41,6 +42,7 @@ public class CryptoCall {
 		cryptoCall.setLibrary(_library);
 		cryptoCall.setNote(_note);
 		cryptoCall.setRelatedCryptoMaterialTypes(_relatedCryptoMaterialTypes);
+		cryptoCall.setSettings(_settings);
 		cryptoCall.setUnresolvedReason(_unresolvedReason);
 
 		return cryptoCall;
@@ -52,6 +54,10 @@ public class CryptoCall {
 
 	public String getBundleSymbolicName() {
 		return _bundleSymbolicName;
+	}
+
+	public List<String> getCipherSuites() {
+		return _cipherSuites;
 	}
 
 	public String getClassName() {
@@ -98,6 +104,10 @@ public class CryptoCall {
 		return _relatedCryptoMaterialTypes;
 	}
 
+	public List<String> getSettings() {
+		return _settings;
+	}
+
 	public String getUnresolvedReason() {
 		return _unresolvedReason;
 	}
@@ -116,6 +126,10 @@ public class CryptoCall {
 
 	public void setAlgorithm(String algorithm) {
 		_algorithm = algorithm;
+	}
+
+	public void setCipherSuites(List<String> cipherSuites) {
+		_cipherSuites = cipherSuites;
 	}
 
 	public void setConfiguredBy(List<String> configuredBy) {
@@ -148,12 +162,17 @@ public class CryptoCall {
 		_relatedCryptoMaterialTypes = relatedCryptoMaterialTypes;
 	}
 
+	public void setSettings(List<String> settings) {
+		_settings = settings;
+	}
+
 	public void setUnresolvedReason(String unresolvedReason) {
 		_unresolvedReason = unresolvedReason;
 	}
 
 	private String _algorithm;
 	private final String _bundleSymbolicName;
+	private List<String> _cipherSuites = Collections.emptyList();
 	private final String _className;
 	private List<String> _configuredBy = Collections.emptyList();
 	private List<CryptoFunction> _cryptoFunctions = Collections.emptyList();
@@ -165,6 +184,7 @@ public class CryptoCall {
 	private String _note;
 	private List<RelatedCryptoMaterialType> _relatedCryptoMaterialTypes =
 		Collections.emptyList();
+	private List<String> _settings = Collections.emptyList();
 	private String _unresolvedReason;
 
 }

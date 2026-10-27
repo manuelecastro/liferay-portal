@@ -66,6 +66,14 @@ public class FIPSModeLimitUtil {
 		return new TreeMap<>(requiredSecurityProperties);
 	}
 
+	public static List<String> getTLSCipherSuites() {
+		return _getSortedValues("_allowedTLSCipherSuites");
+	}
+
+	public static List<String> getTLSProtocols() {
+		return _getSortedValues("_allowedTLSProtocols");
+	}
+
 	public static List<CryptoCall> limit(
 		List<CryptoCall> cryptoCalls,
 		Map<String, Set<String>> limitedSettings) {

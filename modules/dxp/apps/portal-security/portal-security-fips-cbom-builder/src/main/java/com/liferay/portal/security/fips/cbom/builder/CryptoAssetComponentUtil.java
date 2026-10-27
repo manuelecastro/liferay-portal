@@ -26,6 +26,7 @@ import org.cyclonedx.model.Component;
 import org.cyclonedx.model.Evidence;
 import org.cyclonedx.model.Property;
 import org.cyclonedx.model.component.crypto.AlgorithmProperties;
+import org.cyclonedx.model.component.crypto.CipherSuite;
 import org.cyclonedx.model.component.crypto.CryptoProperties;
 import org.cyclonedx.model.component.crypto.ProtocolProperties;
 import org.cyclonedx.model.component.crypto.RelatedCryptoMaterialProperties;
@@ -393,6 +394,26 @@ public class CryptoAssetComponentUtil {
 		CryptoCall cryptoCall) {
 
 		ProtocolProperties protocolProperties = new ProtocolProperties();
+
+		if (!cryptoCall.getCipherSuites(
+			).isEmpty()) {
+
+			protocolProperties.setCipherSuites(
+				TransformUtil.transform(
+					cryptoCall.getCipherSuites(),
+					cipherSuiteName -> {
+						CipherSuite cipherSuite = new CipherSuite();
+
+						cipherSuite.setAlgorithms(
+							TransformUtil.transform(
+								CryptoEnvironmentUtil.getCipherSuiteCryptoCalls(
+									cipherSuiteName, cryptoCall),
+								CryptoAssetComponentUtil::getBOMRef));
+						cipherSuite.setName(cipherSuiteName);
+
+						return cipherSuite;
+					}));
+		}
 
 		if (cryptoCall.getAlgorithm() == null) {
 			protocolProperties.setType(ProtocolType.TLS);

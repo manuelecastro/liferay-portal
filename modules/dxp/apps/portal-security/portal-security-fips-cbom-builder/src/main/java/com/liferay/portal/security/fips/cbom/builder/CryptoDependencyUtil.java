@@ -50,7 +50,7 @@ public class CryptoDependencyUtil {
 					});
 			}
 
-			for (String propertyKey : cryptoCall.getConfiguredBy()) {
+			for (String propertyKey : _getSettings(cryptoCall)) {
 				componentsMap.computeIfAbsent(
 					"setting:" + propertyKey,
 					bomRef -> _toDataComponent(bomRef, propertyKey));
@@ -71,7 +71,7 @@ public class CryptoDependencyUtil {
 			Set<String> bomRefDependsOn = dependsOnMap.computeIfAbsent(
 				bomRef, key -> new TreeSet<>());
 
-			for (String propertyKey : cryptoCall.getConfiguredBy()) {
+			for (String propertyKey : _getSettings(cryptoCall)) {
 				bomRefDependsOn.add("setting:" + propertyKey);
 
 				dependsOnMap.computeIfAbsent(
@@ -134,6 +134,14 @@ public class CryptoDependencyUtil {
 
 		return CryptoProviderUtil.fetchProviderName(
 			cryptoCall.getAlgorithm(), cryptoCall.getJCAClassName());
+	}
+
+	private static List<String> _getSettings(CryptoCall cryptoCall) {
+		List<String> settings = new ArrayList<>(cryptoCall.getConfiguredBy());
+
+		settings.addAll(cryptoCall.getSettings());
+
+		return settings;
 	}
 
 	private static Component _toDataComponent(

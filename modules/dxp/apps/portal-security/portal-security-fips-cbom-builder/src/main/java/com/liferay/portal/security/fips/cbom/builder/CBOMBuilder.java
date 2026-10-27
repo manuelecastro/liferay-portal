@@ -171,6 +171,11 @@ public class CBOMBuilder {
 			System.out.println(message);
 		}
 
+		cryptoCalls = new ArrayList<>(cryptoCalls);
+
+		cryptoCalls.addAll(
+			CryptoEnvironmentUtil.getCryptoCalls(cryptoCalls, fipsEnabled));
+
 		String cbomJSON = build(
 			configurationDir.getName(), cryptoAssessment, cryptoCalls,
 			properties);
