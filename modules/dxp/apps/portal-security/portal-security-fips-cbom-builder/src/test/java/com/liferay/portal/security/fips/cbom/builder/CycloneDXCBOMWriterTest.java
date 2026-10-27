@@ -49,6 +49,35 @@ public class CycloneDXCBOMWriterTest {
 	}
 
 	@Test
+	public void testValidate() throws Exception {
+		Assert.assertEquals(
+			Collections.emptyList(),
+			CycloneDXCBOMWriter.validate(
+				CycloneDXCBOMWriter.write(
+					Collections.emptyList(), RandomTestUtil.randomString(),
+					Collections.emptyList(), RandomTestUtil.randomString(),
+					RandomTestUtil.randomString(), Collections.emptyMap(),
+					Collections.emptyMap())));
+
+		List<String> messages = CycloneDXCBOMWriter.validate(
+			JSONUtil.put(
+				"bomFormat", "CycloneDX"
+			).put(
+				"components",
+				JSONUtil.putAll(
+					JSONUtil.put(
+						"name", RandomTestUtil.randomString()
+					).put(
+						"type", RandomTestUtil.randomString()
+					))
+			).put(
+				"specVersion", "1.6"
+			).toString());
+
+		Assert.assertFalse(messages.isEmpty());
+	}
+
+	@Test
 	public void testWrite() throws Exception {
 		Component component1 = new Component();
 

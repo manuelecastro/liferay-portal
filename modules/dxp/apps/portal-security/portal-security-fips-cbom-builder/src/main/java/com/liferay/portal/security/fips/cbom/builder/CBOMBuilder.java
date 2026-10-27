@@ -25,7 +25,10 @@ import java.nio.file.Files;
 
 import java.security.Provider;
 
+import java.time.LocalDate;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -95,7 +98,7 @@ public class CBOMBuilder {
 					" because its configuration fails FIPS mode's startup ",
 					"checks: ", securityException.getMessage());
 
-				if (GetterUtil.getBoolean(System.getProperty("cbom.release"))) {
+				if (_isRelease()) {
 					throw new IllegalStateException(message, securityException);
 				}
 
@@ -136,15 +139,17 @@ public class CBOMBuilder {
 				provider.getName(), providerVersion);
 
 			if (!cryptoAssessment.hasFIPSModule()) {
-				String message = StringBundler.concat(
-					"The CBOM reference data has no FIPS module for ",
-					provider.getName(), StringPool.SPACE, providerVersion);
+				_reportFailure(
+					StringBundler.concat(
+						"The CBOM reference data has no FIPS module for ",
+						provider.getName(), StringPool.SPACE, providerVersion));
+			}
 
-				if (GetterUtil.getBoolean(System.getProperty("cbom.release"))) {
-					throw new IllegalStateException(message);
-				}
+			String message = cryptoAssessment.fetchInactiveCertificateMessage(
+				LocalDate.now());
 
-				System.out.println("WARNING: " + message);
+			if (message != null) {
+				_reportFailure(message);
 			}
 
 			properties.put(
@@ -181,6 +186,16 @@ public class CBOMBuilder {
 			configurationDir.getName(), cryptoAssessment, cryptoCalls,
 			properties);
 
+		List<String> schemaMessages = CycloneDXCBOMWriter.validate(cbomJSON);
+
+		if (!schemaMessages.isEmpty()) {
+			_reportFailure(
+				StringBundler.concat(
+					"The CBOM of ", configurationDir.getName(),
+					" fails the CycloneDX schema: ",
+					StringUtil.merge(schemaMessages, "; ")));
+		}
+
 		File file = new File(args[1]);
 
 		File parentDir = file.getParentFile();
@@ -193,7 +208,7 @@ public class CBOMBuilder {
 	}
 
 	private static void _addFiles(
-		File dir, File excludedDir, List<File> files) {
+		File dir, List<File> excludedDirs, List<File> files) {
 
 		File[] childFiles = dir.listFiles();
 
@@ -205,8 +220,8 @@ public class CBOMBuilder {
 			String fileName = childFile.getName();
 
 			if (childFile.isDirectory()) {
-				if (!childFile.equals(excludedDir)) {
-					_addFiles(childFile, excludedDir, files);
+				if (!excludedDirs.contains(childFile)) {
+					_addFiles(childFile, excludedDirs, files);
 				}
 			}
 			else if (fileName.endsWith(".jar") || fileName.endsWith(".lpkg")) {
@@ -218,26 +233,54 @@ public class CBOMBuilder {
 	private static List<File> _getFiles(
 		File appServerPortalDir, File liferayHomeDir) {
 
-		List<File> files = new ArrayList<>();
-
 		File osgiDir = new File(liferayHomeDir, "osgi");
 
-		_addFiles(osgiDir, new File(osgiDir, "test"), files);
+		if (!osgiDir.isDirectory()) {
+			throw new IllegalArgumentException(
+				"Directory \"" + osgiDir + "\" does not exist");
+		}
 
-		_addFiles(new File(appServerPortalDir, "WEB-INF/lib"), null, files);
+		File libDir = new File(appServerPortalDir, "WEB-INF/lib");
+
+		if (!libDir.isDirectory()) {
+			throw new IllegalArgumentException(
+				"Directory \"" + libDir + "\" does not exist");
+		}
+
+		List<File> files = new ArrayList<>();
+
+		_addFiles(
+			osgiDir,
+			Arrays.asList(
+				new File(osgiDir, "state"), new File(osgiDir, "test")),
+			files);
+
+		_addFiles(libDir, Collections.emptyList(), files);
 		_addFiles(
 			new File(appServerPortalDir, "WEB-INF/shielded-container-lib"),
-			null, files);
+			Collections.emptyList(), files);
 
 		files.sort(null);
 
 		return files;
 	}
 
+	private static boolean _isRelease() {
+		return GetterUtil.getBoolean(System.getProperty("cbom.release"));
+	}
+
 	private static Properties _loadProperties(File file) throws Exception {
 		try (FileInputStream fileInputStream = new FileInputStream(file)) {
 			return PropertiesUtil.load(fileInputStream, StringPool.UTF8);
 		}
+	}
+
+	private static void _reportFailure(String message) {
+		if (_isRelease()) {
+			throw new IllegalStateException(message);
+		}
+
+		System.out.println("WARNING: " + message);
 	}
 
 	private static void _setModule(

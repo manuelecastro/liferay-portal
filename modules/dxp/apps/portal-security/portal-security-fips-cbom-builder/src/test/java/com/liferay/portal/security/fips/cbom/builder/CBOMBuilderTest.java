@@ -5,6 +5,7 @@
 
 package com.liferay.portal.security.fips.cbom.builder;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -250,6 +251,42 @@ public class CBOMBuilderTest {
 
 			PropsUtil.set("fips.enabled", "false");
 		}
+	}
+
+	@Test
+	public void testMainWhenOSGiDirIsMissing() throws Exception {
+		File configurationDir = temporaryFolder.newFolder();
+
+		File portalExtPropertiesFile = new File(
+			configurationDir, "portal-ext.properties");
+
+		Files.write(
+			portalExtPropertiesFile.toPath(),
+			"fips.enabled=false".getBytes(StandardCharsets.UTF_8));
+
+		File file = new File(temporaryFolder.getRoot(), "fips-off.cdx.json");
+		File liferayHomeDir = temporaryFolder.newFolder();
+
+		try {
+			CBOMBuilder.main(
+				new String[] {
+					configurationDir.getPath(), file.getPath(),
+					liferayHomeDir.getPath(),
+					temporaryFolder.newFolder(
+					).getPath()
+				});
+
+			Assert.fail();
+		}
+		catch (IllegalArgumentException illegalArgumentException) {
+			Assert.assertEquals(
+				StringBundler.concat(
+					"Directory \"", new File(liferayHomeDir, "osgi"),
+					"\" does not exist"),
+				illegalArgumentException.getMessage());
+		}
+
+		Assert.assertFalse(file.exists());
 	}
 
 	@Rule

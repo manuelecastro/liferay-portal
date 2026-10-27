@@ -17,6 +17,8 @@ import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.TreeMapBuilder;
 
+import java.io.IOException;
+
 import java.nio.charset.StandardCharsets;
 
 import java.util.Collections;
@@ -26,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.cyclonedx.Version;
+import org.cyclonedx.exception.ParseException;
 import org.cyclonedx.generators.BomGeneratorFactory;
 import org.cyclonedx.generators.json.BomJsonGenerator;
 import org.cyclonedx.model.Bom;
@@ -35,11 +38,20 @@ import org.cyclonedx.model.LifecycleChoice;
 import org.cyclonedx.model.Lifecycles;
 import org.cyclonedx.model.Metadata;
 import org.cyclonedx.model.Property;
+import org.cyclonedx.parsers.JsonParser;
 
 /**
  * @author Manuele Castro
  */
 public class CycloneDXCBOMWriter {
+
+	public static List<String> validate(String cbomJSON) throws IOException {
+		JsonParser jsonParser = new JsonParser();
+
+		return TransformUtil.transform(
+			jsonParser.validate(cbomJSON, _VERSION),
+			ParseException::getMessage);
+	}
 
 	public static String write(
 			List<Component> components, String configurationName,
@@ -60,7 +72,7 @@ public class CycloneDXCBOMWriter {
 		bom.setVersion(1);
 
 		BomJsonGenerator bomJsonGenerator = BomGeneratorFactory.createJson(
-			Version.VERSION_16, bom);
+			_VERSION, bom);
 
 		ObjectMapper objectMapper = new ObjectMapper();
 
@@ -147,5 +159,7 @@ public class CycloneDXCBOMWriter {
 		return "urn:uuid:" +
 			UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
 	}
+
+	private static final Version _VERSION = Version.VERSION_16;
 
 }

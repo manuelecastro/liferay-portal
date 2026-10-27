@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -16,6 +17,8 @@ import com.liferay.portal.kernel.util.TreeMapBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import java.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,6 +69,36 @@ public class CryptoAssessment {
 		String source = _getText(certificateJsonNode, "source");
 
 		return source.substring(0, source.indexOf(CharPool.COMMA));
+	}
+
+	public String fetchInactiveCertificateMessage(LocalDate localDate) {
+		if (_moduleJsonNode == null) {
+			return null;
+		}
+
+		JsonNode certificateJsonNode = _moduleJsonNode.get("certificate");
+
+		String status = _getText(certificateJsonNode, "status");
+
+		if (!Objects.equals(status, "Active")) {
+			return StringBundler.concat(
+				"The CMVP certificate ",
+				_getText(certificateJsonNode, "number"), " of ",
+				_getText(_moduleJsonNode, "name"), " is ", status,
+				", not Active");
+		}
+
+		String sunsetDate = _getText(certificateJsonNode, "sunsetDate");
+
+		if (localDate.isAfter(LocalDate.parse(sunsetDate))) {
+			return StringBundler.concat(
+				"The CMVP certificate ",
+				_getText(certificateJsonNode, "number"), " of ",
+				_getText(_moduleJsonNode, "name"), " passed its sunset date ",
+				sunsetDate);
+		}
+
+		return null;
 	}
 
 	public Integer fetchNISTQuantumSecurityLevel(String name) {

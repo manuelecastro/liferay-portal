@@ -5,9 +5,16 @@
 
 package com.liferay.portal.security.fips.cbom.builder;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+
+import java.time.LocalDate;
 
 import java.util.Arrays;
 
@@ -27,6 +34,49 @@ public class CryptoAssessmentTest {
 	@Rule
 	public static final LiferayUnitTestRule liferayUnitTestRule =
 		LiferayUnitTestRule.INSTANCE;
+
+	@Test
+	public void testFetchInactiveCertificateMessage() throws Exception {
+		CryptoAssessment cryptoAssessment = CryptoAssessment.load(
+			"BCFIPS", "2.1.1");
+
+		Assert.assertNull(
+			cryptoAssessment.fetchInactiveCertificateMessage(
+				LocalDate.of(2030, 1, 16)));
+		Assert.assertEquals(
+			"The CMVP certificate 4943 of BC-FJA (Bouncy Castle FIPS Java " +
+				"API) passed its sunset date 2030-01-16",
+			cryptoAssessment.fetchInactiveCertificateMessage(
+				LocalDate.of(2030, 1, 17)));
+
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		JsonNode jsonNode = objectMapper.readTree(
+			CryptoAssessment.class.getResourceAsStream(
+				"dependencies/cbom-reference-data.json"));
+
+		ObjectNode objectNode = (ObjectNode)jsonNode.at(
+			"/modules/0/certificate");
+
+		String status = RandomTestUtil.randomString();
+
+		objectNode.put("status", status);
+
+		cryptoAssessment = new CryptoAssessment("BCFIPS", "2.1.1", jsonNode);
+
+		Assert.assertEquals(
+			StringBundler.concat(
+				"The CMVP certificate 4943 of BC-FJA (Bouncy Castle FIPS Java ",
+				"API) is ", status, ", not Active"),
+			cryptoAssessment.fetchInactiveCertificateMessage(
+				LocalDate.of(2030, 1, 16)));
+
+		cryptoAssessment = CryptoAssessment.load(null, null);
+
+		Assert.assertNull(
+			cryptoAssessment.fetchInactiveCertificateMessage(
+				LocalDate.of(2030, 1, 17)));
+	}
 
 	@Test
 	public void testFetchNISTQuantumSecurityLevel() throws Exception {
