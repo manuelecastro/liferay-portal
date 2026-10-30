@@ -362,6 +362,18 @@ testray.build.type=EE Development (@{to.branch.name})</echo>
 		</gradle-execute>
 	</target>
 
+	<target name="build-cbom">
+		<if>
+			<available file="${project.dir}/modules/dxp/apps/portal-security/portal-security-fips-cbom-builder" type="dir" />
+			<then>
+				<gradle-execute dir="${project.dir}/modules" task=":dxp:apps:portal-security:portal-security-fips-cbom-builder:buildCBOM">
+					<arg if:set="cbom.release" value="-Pcbom.release=${cbom.release}" />
+					<arg if:set="cbom.version" value="-Pcbom.version=${cbom.version}" />
+				</gradle-execute>
+			</then>
+		</if>
+	</target>
+
 	<target name="clean">
 		<exec executable="git" outputproperty="master.private.ref">
 			<arg value="for-each-ref" />
@@ -1079,6 +1091,17 @@ This target has been renamed to "snapshot-bundle". Please call "snapshot-bundle"
 		<ant dir="util-java" inheritAll="false" target="restore-latest-artifact-version" />
 		<ant dir="util-slf4j" inheritAll="false" target="restore-latest-artifact-version" />
 		<ant dir="util-taglib" inheritAll="false" target="restore-latest-artifact-version" />
+	</target>
+
+	<target name="review-cbom">
+		<if>
+			<available file="${project.dir}/modules/dxp/apps/portal-security/portal-security-fips-cbom-builder" type="dir" />
+			<then>
+				<gradle-execute dir="${project.dir}/modules" task=":dxp:apps:portal-security:portal-security-fips-cbom-builder:reviewCBOM">
+					<arg value="-Pcbom.previous.dir=${cbom.previous.dir}" />
+				</gradle-execute>
+			</then>
+		</if>
 	</target>
 
 	<target name="setup-libs">

@@ -1,0 +1,296 @@
+{
+	"bomFormat": "CycloneDX",
+	"components": [
+		{
+			"bom-ref": "crypto:Cipher:AES/GCM/NoPadding",
+			"name": "AES-GCM",
+			"properties": [
+				{
+					"name": "liferay:cbom:fips-approval-status",
+					"value": "PROVIDER_NOT_VALIDATED"
+				},
+				{
+					"name": "liferay:cbom:jca-class",
+					"value": "Cipher"
+				}
+			],
+			"type": "cryptographic-asset"
+		},
+		{
+			"bom-ref": "crypto:KeyAgreement:X25519",
+			"name": "XDH-X25519",
+			"properties": [
+				{
+					"name": "liferay:cbom:fips-approval-status",
+					"value": "APPROVED"
+				},
+				{
+					"name": "liferay:cbom:jca-class",
+					"value": "KeyAgreement"
+				},
+				{
+					"name": "liferay:cbom:non-nist-approved-curve",
+					"value": "true"
+				}
+			],
+			"type": "cryptographic-asset"
+		},
+		{
+			"bom-ref": "crypto:KeyStore:keystore.type",
+			"name": "keystore.type",
+			"properties": [
+				{
+					"name": "liferay:cbom:jca-class",
+					"value": "KeyStore"
+				}
+			],
+			"type": "cryptographic-asset"
+		},
+		{
+			"bom-ref": "crypto:Mac:HmacSHA256",
+			"name": "HMAC-SHA-256",
+			"properties": [
+				{
+					"name": "liferay:cbom:fips-approval-status",
+					"value": "APPROVED"
+				},
+				{
+					"name": "liferay:cbom:jca-class",
+					"value": "Mac"
+				}
+			],
+			"type": "cryptographic-asset"
+		},
+		{
+			"bom-ref": "crypto:MessageDigest:com.liferay.foo.Bar",
+			"description": "The scan cannot read the algorithm, which comes from parameter 1 of Bar.digest.",
+			"name": "MessageDigest",
+			"properties": [
+				{
+					"name": "liferay:cbom:jca-class",
+					"value": "MessageDigest"
+				}
+			],
+			"type": "cryptographic-asset"
+		},
+		{
+			"bom-ref": "crypto:SSLContext:TLSv1.2",
+			"cryptoProperties": {
+				"assetType": "protocol",
+				"protocolProperties": {
+					"cipherSuites": [
+						{
+							"name": "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+						},
+						{
+							"name": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+						}
+					],
+					"type": "tls",
+					"version": "1.2"
+				}
+			},
+			"name": "TLSv1.2",
+			"properties": [
+				{
+					"name": "liferay:cbom:fips-approval-status",
+					"value": "PROVIDER_NOT_VALIDATED"
+				},
+				{
+					"name": "liferay:cbom:jca-class",
+					"value": "SSLContext"
+				}
+			],
+			"type": "cryptographic-asset"
+		},
+		{
+			"bom-ref": "crypto:Signature:SHA256withECDSA:secp256k1",
+			"name": "ECDSA-secp256k1-SHA-256",
+			"properties": [
+				{
+					"name": "liferay:cbom:fips-approval-status",
+					"value": "APPROVED"
+				},
+				{
+					"name": "liferay:cbom:jca-class",
+					"value": "Signature"
+				},
+				{
+					"name": "liferay:cbom:non-nist-approved-curve",
+					"value": "true"
+				}
+			],
+			"type": "cryptographic-asset"
+		},
+		{
+			"bom-ref": "module:com.liferay.foo",
+			"name": "Liferay Foo",
+			"type": "library"
+		},
+		{
+			"bom-ref": "provider:BCFIPS",
+			"externalReferences": [
+				{
+					"type": "certification-report",
+					"url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4943"
+				}
+			],
+			"name": "BCFIPS",
+			"properties": [
+				{
+					"name": "liferay:cbom:cmvp-certificate",
+					"value": "4943"
+				},
+				{
+					"name": "liferay:cbom:cmvp-status",
+					"value": "Active"
+				},
+				{
+					"name": "liferay:cbom:cmvp-sunset-date",
+					"value": "2030-01-16"
+				}
+			],
+			"type": "library",
+			"version": "2.1.2"
+		},
+		{
+			"bom-ref": "provider:BCJSSE",
+			"name": "BCJSSE",
+			"type": "library",
+			"version": "2.1.25"
+		},
+		{
+			"bom-ref": "provider:SUN",
+			"name": "SUN",
+			"type": "library"
+		},
+		{
+			"bom-ref": "provider:SunJCE",
+			"name": "SunJCE",
+			"type": "library"
+		},
+		{
+			"bom-ref": "setting:keystore.type",
+			"data": [
+				{
+					"name": "portal.properties",
+					"type": "configuration"
+				}
+			],
+			"name": "keystore.type",
+			"type": "data"
+		}
+	],
+	"dependencies": [
+		{
+			"dependsOn": [
+			],
+			"ref": "crypto:Cipher:AES/GCM/NoPadding"
+		},
+		{
+			"dependsOn": [
+			],
+			"ref": "crypto:KeyAgreement:X25519"
+		},
+		{
+			"dependsOn": [
+				"setting:keystore.type"
+			],
+			"ref": "crypto:KeyStore:keystore.type"
+		},
+		{
+			"dependsOn": [
+			],
+			"ref": "crypto:Mac:HmacSHA256"
+		},
+		{
+			"dependsOn": [
+			],
+			"ref": "crypto:MessageDigest:com.liferay.foo.Bar"
+		},
+		{
+			"dependsOn": [
+			],
+			"ref": "crypto:SSLContext:TLSv1.2"
+		},
+		{
+			"dependsOn": [
+			],
+			"ref": "crypto:Signature:SHA256withECDSA:secp256k1"
+		},
+		{
+			"dependsOn": [
+				"crypto:Cipher:AES/GCM/NoPadding",
+				"crypto:KeyStore:keystore.type",
+				"crypto:Mac:HmacSHA256",
+				"crypto:MessageDigest:com.liferay.foo.Bar"
+			],
+			"ref": "module:com.liferay.foo"
+		},
+		{
+			"dependsOn": [
+			],
+			"provides": [
+				"crypto:KeyAgreement:X25519",
+				"crypto:Mac:HmacSHA256",
+				"crypto:Signature:SHA256withECDSA:secp256k1"
+			],
+			"ref": "provider:BCFIPS"
+		},
+		{
+			"dependsOn": [
+			],
+			"provides": [
+				"crypto:SSLContext:TLSv1.2"
+			],
+			"ref": "provider:BCJSSE"
+		},
+		{
+			"dependsOn": [
+			],
+			"ref": "provider:SUN"
+		},
+		{
+			"dependsOn": [
+			],
+			"provides": [
+				"crypto:Cipher:AES/GCM/NoPadding"
+			],
+			"ref": "provider:SunJCE"
+		},
+		{
+			"dependsOn": [
+			],
+			"ref": "setting:keystore.type"
+		}
+	],
+	"metadata": {
+		"component": {
+			"name": "Liferay Digital Experience Platform",
+			"type": "application",
+			"version": "2026.Q4.0"
+		},
+		"lifecycles": [
+			{
+				"phase": "post-build"
+			}
+		],
+		"properties": [
+			{
+				"name": "liferay:cbom:configuration",
+				"value": "bcfips"
+			},
+			{
+				"name": "liferay:cbom:fips-provider",
+				"value": "BCFIPS 2.1.2"
+			},
+			{
+				"name": "liferay:cbom:schema-version",
+				"value": "1.0"
+			}
+		]
+	},
+	"serialNumber": "urn:uuid:8c2e4b71-0d3f-3a96-b5e1-7f4a9c2d6b08",
+	"specVersion": "1.6",
+	"version": 1
+}

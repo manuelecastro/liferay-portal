@@ -1,0 +1,87 @@
+task buildCBOM
+task copyCBOMConfigurations(type: Sync)
+task reviewCBOM(type: JavaExec)
+
+configurations {
+	cbomBCFIPS {
+		transitive = false
+	}
+}
+
+File cbomDir = new File(liferay.liferayHome, "cbom")
+
+file("configurations").eachDir {
+	File cbomConfigurationDir ->
+
+	String cbomConfigurationName = cbomConfigurationDir.name
+
+	JavaExec buildCBOMConfigurationTask = tasks.create(name: "buildCBOM-${cbomConfigurationName}", type: JavaExec) {
+		args cbomConfigurationDir, new File(cbomDir, "${cbomConfigurationName}.cdx.json"), liferay.liferayHome, liferay.appServerPortalDir
+		classpath = files(cbomConfigurationDir) + sourceSets.main.runtimeClasspath + configurations.compileClasspath + configurations.portal
+		dependsOn copyCBOMConfigurations
+		environment = System.getenv().findAll {
+			!it.key.startsWith("LIFERAY_")
+		}
+		jvmArgs "--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED"
+		mainClass = "com.liferay.portal.security.fips.cbom.builder.CBOMBuilder"
+		systemProperty "cbom.release", project.findProperty("cbom.release") ?: "false"
+		systemProperty "cbom.version", project.findProperty("cbom.version") ?: "1"
+
+		if (cbomConfigurationName == "bcfips") {
+			classpath += configurations.cbomBCFIPS
+		}
+
+		File javaSecurityFile = new File(cbomConfigurationDir, "java.security")
+
+		if (javaSecurityFile.exists()) {
+			systemProperty "java.security.properties", javaSecurityFile
+		}
+
+		File jvmOptionsFile = new File(cbomConfigurationDir, "jvm.options")
+
+		if (jvmOptionsFile.exists()) {
+			jvmArgs jvmOptionsFile.readLines().findAll {
+				!it.isEmpty() && !it.startsWith("#")
+			}
+		}
+	}
+
+	buildCBOM.dependsOn buildCBOMConfigurationTask
+}
+
+copyCBOMConfigurations {
+	from "configurations"
+	into new File(cbomDir, "configurations")
+}
+
+dependencies {
+	cbomBCFIPS group: "org.bouncycastle", name: "bc-fips", version: "2.1.1"
+	cbomBCFIPS group: "org.bouncycastle", name: "bctls-fips", version: "2.1.25"
+	cbomBCFIPS group: "org.bouncycastle", name: "bcutil-fips", version: "2.1.8"
+	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
+	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+	compileOnly project(":core:petra:petra-function")
+	compileOnly project(":core:petra:petra-reflect")
+	compileOnly project(":core:petra:petra-string")
+	implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.18.11"
+	implementation group: "com.fasterxml.jackson.core", name: "jackson-databind", version: "2.18.11"
+	implementation group: "org.cyclonedx", name: "cyclonedx-core-java", version: "13.2.0"
+	implementation group: "org.ow2.asm", name: "asm", version: "9.11.1"
+	implementation group: "org.ow2.asm", name: "asm-analysis", version: "9.11.1"
+	implementation group: "org.ow2.asm", name: "asm-tree", version: "9.11.1"
+	testImplementation group: "com.liferay", name: "biz.aQute.bnd.annotation", version: "4.2.0.LIFERAY-PATCHED-2"
+	testImplementation group: "com.liferay.jakarta.portlet", name: "com.liferay.jakarta.portlet-api", version: "4.0.0"
+	testImplementation group: "jakarta.servlet", name: "jakarta.servlet-api", version: "6.0.0"
+	testImplementation group: "org.skyscreamer", name: "jsonassert", version: "1.2.3"
+}
+
+deploy {
+	enabled = false
+}
+
+reviewCBOM {
+	args cbomDir, project.findProperty("cbom.previous.dir") ?: ""
+	classpath = sourceSets.main.runtimeClasspath + configurations.compileClasspath + configurations.portal
+	jvmArgs "--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED"
+	mainClass = "com.liferay.portal.security.fips.cbom.builder.CBOMReviewer"
+}

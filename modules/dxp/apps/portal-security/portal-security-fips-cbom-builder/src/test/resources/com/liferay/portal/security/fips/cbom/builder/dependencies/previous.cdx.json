@@ -1,0 +1,205 @@
+{
+	"bomFormat": "CycloneDX",
+	"components": [
+		{
+			"bom-ref": "crypto:Cipher:AES/GCM/NoPadding",
+			"name": "AES-GCM",
+			"properties": [
+				{
+					"name": "liferay:cbom:fips-approval-status",
+					"value": "APPROVED"
+				},
+				{
+					"name": "liferay:cbom:jca-class",
+					"value": "Cipher"
+				}
+			],
+			"type": "cryptographic-asset"
+		},
+		{
+			"bom-ref": "crypto:MessageDigest:MD5",
+			"name": "MD5",
+			"properties": [
+				{
+					"name": "liferay:cbom:fips-approval-status",
+					"value": "PROVIDER_NOT_VALIDATED"
+				},
+				{
+					"name": "liferay:cbom:jca-class",
+					"value": "MessageDigest"
+				}
+			],
+			"type": "cryptographic-asset"
+		},
+		{
+			"bom-ref": "crypto:SSLContext:TLSv1.2",
+			"cryptoProperties": {
+				"assetType": "protocol",
+				"protocolProperties": {
+					"cipherSuites": [
+						{
+							"name": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+						},
+						{
+							"name": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+						}
+					],
+					"type": "tls",
+					"version": "1.2"
+				}
+			},
+			"name": "TLSv1.2",
+			"properties": [
+				{
+					"name": "liferay:cbom:fips-approval-status",
+					"value": "PROVIDER_NOT_VALIDATED"
+				},
+				{
+					"name": "liferay:cbom:jca-class",
+					"value": "SSLContext"
+				}
+			],
+			"type": "cryptographic-asset"
+		},
+		{
+			"bom-ref": "crypto:Signature:SHA256withECDSA:secp256k1",
+			"name": "ECDSA-secp256k1-SHA-256",
+			"properties": [
+				{
+					"name": "liferay:cbom:fips-approval-status",
+					"value": "APPROVED"
+				},
+				{
+					"name": "liferay:cbom:jca-class",
+					"value": "Signature"
+				}
+			],
+			"type": "cryptographic-asset"
+		},
+		{
+			"bom-ref": "module:com.liferay.foo",
+			"name": "Liferay Foo",
+			"type": "library"
+		},
+		{
+			"bom-ref": "provider:BCFIPS",
+			"externalReferences": [
+				{
+					"type": "certification-report",
+					"url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4943"
+				}
+			],
+			"name": "BCFIPS",
+			"properties": [
+				{
+					"name": "liferay:cbom:cmvp-certificate",
+					"value": "4943"
+				},
+				{
+					"name": "liferay:cbom:cmvp-status",
+					"value": "Active"
+				},
+				{
+					"name": "liferay:cbom:cmvp-sunset-date",
+					"value": "2030-01-16"
+				}
+			],
+			"type": "library",
+			"version": "2.1.1"
+		},
+		{
+			"bom-ref": "provider:BCJSSE",
+			"name": "BCJSSE",
+			"type": "library",
+			"version": "2.1.25"
+		},
+		{
+			"bom-ref": "provider:SUN",
+			"name": "SUN",
+			"type": "library"
+		}
+	],
+	"dependencies": [
+		{
+			"dependsOn": [
+			],
+			"ref": "crypto:Cipher:AES/GCM/NoPadding"
+		},
+		{
+			"dependsOn": [
+			],
+			"ref": "crypto:MessageDigest:MD5"
+		},
+		{
+			"dependsOn": [
+			],
+			"ref": "crypto:SSLContext:TLSv1.2"
+		},
+		{
+			"dependsOn": [
+			],
+			"ref": "crypto:Signature:SHA256withECDSA:secp256k1"
+		},
+		{
+			"dependsOn": [
+				"crypto:Cipher:AES/GCM/NoPadding",
+				"crypto:MessageDigest:MD5"
+			],
+			"ref": "module:com.liferay.foo"
+		},
+		{
+			"dependsOn": [
+			],
+			"provides": [
+				"crypto:Cipher:AES/GCM/NoPadding",
+				"crypto:Signature:SHA256withECDSA:secp256k1"
+			],
+			"ref": "provider:BCFIPS"
+		},
+		{
+			"dependsOn": [
+			],
+			"provides": [
+				"crypto:SSLContext:TLSv1.2"
+			],
+			"ref": "provider:BCJSSE"
+		},
+		{
+			"dependsOn": [
+			],
+			"provides": [
+				"crypto:MessageDigest:MD5"
+			],
+			"ref": "provider:SUN"
+		}
+	],
+	"metadata": {
+		"component": {
+			"name": "Liferay Digital Experience Platform",
+			"type": "application",
+			"version": "2026.Q3.0"
+		},
+		"lifecycles": [
+			{
+				"phase": "post-build"
+			}
+		],
+		"properties": [
+			{
+				"name": "liferay:cbom:configuration",
+				"value": "bcfips"
+			},
+			{
+				"name": "liferay:cbom:fips-provider",
+				"value": "BCFIPS 2.1.1"
+			},
+			{
+				"name": "liferay:cbom:schema-version",
+				"value": "1.0"
+			}
+		]
+	},
+	"serialNumber": "urn:uuid:3f9a1d52-5b0e-3c41-9f6e-2d8b7a4c1e90",
+	"specVersion": "1.6",
+	"version": 1
+}
