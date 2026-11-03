@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyInfo;
 import com.liferay.portal.kernel.model.VirtualHost;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.security.fips.FIPSApplicationStateMachineUtil;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.service.VirtualHostLocalServiceUtil;
@@ -36,6 +37,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -131,6 +133,9 @@ public class CompanyLocalServiceImplTest {
 		try (MockedStatic<CompanyKeyResolverUtil>
 				companyKeyResolverUtilMockedStatic = Mockito.mockStatic(
 					CompanyKeyResolverUtil.class, Mockito.CALLS_REAL_METHODS);
+			MockedStatic<FIPSApplicationStateMachineUtil>
+				fipsApplicationStateMachineUtilMockedStatic =
+					Mockito.mockStatic(FIPSApplicationStateMachineUtil.class);
 			MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
 				Mockito.mockStatic(FIPSAuditUtil.class);
 			MockedStatic<TransactionInvokerUtil>
@@ -200,9 +205,10 @@ public class CompanyLocalServiceImplTest {
 				companyInfoPersistence
 			).clearCache();
 
+			fipsApplicationStateMachineUtilMockedStatic.verifyNoInteractions();
 			fipsAuditUtilMockedStatic.verifyNoInteractions();
 
-			// Failed rotation
+			// Default company
 
 			companyKeyResolverUtilMockedStatic.when(
 				() -> CompanyKeyResolverUtil.generateKey(companyId)
@@ -212,8 +218,39 @@ public class CompanyLocalServiceImplTest {
 
 			companyLocalServiceImpl.checkCompanyKey(companyId);
 
+			ArgumentCaptor<Throwable> argumentCaptor = ArgumentCaptor.forClass(
+				Throwable.class);
+
+			fipsApplicationStateMachineUtilMockedStatic.verify(
+				() -> FIPSApplicationStateMachineUtil.error(
+					Mockito.anyString(), argumentCaptor.capture()));
+
+			Throwable throwable = argumentCaptor.getValue();
+
+			String message = throwable.getMessage();
+
+			Assert.assertTrue(
+				message, message.contains(String.valueOf(companyId)));
+
 			fipsAuditUtilMockedStatic.verify(
 				() -> FIPSAuditUtil.write(Mockito.any(FIPSAuditEvent.class)));
+
+			// Other company
+
+			Mockito.when(
+				company.getWebId()
+			).thenReturn(
+				RandomTestUtil.randomString()
+			);
+
+			companyLocalServiceImpl.checkCompanyKey(companyId);
+
+			fipsApplicationStateMachineUtilMockedStatic.verify(
+				() -> FIPSApplicationStateMachineUtil.error(
+					Mockito.anyString(), Mockito.any(Throwable.class)));
+			fipsAuditUtilMockedStatic.verify(
+				() -> FIPSAuditUtil.write(Mockito.any(FIPSAuditEvent.class)),
+				Mockito.times(2));
 		}
 	}
 

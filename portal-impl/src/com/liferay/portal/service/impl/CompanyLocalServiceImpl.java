@@ -85,6 +85,7 @@ import com.liferay.portal.kernel.search.facet.faceted.searcher.FacetedSearcherMa
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.EmailAddressValidator;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.security.fips.FIPSApplicationStateMachineUtil;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
@@ -2478,6 +2479,17 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		}
 		catch (Exception exception) {
 			throwable.addSuppressed(exception);
+		}
+
+		if (Objects.equals(
+				company.getWebId(), PropsValues.COMPANY_DEFAULT_WEB_ID)) {
+
+			FIPSApplicationStateMachineUtil.error(
+				"Default company key rotation",
+				new CompanyKeyException(
+					"Unable to rotate the key of the default company " +
+						companyId,
+					throwable));
 		}
 
 		_log.error(
