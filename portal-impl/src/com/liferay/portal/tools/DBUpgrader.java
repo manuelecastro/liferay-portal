@@ -545,9 +545,6 @@ public class DBUpgrader {
 
 					updatePortalServiceComponent();
 				}
-
-				PortalUpgradeProcess.updateBuildInfo(connection);
-				PortalUpgradeProcess.updateVersionDisplayName(connection);
 			}
 
 			CustomSQLUtil.reloadCustomSQL();
@@ -558,6 +555,11 @@ public class DBUpgrader {
 			}
 
 			_updateCompanyKey();
+
+			try (Connection connection = DataAccess.getConnection()) {
+				PortalUpgradeProcess.updateBuildInfo(connection);
+				PortalUpgradeProcess.updateVersionDisplayName(connection);
+			}
 
 			PortalCacheHelperUtil.clearPortalCaches(
 				PortalCacheManagerNames.MULTI_VM);
@@ -663,8 +665,11 @@ public class DBUpgrader {
 					!CompanyKeyResolverUtil.isWrappedKey(keyString)) {
 
 					throw new IllegalStateException(
-						"Unable to wrap the regenerated key for company " +
-							companyId);
+						StringBundler.concat(
+							"Unable to wrap the regenerated key for company ",
+							companyId, " because its current key is wrapped ",
+							"and the key manager's company-kek-identifier is ",
+							"not available"));
 				}
 
 				try (Connection connection = DataAccess.getConnection();
