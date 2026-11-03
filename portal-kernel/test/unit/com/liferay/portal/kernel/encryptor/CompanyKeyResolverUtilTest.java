@@ -189,6 +189,28 @@ public class CompanyKeyResolverUtilTest {
 			Assert.assertSame(
 				key, CompanyKeyResolverUtil.unwrapKey(_COMPANY_ID, keyString));
 		}
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			for (String legacyKeyString :
+					new String[] {RandomTestUtil.randomString(), keyString}) {
+
+				try {
+					CompanyKeyResolverUtil.unwrapKey(
+						_COMPANY_ID, legacyKeyString);
+
+					Assert.fail();
+				}
+				catch (CompanyKeyException companyKeyException) {
+					String message = companyKeyException.getMessage();
+
+					Assert.assertTrue(
+						message, message.contains(String.valueOf(_COMPANY_ID)));
+				}
+			}
+		}
 	}
 
 	@Test

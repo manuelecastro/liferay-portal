@@ -50,6 +50,14 @@ public class CompanyKeyResolverUtil {
 	}
 
 	public static Key unwrapKey(long companyId, String keyString) {
+		if (PropsValues.FIPS_ENABLED && !isFIPSKey(keyString)) {
+			throw new CompanyKeyException(
+				StringBundler.concat(
+					"The key of company ", companyId,
+					" was not generated in FIPS mode and is refused until a ",
+					"FIPS start rotates it"));
+		}
+
 		keyString = _getInnerKeyString(keyString);
 
 		if (!isWrappedKey(keyString)) {
