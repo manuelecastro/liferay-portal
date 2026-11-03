@@ -69,10 +69,14 @@ public class CryptoUse {
 		_algorithm = algorithm;
 	}
 
+	public void setFeatureName(String featureName) {
+		_featureName = featureName;
+	}
+
 	private String _algorithm;
 	private final String _bundleSymbolicName;
 	private final String _className;
-	private final String _featureName;
+	private String _featureName;
 	private final String _jcaClassName;
 	private final SortedSet<String> _values = new TreeSet<>();
 
