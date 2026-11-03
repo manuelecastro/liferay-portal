@@ -14,7 +14,10 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.io.File;
+
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +31,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
@@ -160,6 +164,32 @@ public class CBOMBuilderTest {
 		Assert.assertNotEquals(
 			serialNumber, jsonObject.getString("serialNumber"));
 	}
+
+	@Test
+	public void testMain() throws Exception {
+		File configurationDir = temporaryFolder.newFolder();
+
+		File portalExtPropertiesFile = new File(
+			configurationDir, "portal-ext.properties");
+
+		Files.write(
+			portalExtPropertiesFile.toPath(),
+			"fips.enabled=true".getBytes(StandardCharsets.UTF_8));
+
+		try {
+			CBOMBuilder.main(new String[] {configurationDir.getPath()});
+
+			Assert.fail();
+		}
+		catch (UnsupportedOperationException unsupportedOperationException) {
+			Assert.assertEquals(
+				"Unable to build the CBOM of a FIPS mode configuration",
+				unsupportedOperationException.getMessage());
+		}
+	}
+
+	@Rule
+	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	private CryptoUse _createCryptoUse(
 		String algorithm, String className, String jcaClassName) {
