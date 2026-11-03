@@ -34,6 +34,7 @@ import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.encryptor.CompanyKeyResolverUtil;
 import com.liferay.portal.kernel.encryptor.EncryptorException;
+import com.liferay.portal.kernel.exception.CompanyKeyException;
 import com.liferay.portal.kernel.exception.CompanyMaxUsersException;
 import com.liferay.portal.kernel.exception.CompanyMxException;
 import com.liferay.portal.kernel.exception.CompanyNameException;
@@ -84,6 +85,8 @@ import com.liferay.portal.kernel.search.facet.faceted.searcher.FacetedSearcherMa
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.EmailAddressValidator;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -566,13 +569,21 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	public void checkCompanyKey(long companyId) throws PortalException {
 		Company company = companyPersistence.findByPrimaryKey(companyId);
 
-		if (Validator.isNotNull(company.getKey())) {
+		String key = company.getKey();
+
+		if (Validator.isNull(key)) {
+			company.setKey(_generateKey(companyId));
+
+			_companyInfoPersistence.update(company.getCompanyInfo());
+
 			return;
 		}
 
-		company.setKey(_generateKey(companyId));
+		if (PropsValues.FIPS_ENABLED &&
+			!CompanyKeyResolverUtil.isFIPSKey(key)) {
 
-		_companyInfoPersistence.update(company.getCompanyInfo());
+			_rotateKey(company);
+		}
 	}
 
 	@Override
@@ -2400,6 +2411,22 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		return guestUser;
 	}
 
+	private FIPSAuditEvent _createKeyRotationFIPSAuditEvent(
+		long companyId, String key, String result,
+		FIPSAuditEvent.Severity severity) {
+
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"fips-migration", severity);
+
+		fipsAuditEvent.put("company-id", companyId);
+		fipsAuditEvent.put("executor", "startup");
+		fipsAuditEvent.put("item", "company-key");
+		fipsAuditEvent.put("result", result);
+		fipsAuditEvent.put("source-key-format", _getKeyFormat(key));
+
+		return fipsAuditEvent;
+	}
+
 	private void _deletePortalInstance(Company company) throws PortalException {
 
 		// Portlet
@@ -2442,6 +2469,14 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);
 		}
+	}
+
+	private String _getKeyFormat(String key) {
+		if (CompanyKeyResolverUtil.isWrappedKey(key)) {
+			return "wrapped";
+		}
+
+		return "plaintext";
 	}
 
 	private long _getNextCompanyId() {
@@ -2535,6 +2570,61 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		catch (Throwable throwable) {
 			throw new PortalException(throwable);
 		}
+	}
+
+	private void _rotateKey(Company company) {
+		long companyId = company.getCompanyId();
+		String key = company.getKey();
+
+		String rotatedKey = null;
+
+		try {
+			rotatedKey = CompanyKeyResolverUtil.generateKey(companyId);
+		}
+		catch (Exception exception) {
+			_writeKeyRotationFailure(companyId, key, exception);
+
+			return;
+		}
+
+		if (CompanyKeyResolverUtil.isWrappedKey(key) &&
+			!CompanyKeyResolverUtil.isWrappedKey(rotatedKey)) {
+
+			_writeKeyRotationFailure(
+				companyId, key,
+				new CompanyKeyException(
+					StringBundler.concat(
+						"Unable to wrap the rotated key for company ",
+						companyId, " because its current key is wrapped and ",
+						"the key manager's company-kek-identifier is not ",
+						"available")));
+
+			return;
+		}
+
+		company.setKey(rotatedKey);
+
+		_companyInfoPersistence.update(company.getCompanyInfo());
+
+		String targetKeyFormat = _getKeyFormat(rotatedKey);
+
+		TransactionCallbackUtil.registerCommitCallback(
+			() -> {
+				FIPSAuditEvent fipsAuditEvent =
+					_createKeyRotationFIPSAuditEvent(
+						companyId, key, "migrated",
+						FIPSAuditEvent.Severity.INFO);
+
+				fipsAuditEvent.put("target-key-format", targetKeyFormat);
+
+				FIPSAuditUtil.write(fipsAuditEvent);
+
+				if (_log.isInfoEnabled()) {
+					_log.info("Rotated the key for company " + companyId);
+				}
+
+				return null;
+			});
 	}
 
 	private void _synchronizePortalInstances() {
@@ -2663,6 +2753,29 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			throw new IllegalArgumentException(
 				"Web ID must not exceed " + maxLength + " characters");
 		}
+	}
+
+	private void _writeKeyRotationFailure(
+		long companyId, String key, Exception exception1) {
+
+		FIPSAuditEvent fipsAuditEvent = _createKeyRotationFIPSAuditEvent(
+			companyId, key, "failed", FIPSAuditEvent.Severity.CRITICAL);
+
+		fipsAuditEvent.put(
+			"failure-reason", GetterUtil.getString(exception1.getMessage()));
+
+		try {
+			FIPSAuditUtil.write(fipsAuditEvent);
+		}
+		catch (Exception exception2) {
+			exception1.addSuppressed(exception2);
+		}
+
+		_log.error(
+			StringBundler.concat(
+				"Unable to rotate the key for company ", companyId,
+				". The key is refused until a later start rotates it."),
+			exception1);
 	}
 
 	private static final String _DEFAULT_VIRTUAL_HOST = "localhost";
