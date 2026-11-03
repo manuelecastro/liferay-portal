@@ -14,7 +14,11 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+
+import java.nio.file.Files;
 
 import java.security.KeyFactory;
 import java.security.MessageDigest;
@@ -26,7 +30,14 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.crypto.KeyGenerator;
 
@@ -34,6 +45,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Manuele Castro
@@ -57,6 +69,53 @@ public class CBOMScannerTest {
 		_testScan(SecureRandomTestClass.class, "SecureRandom SHA1PRNG");
 		_testScan(SignatureTestClass.class, "Signature SHA256withRSA");
 	}
+
+	@Test
+	public void testScanFile() throws Exception {
+		String bundleName = RandomTestUtil.randomString();
+		String bundleSymbolicName = RandomTestUtil.randomString();
+
+		File bundleJarFile = temporaryFolder.newFile("bundle.jar");
+
+		_writeJarFile(
+			bundleName, bundleSymbolicName + ";singleton:=true", bundleJarFile);
+
+		_testScanFile(bundleSymbolicName, bundleName, bundleJarFile);
+
+		File libraryJarFile = temporaryFolder.newFile("library.jar");
+
+		_writeJarFile(null, null, libraryJarFile);
+
+		_testScanFile("library", "library", libraryJarFile);
+
+		File lpkgFile = temporaryFolder.newFile("package.lpkg");
+
+		try (ZipOutputStream zipOutputStream = new ZipOutputStream(
+				new FileOutputStream(lpkgFile))) {
+
+			zipOutputStream.putNextEntry(new ZipEntry("bundle.jar"));
+
+			zipOutputStream.write(Files.readAllBytes(bundleJarFile.toPath()));
+
+			zipOutputStream.closeEntry();
+		}
+
+		_testScanFile(bundleSymbolicName, bundleName, lpkgFile);
+
+		CBOMData bundleCBOMData = new CBOMData();
+
+		CBOMScanner bundleCBOMScanner = new CBOMScanner(
+			Collections.singleton(RandomTestUtil.randomString()),
+			bundleCBOMData);
+
+		bundleCBOMScanner.scan(bundleJarFile);
+
+		Assert.assertEquals(
+			Collections.emptyList(), bundleCBOMData.getScannedCryptoUses());
+	}
+
+	@Rule
+	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	public static class ConstantTestClass {
 
@@ -186,6 +245,60 @@ public class CBOMScannerTest {
 		descriptions.sort(null);
 
 		Assert.assertEquals(Arrays.asList(expectedDescriptions), descriptions);
+	}
+
+	private void _testScanFile(
+			String expectedBundleSymbolicName, String expectedFeatureName,
+			File file)
+		throws Exception {
+
+		CBOMData cbomData = new CBOMData();
+
+		CBOMScanner cbomScanner = new CBOMScanner(cbomData);
+
+		cbomScanner.scan(file);
+
+		List<CryptoUse> cryptoUses = cbomData.getScannedCryptoUses();
+
+		Assert.assertEquals(cryptoUses.toString(), 1, cryptoUses.size());
+
+		CryptoUse cryptoUse = cryptoUses.get(0);
+
+		Assert.assertEquals(
+			expectedBundleSymbolicName, cryptoUse.getBundleSymbolicName());
+		Assert.assertEquals(
+			CBOMScannerTest.class.getName(), cryptoUse.getClassName());
+		Assert.assertEquals(expectedFeatureName, cryptoUse.getFeatureName());
+	}
+
+	private void _writeJarFile(
+			String bundleName, String bundleSymbolicName, File file)
+		throws Exception {
+
+		Manifest manifest = new Manifest();
+
+		Attributes attributes = manifest.getMainAttributes();
+
+		attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+
+		if (bundleName != null) {
+			attributes.putValue("Bundle-Name", bundleName);
+		}
+
+		if (bundleSymbolicName != null) {
+			attributes.putValue("Bundle-SymbolicName", bundleSymbolicName);
+		}
+
+		try (JarOutputStream jarOutputStream = new JarOutputStream(
+				new FileOutputStream(file), manifest)) {
+
+			jarOutputStream.putNextEntry(
+				new JarEntry(_getClassFileName(ConstantTestClass.class)));
+
+			jarOutputStream.write(_read(ConstantTestClass.class));
+
+			jarOutputStream.closeEntry();
+		}
 	}
 
 }
