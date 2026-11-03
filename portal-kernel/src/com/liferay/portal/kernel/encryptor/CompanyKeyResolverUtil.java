@@ -5,8 +5,11 @@
 
 package com.liferay.portal.kernel.encryptor;
 
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.CompanyKeyException;
 import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import java.security.Key;
 
@@ -15,7 +18,30 @@ import java.security.Key;
  */
 public class CompanyKeyResolverUtil {
 
+	public static String generateKey(long companyId) throws EncryptorException {
+		String keyString = wrapKey(companyId, EncryptorUtil.generateKey());
+
+		if (!PropsValues.FIPS_ENABLED) {
+			return keyString;
+		}
+
+		return StringBundler.concat(
+			_FIPS_KEY_PREFIX, keyString, StringPool.CLOSE_CURLY_BRACE);
+	}
+
+	public static boolean isFIPSKey(String keyString) {
+		if ((keyString != null) && keyString.startsWith(_FIPS_KEY_PREFIX) &&
+			keyString.endsWith(StringPool.CLOSE_CURLY_BRACE)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	public static boolean isWrappedKey(String keyString) {
+		keyString = _getInnerKeyString(keyString);
+
 		if ((keyString != null) && keyString.startsWith("${wrappedKey:")) {
 			return true;
 		}
@@ -24,6 +50,8 @@ public class CompanyKeyResolverUtil {
 	}
 
 	public static Key unwrapKey(long companyId, String keyString) {
+		keyString = _getInnerKeyString(keyString);
+
 		if (!isWrappedKey(keyString)) {
 			return EncryptorUtil.deserializeKey(keyString);
 		}
@@ -51,6 +79,17 @@ public class CompanyKeyResolverUtil {
 
 		return companyKeyResolver.wrapKey(companyId, key);
 	}
+
+	private static String _getInnerKeyString(String keyString) {
+		if (!isFIPSKey(keyString)) {
+			return keyString;
+		}
+
+		return keyString.substring(
+			_FIPS_KEY_PREFIX.length(), keyString.length() - 1);
+	}
+
+	private static final String _FIPS_KEY_PREFIX = "${fipsKey:v1:";
 
 	private static final Snapshot<CompanyKeyResolver>
 		_companyKeyResolverSnapshot = new Snapshot<>(

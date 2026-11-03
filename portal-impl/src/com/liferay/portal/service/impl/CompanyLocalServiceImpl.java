@@ -34,7 +34,6 @@ import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.encryptor.CompanyKeyResolverUtil;
 import com.liferay.portal.kernel.encryptor.EncryptorException;
-import com.liferay.portal.kernel.encryptor.EncryptorUtil;
 import com.liferay.portal.kernel.exception.CompanyMaxUsersException;
 import com.liferay.portal.kernel.exception.CompanyMxException;
 import com.liferay.portal.kernel.exception.CompanyNameException;
@@ -571,14 +570,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			return;
 		}
 
-		try {
-			company.setKey(
-				CompanyKeyResolverUtil.wrapKey(
-					companyId, EncryptorUtil.generateKey()));
-		}
-		catch (EncryptorException encryptorException) {
-			throw new SystemException(encryptorException);
-		}
+		company.setKey(_generateKey(companyId));
 
 		_companyInfoPersistence.update(company.getCompanyInfo());
 	}
@@ -2445,8 +2437,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 	private String _generateKey(long companyId) {
 		try {
-			return CompanyKeyResolverUtil.wrapKey(
-				companyId, EncryptorUtil.generateKey());
+			return CompanyKeyResolverUtil.generateKey(companyId);
 		}
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);

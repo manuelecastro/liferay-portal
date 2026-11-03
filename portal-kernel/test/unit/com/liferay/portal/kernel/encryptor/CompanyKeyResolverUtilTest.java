@@ -5,9 +5,11 @@
 
 package com.liferay.portal.kernel.encryptor;
 
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.exception.CompanyKeyException;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 
 import java.security.Key;
@@ -23,11 +25,119 @@ import org.mockito.Mockito;
 public class CompanyKeyResolverUtilTest {
 
 	@Test
+	public void testGenerateKey() throws Exception {
+		Encryptor encryptor = Mockito.mock(Encryptor.class);
+		Key key = Mockito.mock(Key.class);
+		String keyString = RandomTestUtil.randomString();
+
+		Mockito.when(
+			encryptor.generateKey()
+		).thenReturn(
+			key
+		);
+
+		Mockito.when(
+			encryptor.serializeKey(key)
+		).thenReturn(
+			keyString
+		);
+
+		try (AutoCloseable autoCloseable1 = _setEncryptor(encryptor);
+			AutoCloseable autoCloseable2 = _setCompanyKeyResolver(null)) {
+
+			Assert.assertEquals(
+				keyString, CompanyKeyResolverUtil.generateKey(_COMPANY_ID));
+
+			try (SafeCloseable safeCloseable =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"FIPS_ENABLED", true)) {
+
+				String fipsKeyString = CompanyKeyResolverUtil.generateKey(
+					_COMPANY_ID);
+
+				Assert.assertEquals(
+					_FIPS_KEY_PREFIX + keyString + "}", fipsKeyString);
+				Assert.assertTrue(
+					CompanyKeyResolverUtil.isFIPSKey(fipsKeyString));
+				Assert.assertFalse(
+					CompanyKeyResolverUtil.isWrappedKey(fipsKeyString));
+			}
+		}
+
+		CompanyKeyResolver companyKeyResolver = Mockito.mock(
+			CompanyKeyResolver.class);
+
+		Mockito.when(
+			companyKeyResolver.isEnabled(_COMPANY_ID)
+		).thenReturn(
+			true
+		);
+
+		String wrappedKeyString =
+			_WRAPPED_KEY_PREFIX + RandomTestUtil.randomString() + "}";
+
+		Mockito.when(
+			companyKeyResolver.unwrapKey(_COMPANY_ID, wrappedKeyString)
+		).thenReturn(
+			key
+		);
+
+		Mockito.when(
+			companyKeyResolver.wrapKey(_COMPANY_ID, key)
+		).thenReturn(
+			wrappedKeyString
+		);
+
+		try (AutoCloseable autoCloseable1 = _setEncryptor(encryptor);
+			AutoCloseable autoCloseable2 = _setCompanyKeyResolver(
+				companyKeyResolver);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			String fipsKeyString = CompanyKeyResolverUtil.generateKey(
+				_COMPANY_ID);
+
+			Assert.assertEquals(
+				_FIPS_KEY_PREFIX + wrappedKeyString + "}", fipsKeyString);
+			Assert.assertTrue(CompanyKeyResolverUtil.isFIPSKey(fipsKeyString));
+			Assert.assertTrue(
+				CompanyKeyResolverUtil.isWrappedKey(fipsKeyString));
+			Assert.assertSame(
+				key,
+				CompanyKeyResolverUtil.unwrapKey(_COMPANY_ID, fipsKeyString));
+		}
+	}
+
+	@Test
+	public void testIsFIPSKey() {
+		String keyString = RandomTestUtil.randomString();
+
+		Assert.assertTrue(
+			CompanyKeyResolverUtil.isFIPSKey(
+				_FIPS_KEY_PREFIX + keyString + "}"));
+		Assert.assertFalse(
+			CompanyKeyResolverUtil.isFIPSKey(_FIPS_KEY_PREFIX + keyString));
+		Assert.assertFalse(CompanyKeyResolverUtil.isFIPSKey(keyString));
+		Assert.assertFalse(
+			CompanyKeyResolverUtil.isFIPSKey(
+				_WRAPPED_KEY_PREFIX + keyString + "}"));
+
+		Assert.assertFalse(CompanyKeyResolverUtil.isFIPSKey(null));
+	}
+
+	@Test
 	public void testIsWrappedKey() {
 		Assert.assertTrue(
 			CompanyKeyResolverUtil.isWrappedKey(_WRAPPED_KEY_PREFIX));
+		Assert.assertTrue(
+			CompanyKeyResolverUtil.isWrappedKey(
+				_FIPS_KEY_PREFIX + _WRAPPED_KEY_PREFIX + "}"));
 		Assert.assertFalse(
 			CompanyKeyResolverUtil.isWrappedKey(RandomTestUtil.randomString()));
+		Assert.assertFalse(
+			CompanyKeyResolverUtil.isWrappedKey(
+				_FIPS_KEY_PREFIX + RandomTestUtil.randomString() + "}"));
 		Assert.assertFalse(CompanyKeyResolverUtil.isWrappedKey(null));
 	}
 
@@ -48,6 +158,10 @@ public class CompanyKeyResolverUtilTest {
 
 			Assert.assertSame(
 				key, CompanyKeyResolverUtil.unwrapKey(_COMPANY_ID, keyString));
+			Assert.assertSame(
+				key,
+				CompanyKeyResolverUtil.unwrapKey(
+					_COMPANY_ID, _FIPS_KEY_PREFIX + keyString + "}"));
 		}
 
 		keyString = _WRAPPED_KEY_PREFIX + RandomTestUtil.randomString();
@@ -165,6 +279,8 @@ public class CompanyKeyResolverUtilTest {
 	}
 
 	private static final long _COMPANY_ID = RandomTestUtil.randomLong();
+
+	private static final String _FIPS_KEY_PREFIX = "${fipsKey:v1:";
 
 	private static final String _WRAPPED_KEY_PREFIX = "${wrappedKey:";
 
