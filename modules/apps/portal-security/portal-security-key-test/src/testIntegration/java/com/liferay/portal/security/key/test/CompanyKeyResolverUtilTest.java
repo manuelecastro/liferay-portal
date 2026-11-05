@@ -6,6 +6,7 @@
 package com.liferay.portal.security.key.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
@@ -16,14 +17,19 @@ import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.security.key.spi.crypto.CryptoProvider;
 import com.liferay.portal.security.key.test.util.TestCompanyCryptoProvider;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.security.Key;
 
+import java.util.Arrays;
 import java.util.Dictionary;
 
 import org.junit.After;
@@ -59,12 +65,9 @@ public class CompanyKeyResolverUtilTest {
 					TestCompanyCryptoProvider.KEY_IDENTIFIER));
 		_keyManagerCustomProfileConfigurationTemporarySwapper =
 			new ConfigurationTemporarySwapper(
-				"com.liferay.portal.security.key.internal.profile." +
-					"configuration.KeyManagerCustomProfileConfiguration",
-				HashMapDictionaryBuilder.<String, Object>put(
-					"companyKEKProviderId",
-					TestCompanyCryptoProvider.PROVIDER_ID
-				).build());
+				_KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID,
+				_getKeyManagerCustomProfileConfigurationProperties(
+					TestCompanyCryptoProvider.PROVIDER_ID));
 
 		Bundle bundle = FrameworkUtil.getBundle(
 			CompanyKeyResolverUtilTest.class);
@@ -86,6 +89,100 @@ public class CompanyKeyResolverUtilTest {
 		_keyManagerCustomProfileConfigurationTemporarySwapper.close();
 
 		_serviceRegistration.unregister();
+	}
+
+	@Test
+	public void testCheckCompanyKey() throws Exception {
+		_company = CompanyTestUtil.addCompany();
+
+		String keyString = _company.getKey();
+
+		Assert.assertTrue(CompanyKeyResolverUtil.isWrappedKey(keyString));
+		Assert.assertFalse(CompanyKeyResolverUtil.isFIPSKey(keyString));
+
+		_saveKeyManagerConfiguration(StringPool.BLANK);
+
+		_legacyCompany = CompanyTestUtil.addCompany();
+
+		String legacyKeyString = _legacyCompany.getKey();
+
+		Assert.assertFalse(
+			CompanyKeyResolverUtil.isWrappedKey(legacyKeyString));
+		Assert.assertFalse(CompanyKeyResolverUtil.isFIPSKey(legacyKeyString));
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_CLASS_NAME_FIPS_LOG4J_UTIL, LoggerTestUtil.INFO)) {
+
+			// A wrapped key is never replaced with a plaintext one
+
+			Assert.assertEquals(keyString, _checkCompanyKey(_company));
+
+			// An unreachable KEK leaves the key untouched
+
+			_saveKeyManagerConfiguration(
+				TestCompanyCryptoProvider.KEY_IDENTIFIER);
+			_saveKeyManagerCustomProfileConfiguration(
+				RandomTestUtil.randomString());
+
+			Assert.assertEquals(
+				legacyKeyString, _checkCompanyKey(_legacyCompany));
+
+			// With a KEK, the key is rotated and wrapped
+
+			_saveKeyManagerCustomProfileConfiguration(
+				TestCompanyCryptoProvider.PROVIDER_ID);
+
+			String rotatedKeyString = _checkCompanyKey(_company);
+
+			Assert.assertTrue(
+				CompanyKeyResolverUtil.isFIPSKey(rotatedKeyString));
+			Assert.assertTrue(
+				CompanyKeyResolverUtil.isWrappedKey(rotatedKeyString));
+
+			Key key = CompanyKeyResolverUtil.unwrapKey(
+				_company.getCompanyId(), rotatedKeyString);
+
+			byte[] encodedBytes = key.getEncoded();
+
+			Assert.assertEquals(
+				Arrays.toString(encodedBytes), 32, encodedBytes.length);
+
+			// A rotated key is kept
+
+			Assert.assertEquals(rotatedKeyString, _checkCompanyKey(_company));
+
+			// Without a KEK, the key is rotated in plaintext
+
+			_saveKeyManagerConfiguration(StringPool.BLANK);
+
+			String rotatedLegacyKeyString = _checkCompanyKey(_legacyCompany);
+
+			Assert.assertTrue(
+				CompanyKeyResolverUtil.isFIPSKey(rotatedLegacyKeyString));
+			Assert.assertFalse(
+				CompanyKeyResolverUtil.isWrappedKey(rotatedLegacyKeyString));
+
+			key = CompanyKeyResolverUtil.unwrapKey(
+				_legacyCompany.getCompanyId(), rotatedLegacyKeyString);
+
+			encodedBytes = key.getEncoded();
+
+			Assert.assertEquals(
+				Arrays.toString(encodedBytes), 32, encodedBytes.length);
+
+			Assert.assertEquals(
+				1, _countFIPSMigrationEvents(logCapture, _company, "failed"));
+			Assert.assertEquals(
+				1, _countFIPSMigrationEvents(logCapture, _company, "migrated"));
+			Assert.assertEquals(
+				1,
+				_countFIPSMigrationEvents(
+					logCapture, _legacyCompany, "failed"));
+			Assert.assertEquals(
+				1,
+				_countFIPSMigrationEvents(
+					logCapture, _legacyCompany, "migrated"));
+		}
 	}
 
 	@Test
@@ -159,6 +256,44 @@ public class CompanyKeyResolverUtilTest {
 			_legacyCompany.getKeyObj());
 	}
 
+	private String _checkCompanyKey(Company company) throws Exception {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			CompanyLocalServiceUtil.checkCompanyKey(company.getCompanyId());
+		}
+
+		EntityCacheUtil.clearCache();
+
+		Company persistedCompany = CompanyLocalServiceUtil.getCompany(
+			company.getCompanyId());
+
+		return persistedCompany.getKey();
+	}
+
+	private int _countFIPSMigrationEvents(
+		LogCapture logCapture, Company company, String result) {
+
+		int count = 0;
+
+		for (LogEntry logEntry : logCapture.getLogEntries()) {
+			String message = logEntry.getMessage();
+
+			if (!message.contains("company-id=" + company.getCompanyId()) ||
+				!message.contains("event-type=fips-migration") ||
+				!message.contains("item=company-key") ||
+				!message.contains("result=" + result)) {
+
+				continue;
+			}
+
+			count++;
+		}
+
+		return count;
+	}
+
 	private Dictionary<String, Object> _getKeyManagerConfigurationProperties(
 		String companyKEKIdentifier) {
 
@@ -166,6 +301,15 @@ public class CompanyKeyResolverUtilTest {
 			"activeProfileId", "custom"
 		).put(
 			"companyKEKIdentifier", companyKEKIdentifier
+		).build();
+	}
+
+	private Dictionary<String, Object>
+		_getKeyManagerCustomProfileConfigurationProperties(
+			String companyKEKProviderId) {
+
+		return HashMapDictionaryBuilder.<String, Object>put(
+			"companyKEKProviderId", companyKEKProviderId
 		).build();
 	}
 
@@ -177,9 +321,26 @@ public class CompanyKeyResolverUtilTest {
 			_getKeyManagerConfigurationProperties(companyKEKIdentifier));
 	}
 
+	private void _saveKeyManagerCustomProfileConfiguration(
+			String companyKEKProviderId)
+		throws Exception {
+
+		ConfigurationTestUtil.saveConfiguration(
+			_KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID,
+			_getKeyManagerCustomProfileConfigurationProperties(
+				companyKEKProviderId));
+	}
+
+	private static final String _CLASS_NAME_FIPS_LOG4J_UTIL =
+		"com.liferay.portal.kernel.internal.log4j.FIPSLog4jUtil";
+
 	private static final String _KEY_MANAGER_CONFIGURATION_PID =
 		"com.liferay.portal.security.key.internal.profile.configuration." +
 			"KeyManagerConfiguration";
+
+	private static final String _KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID =
+		"com.liferay.portal.security.key.internal.profile.configuration." +
+			"KeyManagerCustomProfileConfiguration";
 
 	@DeleteAfterTestRun
 	private Company _company;
