@@ -664,6 +664,11 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 			}
 		}
 
+		if (!autoPassword && FIPSModeValidator.isNotAllowedPassword(password)) {
+			autoPassword = true;
+			password = null;
+		}
+
 		Calendar calendar = CalendarFactoryUtil.getCalendar();
 
 		calendar.setTime(ldapUser.getBirthday());
@@ -2012,6 +2017,21 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 					password = screenName;
 				}
 			}
+		}
+
+		if (FIPSModeValidator.isNotAllowedPassword(password)) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"Generating a password for user ", userId,
+						" because the imported password has fewer than ",
+						FIPSModeValidator.PASSWORDS_MIN_LENGTH,
+						" bytes in FIPS mode"));
+			}
+
+			password = PwdGenerator.getPassword(
+				FIPSModeValidator.PASSWORDS_MIN_LENGTH);
+			passwordGenerated = true;
 		}
 
 		ServiceContext serviceContext = new ServiceContext();

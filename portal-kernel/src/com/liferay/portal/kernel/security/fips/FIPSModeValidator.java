@@ -31,7 +31,7 @@ import java.lang.reflect.Method;
 
 import java.net.URL;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -118,7 +118,7 @@ public class FIPSModeValidator {
 			return false;
 		}
 
-		byte[] bytes = password.getBytes(StandardCharsets.UTF_8);
+		byte[] bytes = password.getBytes(Charset.defaultCharset());
 
 		if (bytes.length >= PASSWORDS_MIN_LENGTH) {
 			return false;
@@ -561,10 +561,7 @@ public class FIPSModeValidator {
 			return;
 		}
 
-		byte[] bytes = PropsValues.DEFAULT_ADMIN_PASSWORD.getBytes(
-			StandardCharsets.UTF_8);
-
-		if (bytes.length < PASSWORDS_MIN_LENGTH) {
+		if (isNotAllowedPassword(PropsValues.DEFAULT_ADMIN_PASSWORD)) {
 			throw new SecurityException(
 				StringBundler.concat(
 					"FIPS mode requires the property \"",
