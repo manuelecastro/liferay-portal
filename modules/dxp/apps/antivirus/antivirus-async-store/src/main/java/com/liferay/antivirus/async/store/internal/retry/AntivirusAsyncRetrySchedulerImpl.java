@@ -5,20 +5,27 @@
 
 package com.liferay.antivirus.async.store.internal.retry;
 
+import com.liferay.antivirus.async.store.AntivirusScannerHelper;
 import com.liferay.antivirus.async.store.configuration.AntivirusAsyncConfiguration;
 import com.liferay.antivirus.async.store.retry.AntivirusAsyncRetryScheduler;
+import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.messaging.Message;
-import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.scheduler.SchedulerJobConfiguration;
+import com.liferay.portal.kernel.scheduler.TimeUnit;
+import com.liferay.portal.kernel.scheduler.TriggerConfiguration;
 import com.liferay.portal.kernel.util.TransientValue;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.osgi.service.component.ComponentFactory;
-import org.osgi.service.component.ComponentInstance;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -54,52 +61,91 @@ public class AntivirusAsyncRetrySchedulerImpl
 			iterator.remove();
 		}
 
-		_componentInstances.computeIfAbsent(
-			message.getString("jobName"),
-			key -> _componentFactory.newInstance(
-				HashMapDictionaryBuilder.<String, Object>put(
-					"jobName", key
-				).put(
-					"message", message
-				).put(
-					"retryCronExpression",
-					_antivirusAsyncConfiguration.retryCronExpression()
-				).build()));
+		_messages.putIfAbsent(message.getString("jobName"), message);
 	}
 
 	@Override
 	public void unschedule(Message message) {
-		ComponentInstance<?> componentInstance = _componentInstances.remove(
-			message.getString("jobName"));
-
-		if (componentInstance != null) {
-			componentInstance.dispose();
-		}
+		_messages.remove(message.getString("jobName"));
 	}
 
 	@Activate
-	protected void activate(Map<String, Object> properties) {
-		_antivirusAsyncConfiguration = ConfigurableUtil.createConfigurable(
-			AntivirusAsyncConfiguration.class, properties);
+	protected void activate(
+		BundleContext bundleContext, Map<String, Object> properties) {
+
+		AntivirusAsyncConfiguration antivirusAsyncConfiguration =
+			ConfigurableUtil.createConfigurable(
+				AntivirusAsyncConfiguration.class, properties);
+
+		TriggerConfiguration triggerConfiguration =
+			TriggerConfiguration.createTriggerConfiguration(
+				antivirusAsyncConfiguration.retryCronExpression());
+
+		triggerConfiguration.setStartDate(
+			new Date(
+				System.currentTimeMillis() + TimeUnit.SECOND.toMillis(10)));
+
+		_serviceRegistration = bundleContext.registerService(
+			SchedulerJobConfiguration.class,
+			new AntivirusAsyncRetrySchedulerJobConfiguration(
+				triggerConfiguration),
+			null);
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		for (ComponentInstance<?> componentInstance :
-				_componentInstances.values()) {
-
-			componentInstance.dispose();
+		if (_serviceRegistration != null) {
+			_serviceRegistration.unregister();
 		}
 	}
 
-	private AntivirusAsyncConfiguration _antivirusAsyncConfiguration;
+	@Reference
+	private AntivirusScannerHelper _antivirusScannerHelper;
 
-	@Reference(
-		target = "(component.factory=com.liferay.antivirus.async.store.internal.scheduler.AntivirusAsyncFileSchedulerJobConfiguration)"
-	)
-	private ComponentFactory<?> _componentFactory;
+	private final Map<String, Message> _messages = new ConcurrentHashMap<>();
+	private final AtomicBoolean _running = new AtomicBoolean();
+	private ServiceRegistration<SchedulerJobConfiguration> _serviceRegistration;
 
-	private final Map<String, ComponentInstance<?>> _componentInstances =
-		new ConcurrentHashMap<>();
+	private class AntivirusAsyncRetrySchedulerJobConfiguration
+		implements SchedulerJobConfiguration {
+
+		@Override
+		public UnsafeRunnable<Exception> getJobExecutorUnsafeRunnable() {
+			return () -> {
+				if (!_running.compareAndSet(false, true)) {
+					return;
+				}
+
+				try {
+					for (String jobName : new ArrayList<>(_messages.keySet())) {
+						Message message = _messages.remove(jobName);
+
+						if (message == null) {
+							continue;
+						}
+
+						_antivirusScannerHelper.processMessage(message);
+					}
+				}
+				finally {
+					_running.set(false);
+				}
+			};
+		}
+
+		@Override
+		public TriggerConfiguration getTriggerConfiguration() {
+			return _triggerConfiguration;
+		}
+
+		private AntivirusAsyncRetrySchedulerJobConfiguration(
+			TriggerConfiguration triggerConfiguration) {
+
+			_triggerConfiguration = triggerConfiguration;
+		}
+
+		private final TriggerConfiguration _triggerConfiguration;
+
+	}
 
 }
