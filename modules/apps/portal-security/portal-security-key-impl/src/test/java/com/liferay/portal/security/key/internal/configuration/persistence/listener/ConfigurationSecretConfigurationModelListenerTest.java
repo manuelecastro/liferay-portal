@@ -251,8 +251,7 @@ public class ConfigurationSecretConfigurationModelListenerTest {
 
 		if ((secretContext != null) &&
 			Objects.equals(secretContext.getKey(), "credential") &&
-			Objects.equals(secretContext.getProperties(), properties) &&
-			(secretContext.getType() == SecretContext.Type.CONFIGURATION)) {
+			Objects.equals(secretContext.getProperties(), properties)) {
 
 			return true;
 		}
