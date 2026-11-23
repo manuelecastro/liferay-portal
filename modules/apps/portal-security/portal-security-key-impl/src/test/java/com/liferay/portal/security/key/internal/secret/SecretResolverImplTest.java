@@ -798,9 +798,6 @@ public class SecretResolverImplTest {
 			String key = RandomTestUtil.randomString();
 			String pid = RandomTestUtil.randomString();
 
-			String identifier = StringBundler.concat(
-				"config/", pid, "/company/", RandomTestUtil.randomLong(),
-				StringPool.SLASH, key);
 			SecretContext secretContext = SecretContext.fromConfiguration(
 				key,
 				HashMapBuilder.<String, Object>put(
@@ -808,6 +805,10 @@ public class SecretResolverImplTest {
 				).put(
 					"companyId", companyId
 				).build());
+
+			String identifier = StringBundler.concat(
+				"config/", pid, "/company/", RandomTestUtil.randomLong(),
+				StringPool.SLASH, key);
 
 			Assert.assertThrows(
 				SecretException.class,
@@ -832,10 +833,10 @@ public class SecretResolverImplTest {
 		String identifier = StringBundler.concat(
 			"config/", pid, "/company/", companyId, StringPool.SLASH, key);
 
-		String keyReferenceString = _toKeyReferenceString(identifier);
+		String value = _toKeyReferenceString(identifier);
 
 		Assert.assertEquals(
-			keyReferenceString,
+			value,
 			_secretResolverImpl.store(
 				companyId,
 				SecretContext.fromConfiguration(
@@ -845,7 +846,7 @@ public class SecretResolverImplTest {
 					).put(
 						"companyId", companyId
 					).build()),
-				keyReferenceString));
+				value));
 
 		Mockito.verifyNoInteractions(_secretManager);
 	}
