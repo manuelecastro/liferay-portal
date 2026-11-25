@@ -30,8 +30,6 @@ public class PropsValuesTestUtil {
 
 		String originalPropsValue = PropsUtil.get(propsKeysName);
 
-		PropsUtil.set(propsKeysName, String.valueOf(value));
-
 		Object originalValue;
 
 		if (updateField) {
@@ -41,6 +39,8 @@ public class PropsValuesTestUtil {
 		else {
 			originalValue = null;
 		}
+
+		PropsUtil.set(propsKeysName, String.valueOf(value));
 
 		return () -> {
 			PropsUtil.set(propsKeysName, originalPropsValue);
