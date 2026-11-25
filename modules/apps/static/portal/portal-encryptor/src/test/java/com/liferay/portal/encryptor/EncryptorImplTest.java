@@ -34,15 +34,15 @@ public class EncryptorImplTest {
 
 	@Test
 	public void testDecrypt() throws Exception {
-		Encryptor encryptor = new EncryptorImpl();
-
-		Key key = encryptor.generateKey();
-
-		String encryptedString = encryptor.encrypt(key, _PLAINTEXT);
-
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
+
+			Encryptor encryptor = new EncryptorImpl();
+
+			Key key = encryptor.generateKey();
+
+			String encryptedString = encryptor.encrypt(key, _PLAINTEXT);
 
 			Assert.assertEquals(
 				_PLAINTEXT, encryptor.decrypt(key, encryptedString));
